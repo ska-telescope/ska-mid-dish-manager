@@ -14,11 +14,17 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
     "read_response,expected_response",
     [
         # Valid
-        ({"ignoreSpfrx": {"__value": ["true"]}}, "true"),
-        ({"ignoreSpfrx": {"ignoreSpfrx": ["true"]}}, "true"),
+        (
+            {"spfrxControlMode": {"__value": ["MONITOR_AND_CONTROL"]}},
+            "MONITOR_AND_CONTROL",
+        ),
+        (
+            {"spfrxControlMode": {"spfrxControlMode": ["NO_MONITOR_NO_CONTROL"]}},
+            "NO_MONITOR_NO_CONTROL",
+        ),
         # Invalid
-        ({"ignoreSpfrx": {}}, None),
-        ({"ignoreSpfrx": {"ignoreSpfrx": []}}, None),
+        ({"spfrxControlMode": {}}, None),
+        ({"spfrxControlMode": {"spfrxControlMode": []}}, None),
         ({"something_else": {"__value": []}}, None),
         ({"something_else": {"__value": ["true"]}}, None),
         ({"something_else": {"something_else": ["true"]}}, None),
@@ -54,7 +60,7 @@ def test_get_attribute_property_value(
             command_progress_callback=callbacks["progress_cb"],
         )
         dish_manager_cm.try_update_memorized_attributes_from_db
-        result = dish_manager_cm._get_device_attribute_property_value("ignoreSpfrx")
+        result = dish_manager_cm._get_device_attribute_property_value("spfrxControlMode")
 
         assert result == expected_response, (
             "Expected [{expected_response}], but got [{result}] for [{read_response}]"

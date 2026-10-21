@@ -6,6 +6,7 @@ from threading import Event
 from unittest import mock
 
 import pytest
+from ska_tango_base.future import ControlMode
 from ska_control_model import AdminMode, TaskStatus  # ty: ignore[deprecated]
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
@@ -71,28 +72,44 @@ class TestCommandActionsIgnoringDevices:
         self.progress_callback = MethodCallsStore()
         self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
-
         def is_device_ignored(device: str):
-            """Check whether the given device is ignored."""
+            """Map control mode to the legacy ignored-device behaviour."""
             if device == "SPF":
-                return self.dish_manager_cm_mock._component_state["ignorespf"]
+                return (
+                    self.dish_manager_cm_mock._component_state["spfcontrolmode"]
+                    == ControlMode.NO_MONITOR_NO_CONTROL
+                )
             if device == "SPFRX":
-                return self.dish_manager_cm_mock._component_state["ignorespfrx"]
+                return (
+                    self.dish_manager_cm_mock._component_state["spfrxcontrolmode"]
+                    == ControlMode.NO_MONITOR_NO_CONTROL
+                )
             return False
 
         self.dish_manager_cm_mock.is_device_ignored = is_device_ignored
-
-        self.dish_manager_cm_mock._component_state["ignorespf"] = False
-        self.dish_manager_cm_mock._component_state["ignorespfrx"] = False
+        self.dish_manager_cm_mock._component_state["spfcontrolmode"] = (
+            ControlMode.MONITOR_AND_CONTROL
+        )
+        self.dish_manager_cm_mock._component_state["spfrxcontrolmode"] = (
+            ControlMode.MONITOR_AND_CONTROL
+        )
 
     def teardown_method(self):
         """Tear down context."""
         return
 
     def set_devices_ignored(self, spf_ignored, spfrx_ignored):
-        """Set subservient device ignore values."""
-        self.dish_manager_cm_mock._component_state["ignorespf"] = spf_ignored
-        self.dish_manager_cm_mock._component_state["ignorespfrx"] = spfrx_ignored
+        """Set control modes that map to the legacy ignored-device behaviour."""
+        self.dish_manager_cm_mock._component_state["spfcontrolmode"] = (
+            ControlMode.NO_MONITOR_NO_CONTROL
+            if spf_ignored
+            else ControlMode.MONITOR_AND_CONTROL
+        )
+        self.dish_manager_cm_mock._component_state["spfrxcontrolmode"] = (
+            ControlMode.NO_MONITOR_NO_CONTROL
+            if spfrx_ignored
+            else ControlMode.MONITOR_AND_CONTROL
+        )
 
     @pytest.mark.unit
     def test_ignoring_spf(self, caplog):
@@ -109,7 +126,7 @@ class TestCommandActionsIgnoringDevices:
         SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
             my_task_callback, task_abort_event
         )
-
+        
         expected_progress_updates = [
             "Fanned out commands: SPFRX.SetStandbyMode, DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
@@ -203,3 +220,14 @@ class TestCommandActionsIgnoringDevices:
 
         assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
         assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text
+    @pytest.mark.unit
+    def test_monitor_no_control_is_not_implemented(self):
+        """Verify MONITOR_NO_CONTROL is rejected for SPF and SPFRx."""
+        for device in ("SPF", "SPFRX"):
+            with pytest.raises(NotImplementedError, match="MONITOR_NO_CONTROL"):
+                DishManagerComponentManager._validate_subdevice_control_mode(
+                    self.dish_manager_cm_mock,
+                    device,
+                    ControlMode.MONITOR_NO_CONTROL,
+                )
+

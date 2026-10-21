@@ -90,16 +90,18 @@ server:
                   values:
                     - "{{ $.Values.dishmanager.actions.timeout_seconds }}"
               attribute_properties:
-                - attribute: "ignoreSpf"
+                - attribute: "spfControlMode"
                   properties:
                     - name: "__value"
                       values:
-                        - "{{ $.Values.dishmanager.spf.ignored }}"
-                - attribute: "ignoreSpfrx"
+                        - "{{ $.Values.dishmanager.spf.control_mode }}"
+
+                - attribute: "spfrxControlMode"
                   properties:
                     - name: "__value"
                       values:
-                        - "{{ $.Values.dishmanager.spfrx.ignored }}"
+                        - "{{ $.Values.dishmanager.spfrx.control_mode }}"
+
   {{- end }}
 depends_on:
   - device: sys/database/2

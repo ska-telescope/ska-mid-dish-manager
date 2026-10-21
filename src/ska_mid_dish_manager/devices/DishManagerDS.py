@@ -10,12 +10,12 @@ import weakref
 from datetime import datetime
 from functools import reduce
 from typing import List, Literal, Optional, Tuple
-
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
 from ska_tango_base import SKAController
+from ska_tango_base.future import ControlMode
 from ska_tango_base.commands import SubmittedSlowCommand
 from tango import (
     AttrQuality,
@@ -476,8 +476,8 @@ class DishManager(SKAController):
             "kvalue": "kValue",
             "trackinterpolationmode": "trackInterpolationMode",
             "scanid": "scanID",
-            "ignorespf": "ignoreSpf",
-            "ignorespfrx": "ignoreSpfrx",
+            "spfcontrolmode": "spfControlMode",
+            "spfrxcontrolmode": "spfrxControlMode",
             "ignoreb5dc": "ignoreB5dc",
             "spfconnectionstate": "spfConnectionState",
             "spfrxconnectionstate": "spfrxConnectionState",
@@ -1625,44 +1625,55 @@ class DishManager(SKAController):
         self.component_manager._update_component_state(scanid=scanid)
 
     @attribute(
-        dtype=bool,
+        dtype=ControlMode,
         access=AttrWriteType.READ_WRITE,
-        doc="Flag to disable SPF device communication. When ignored, no commands will be issued "
-        "to the device, it will be excluded from state aggregation, and no device related "
-        "attributes will be updated.",
+        doc=(
+            "Control mode for the SPF subdevice. NO_MONITOR_NO_CONTROL disables "
+            "monitoring and control, stops communication, and excludes SPF from "
+            "state aggregation. MONITOR_AND_CONTROL enables monitoring and control. "
+            "MONITOR_NO_CONTROL is not implemented."
+        ),
         memorized=True,
     )
-    def ignoreSpf(self):
-        """Returns ignoreSpf."""
-        return self.component_manager.component_state.get("ignorespf", False)
+    def spfControlMode(self):
+        """Return the SPF control mode."""
+        return self.component_manager.component_state.get(
+            "spfcontrolmode", ControlMode.MONITOR_AND_CONTROL
+        )
 
-    @ignoreSpf.write
+    @spfControlMode.write
     @time_tango_write()
     @log_tango_attr_write()
     @requires_component_manager
-    def ignoreSpf(self, value):
-        """Sets ignoreSpf."""
-        self.component_manager.set_spf_device_ignored(value)
+    def spfControlMode(self, value: ControlMode):
+        """Set the SPF control mode."""
+        self.component_manager.set_spf_control_mode(value)
 
     @attribute(
-        dtype=bool,
+        dtype=ControlMode,
         access=AttrWriteType.READ_WRITE,
-        doc="Flag to disable SPFRx device communication. When ignored, no commands will be issued "
-        "to the device, it will be excluded from state aggregation, and no device related "
-        "attributes will be updated.",
+        doc=(
+            "Control mode for the SPFRx subdevice. NO_MONITOR_NO_CONTROL disables "
+            "monitoring and control, stops communication, and excludes SPFRx from "
+            "state aggregation. MONITOR_AND_CONTROL enables monitoring and control. "
+            "MONITOR_NO_CONTROL is not implemented."
+        ),
         memorized=True,
     )
-    def ignoreSpfrx(self):
-        """Returns ignoreSpfrx."""
-        return self.component_manager.component_state.get("ignorespfrx", False)
+    def spfrxControlMode(self):
+        """Return the SPFRx control mode."""
+        return self.component_manager.component_state.get(
+            "spfrxcontrolmode", ControlMode.MONITOR_AND_CONTROL
+        )
 
-    @ignoreSpfrx.write
+    @spfrxControlMode.write
     @time_tango_write()
     @log_tango_attr_write()
     @requires_component_manager
-    def ignoreSpfrx(self, value):
-        """Sets ignoreSpfrx."""
-        self.component_manager.set_spfrx_device_ignored(value)
+    def spfrxControlMode(self, value: ControlMode):
+        """Set the SPFRx control mode."""
+        self.component_manager.set_spfrx_control_mode(value)
+
 
     @attribute(
         dtype=bool,
