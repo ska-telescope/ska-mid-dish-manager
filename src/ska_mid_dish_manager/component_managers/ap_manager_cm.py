@@ -191,13 +191,21 @@ class APComponentManager(TangoDeviceComponentManager):
 
     @override
     def stop_communicating(self) -> None:
-        """Stop the AP server monitoring on call to stop communicating."""
-        try:
-            self.write_attribute_value(
-                "controlMode",
-                ControlMode.NO_MONITOR_NO_CONTROL,
-            )
-        except Exception:
-            self.logger.exception("Failed to set AP Manager controlMode to NO_MONITOR_NO_CONTROL")
-        finally:
-            super().stop_communicating()
+        """Stop the AP server monitoring on call to stop communicating.
+
+        DishManager sets the communicationState to DISABLED before this
+        method is executed which would ordinarily prevent attr writes, therefore,
+        this method bypasses the check_communicating decorator.
+        """
+        if not self._dp_factory_signal.is_set():
+            try:
+                self._write_attribute_value(
+                    "controlMode",
+                    ControlMode.NO_MONITOR_NO_CONTROL,
+                )
+            except Exception:
+                self.logger.exception(
+                    "Failed to set AP Manager controlMode to NO_MONITOR_NO_CONTROL"
+                )
+
+        super().stop_communicating()

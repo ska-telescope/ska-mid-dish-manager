@@ -134,6 +134,9 @@ ska-mid-dish-b5dc-proxy:
 ska-mid-meerkat-ap-manager:
   enabled: false
 
+ska-mid-meerkat-ap-simulator:
+  enabled: false
+
 ska-mid-meerkat-wms-tango-device:
   enabled: false
 
