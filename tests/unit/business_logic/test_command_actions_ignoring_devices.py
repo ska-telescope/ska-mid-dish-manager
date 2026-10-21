@@ -6,8 +6,8 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_tango_base.future import ControlMode
 from ska_control_model import AdminMode, TaskStatus  # ty: ignore[deprecated]
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
@@ -72,6 +72,7 @@ class TestCommandActionsIgnoringDevices:
         self.progress_callback = MethodCallsStore()
         self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
+
         def is_device_ignored(device: str):
             """Map control mode to the legacy ignored-device behaviour."""
             if device == "SPF":
@@ -101,14 +102,10 @@ class TestCommandActionsIgnoringDevices:
     def set_devices_ignored(self, spf_ignored, spfrx_ignored):
         """Set control modes that map to the legacy ignored-device behaviour."""
         self.dish_manager_cm_mock._component_state["spfcontrolmode"] = (
-            ControlMode.NO_MONITOR_NO_CONTROL
-            if spf_ignored
-            else ControlMode.MONITOR_AND_CONTROL
+            ControlMode.NO_MONITOR_NO_CONTROL if spf_ignored else ControlMode.MONITOR_AND_CONTROL
         )
         self.dish_manager_cm_mock._component_state["spfrxcontrolmode"] = (
-            ControlMode.NO_MONITOR_NO_CONTROL
-            if spfrx_ignored
-            else ControlMode.MONITOR_AND_CONTROL
+            ControlMode.NO_MONITOR_NO_CONTROL if spfrx_ignored else ControlMode.MONITOR_AND_CONTROL
         )
 
     @pytest.mark.unit
@@ -126,7 +123,7 @@ class TestCommandActionsIgnoringDevices:
         SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
             my_task_callback, task_abort_event
         )
-        
+
         expected_progress_updates = [
             "Fanned out commands: SPFRX.SetStandbyMode, DS.SetStandbyMode",
             "Awaiting dishmode change to STANDBY_LP",
@@ -220,6 +217,7 @@ class TestCommandActionsIgnoringDevices:
 
         assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
         assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text
+
     @pytest.mark.unit
     def test_monitor_no_control_is_not_implemented(self):
         """Verify MONITOR_NO_CONTROL is rejected for SPF and SPFRx."""
@@ -230,4 +228,3 @@ class TestCommandActionsIgnoringDevices:
                     device,
                     ControlMode.MONITOR_NO_CONTROL,
                 )
-

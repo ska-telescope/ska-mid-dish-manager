@@ -13,7 +13,7 @@ import numpy as np
 import tango
 from matplotlib import pyplot as plt
 from ska_control_model import CommunicationStatus
-from ska_tango_base.future import ControlMode
+from ska_control_model.future import ControlMode
 from tango.utils import EventCallback
 
 from ska_mid_dish_manager.models.dish_enums import PointingState, TrackTableLoadMode
@@ -664,58 +664,48 @@ class EventPrinter:
                     (f"\nEvent\t{ev.reception_date}\t{ev.device}\t{attr_name}\t{attr_value}")
                 )
 
-# Following new change moving from ignoresubdevice to CONTROLMODE, communication state will always be established only when the device is in control mode. So we will not be ignoring any subdevice, but we will be setting the control mode to control or monitor depending on the test case.
-def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx, ignore_b5dc):
-    """Sets ignored devices on DishManager."""
-    if device_proxy.ignoreSpf != ignore_spf:
-        spf_connection_event_store = EventStore()
-        spf_sub_id = device_proxy.subscribe_event(
-            "spfConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            spf_connection_event_store,
-        )
 
-        device_proxy.ignoreSpf = ignore_spf
+def set_ignored_devices(
+    device_proxy,
+    spf_control_mode: ControlMode,
+    spfrx_control_mode: ControlMode,
+    ignore_b5dc: bool,
+):
+    """Configure SPF, SPFRx and B5DC communication."""
+    _set_control_mode(
+        device_proxy,
+        "spfControlMode",
+        "spfConnectionState",
+        spf_control_mode,
+    )
 
-        if ignore_spf:
-            spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
-        else:
-            spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        device_proxy.unsubscribe_event(spf_sub_id)
-
-    if device_proxy.ignoreSpfrx != ignore_spfrx:
-        spfrx_connection_event_store = EventStore()
-
-        spfrx_sub_id = device_proxy.subscribe_event(
-            "spfrxConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            spfrx_connection_event_store,
-        )
-
-        device_proxy.ignoreSpfrx = ignore_spfrx
-
-        if ignore_spfrx:
-            spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
-        else:
-            spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        device_proxy.unsubscribe_event(spfrx_sub_id)
+    _set_control_mode(
+        device_proxy,
+        "spfrxControlMode",
+        "spfrxConnectionState",
+        spfrx_control_mode,
+    )
 
     if device_proxy.ignoreB5dc != ignore_b5dc:
         b5dc_connection_event_store = EventStore()
 
-        b5dc_sub_id = device_proxy.subscribe_event(
+        subscription_id = device_proxy.subscribe_event(
             "b5dcConnectionState",
             tango.EventType.CHANGE_EVENT,
             b5dc_connection_event_store,
         )
 
-        device_proxy.ignoreB5dc = ignore_b5dc
+        try:
+            device_proxy.ignoreB5dc = ignore_b5dc
 
-        if ignore_b5dc:
-            b5dc_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
-        else:
-            b5dc_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        device_proxy.unsubscribe_event(b5dc_sub_id)
+            expected_status = (
+                CommunicationStatus.DISABLED if ignore_b5dc else CommunicationStatus.ESTABLISHED
+            )
+
+            b5dc_connection_event_store.wait_for_value(expected_status)
+
+        finally:
+            device_proxy.unsubscribe_event(subscription_id)
 
 
 def _set_control_mode(
@@ -727,8 +717,7 @@ def _set_control_mode(
     """Set a sub-device control mode and wait for its communication state."""
     if control_mode == ControlMode.MONITOR_NO_CONTROL:
         raise NotImplementedError(
-            f"{ControlMode.MONITOR_NO_CONTROL.name} is not supported "
-            f"for {control_mode_attribute}"
+            f"{ControlMode.MONITOR_NO_CONTROL.name} is not supported for {control_mode_attribute}"
         )
 
     if getattr(device_proxy, control_mode_attribute) == control_mode:
@@ -759,6 +748,7 @@ def _set_control_mode(
 
     finally:
         device_proxy.unsubscribe_event(subscription_id)
+
 
 def generate_random_text(length=10):
     """Generate a random string."""
