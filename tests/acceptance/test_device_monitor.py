@@ -154,6 +154,7 @@ def test_connection_error(caplog):
         (DEFAULT_DS_MANAGER_TRL, ["achievedTargetLock", "powerState"]),
     ],
 )
+@pytest.mark.excl_test_against_ap_manager
 def test_device_stop_monitor(caplog, device_fqdn, subs):
     """Test that the stop_monitoring() for devices monitor clears threads."""
     caplog.set_level(logging.DEBUG)

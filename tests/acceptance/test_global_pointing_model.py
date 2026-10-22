@@ -15,6 +15,7 @@ def reset_global_pointing(dish_manager_proxy: tango.DeviceProxy):
     dish_manager_proxy.TrackLoadStaticOff([0.0, 0.0])
 
 
+@pytest.mark.excl_test_against_ap_manager
 @pytest.mark.acceptance
 def test_track_load_static_off(
     dish_manager_proxy: tango.DeviceProxy, event_store_class: Any
@@ -58,3 +59,8 @@ def test_track_load_static_off(
     model_event_store.wait_for_value(write_values[1], timeout=7)
 
     remove_subscriptions(subscriptions)
+
+
+# TODO Confirm whether the AP Manager device will take the global
+# pointing corrections or if they need to be intercepted by the
+# AP subcomponent manager

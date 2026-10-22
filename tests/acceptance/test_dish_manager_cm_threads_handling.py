@@ -9,7 +9,6 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     DEFAULT_B5DC_PROXY_TRL,
     DEFAULT_DISH_MANAGER_TRL,
-    DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
     DEFAULT_WATCHDOG_TIMEOUT,
@@ -21,8 +20,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.acceptance
-def test_dish_manager_component_manager_threads_management(component_state_store):
+def test_dish_manager_component_manager_threads_management(component_state_store, ds_device_fqdn):
     """Test dish manager component mananger clears threads on stop communication."""
+    ds_device_trl = ds_device_fqdn
     mock_callable = MagicMock()
     cm = DishManagerComponentManager(
         LOGGER,
@@ -30,7 +30,7 @@ def test_dish_manager_component_manager_threads_management(component_state_store
         build_state_callback=mock_callable,
         quality_state_callback=mock_callable,
         tango_device_name=DEFAULT_DISH_MANAGER_TRL,
-        ds_device_fqdn=DEFAULT_DS_MANAGER_TRL,
+        ds_device_fqdn=ds_device_trl,
         spf_device_fqdn=DEFAULT_SPFC_TRL,
         spfrx_device_fqdn=DEFAULT_SPFRX_TRL,
         b5dc_device_fqdn=DEFAULT_B5DC_PROXY_TRL,
@@ -56,7 +56,7 @@ def test_dish_manager_component_manager_threads_management(component_state_store
 
     assert "MainThread" in threads_names
     for device_fqdn in [
-        DEFAULT_DS_MANAGER_TRL,
+        ds_device_trl,
         DEFAULT_SPFC_TRL,
         DEFAULT_SPFRX_TRL,
         DEFAULT_B5DC_PROXY_TRL,
