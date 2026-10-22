@@ -180,6 +180,7 @@ def test_dsc_current_limit_used(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
+    ds_device_fqdn: str,
 ):
     """Test the dscPowerLimitkW value used when invoking Slew."""
     subscriptions = {}
@@ -193,7 +194,9 @@ def test_dsc_current_limit_used(
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
 
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    requested_az, requested_el = calculate_slew_target(current_az, current_el, 10.0, 10.0)
+    requested_az, requested_el = calculate_slew_target(
+        ds_device_fqdn, current_az, current_el, 10.0, 10.0
+    )
     ds_device_proxy.Slew([requested_az, requested_el])
     status_event_store.wait_for_value(
         (

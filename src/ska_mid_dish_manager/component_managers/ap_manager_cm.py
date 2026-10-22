@@ -30,7 +30,7 @@ class APComponentManager(TangoDeviceComponentManager):
         **kwargs: Any,
     ):
         # The following is a set of commands, usually fanned out to the
-        # DS Manager, that are not implemented on the AP Manager
+        # DS Manager, that are rejected when called on the AP Manager
         self.unmapped_ds_manager_commands = set(
             [
                 "TrackLoadStaticOff",
@@ -145,11 +145,12 @@ class APComponentManager(TangoDeviceComponentManager):
         self, command_name: str, command_arg: Any, truncate_arg_in_logs: bool = False
     ) -> Tuple[TaskStatus, Any]:
         """Intercept any commands that are known not to be executable on the AP Manager."""
+        # Immediately REJECT an unmapped command after STAGING it
         if command_name in self.unmapped_ds_manager_commands:
             return (
-                TaskStatus.COMPLETED,
-                f"This DS Manager command [{command_name}] is not executed whilst monitoring and "
-                "controlling an AP Manager instance.",
+                TaskStatus.REJECTED,
+                f"This dish structure command [{command_name}] can not be executed whilst "
+                "monitoring and controlling an AP Manager instance.",
             )
         else:
             return super().execute_command(command_name, command_arg, truncate_arg_in_logs)

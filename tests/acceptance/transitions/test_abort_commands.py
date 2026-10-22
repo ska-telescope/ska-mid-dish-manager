@@ -5,9 +5,10 @@ import pytest
 from ska_mid_dish_manager.models.constants import (
     MAX_AZIMUTH,
     MAX_ELEVATION_SCIENCE,
-    MIN_AZIMUTH,
+    MIN_AZIMUTH_ACU,
     MIN_ELEVATION_SCIENCE,
     STOW_ELEVATION_DEGREES,
+    STOW_ELEVATION_DEGREES_ACU_SIMULATOR,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -108,7 +109,9 @@ def track_a_sample(
         reference_el = current_el + 10.0
     if current_az >= MAX_AZIMUTH:
         reference_az = current_az - 10.0
-    if current_az <= MIN_AZIMUTH:
+    # Use the ACU min elevation to ensure limits are not exceeded
+    # regardless of dish structure type (ie: DS or AP Manager)
+    if current_az <= MIN_AZIMUTH_ACU:
         reference_az = current_az + 10.0
 
     # create a long track table with last three reference positions the same
@@ -176,6 +179,7 @@ def test_abort_commands_during_slew(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_fqdn,
 ):
     """Test that Abort aborts the executing slew command."""
     result_event_store = event_store_class()
@@ -196,7 +200,9 @@ def test_abort_commands_during_slew(
 
     # Slew the dish
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
-    requested_az, requested_el = calculate_slew_target(current_az, current_el, 30.0, 15.0)
+    requested_az, requested_el = calculate_slew_target(
+        ds_device_fqdn, current_az, current_el, 30.0, 15.0
+    )
     dish_manager_proxy.Slew([requested_az, requested_el])
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=10)
 
@@ -258,7 +264,15 @@ def test_abort_commands_during_stow(
     # Check that the dish is in standby FP mode
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
     # Check that the dish did not slew to the stow position
-    stow_el_position = STOW_ELEVATION_DEGREES
+
+    # Get the expected stow elevation based on whether the DS or
+    # AP Manager is being monitored
+    ds_fqdn = ds_device_proxy.name()
+    if "meerkat-ap-manager" in ds_fqdn:
+        stow_el_position = STOW_ELEVATION_DEGREES_ACU_SIMULATOR
+    else:
+        stow_el_position = STOW_ELEVATION_DEGREES
+
     achieved_el = dish_manager_proxy.achievedPointing[2]
     assert achieved_el != pytest.approx(stow_el_position)
 

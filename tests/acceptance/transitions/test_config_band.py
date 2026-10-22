@@ -69,6 +69,9 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     remove_subscriptions(subscriptions)
 
 
+# TODO On completion of the AP Manager device implementation
+# evaluate whether any special handling is needed for AP indexer positions
+# as the SKA indexer positions are not all mapped to AP positions
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     ("band_request", "expected_band", "message_str"),
@@ -313,6 +316,11 @@ def test_configure_band_json(
     remove_subscriptions(subscriptions)
 
 
+# TODO On completion of the AP Manager device implementation
+# evaluate whether any special handling is needed for AP indexer positions
+# as the SKA indexer are not all mapped to AP positions
+# - Its not yet clear whether the AP Manager will be able to support
+# ConfigureBand5b
 @pytest.mark.acceptance_incl_b5dc
 def test_configure_band_json_with_b5dc_fanout(
     monitor_tango_servers,
@@ -421,6 +429,11 @@ def test_configure_band_json_with_b5dc_fanout(
     remove_subscriptions(subscriptions)
 
 
+# TODO On completion of the AP Manager device implementation
+# evaluate whether any special handling is needed for AP indexer positions
+# as the SKA indexer are not all mapped to AP positions
+# - Its not yet clear whether the AP Manager will be able to support
+# ConfigureBand6
 @pytest.mark.acceptance
 def test_configure_band_6_from_stow(
     monitor_tango_servers,

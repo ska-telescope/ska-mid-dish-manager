@@ -266,6 +266,7 @@ def test_append_dvs_case(
 
 @pytest.mark.movement
 @pytest.mark.acceptance
+@pytest.mark.excl_test_against_ap_manager
 def test_maximum_capacity(
     slew_dish_to_init,
     monitor_tango_servers,
