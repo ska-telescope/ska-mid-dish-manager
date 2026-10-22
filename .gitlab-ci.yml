@@ -88,6 +88,7 @@ k8s-test-runner-incl-meerkat-ap:
      K8S_TEST_RUNNER_MARK: "acceptance and not excl_test_against_ap_manager"
      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
      VALUES_FILE: charts/ska-mid-dish-manager/deployment_with_mk_ap_manager.yaml
+     OVERRIDE_DS_DEVICE_FQDN: "mid-dish/meerkat-ap-manager/SKA001"
   environment:
     name: test/$CI_COMMIT_REF_SLUG
     on_stop: stop-k8s-test-runner-incl-meerkat-ap

@@ -27,6 +27,7 @@ def clean_up(
 
 
 @pytest.mark.acceptance
+@pytest.mark.excl_test_against_ap_manager
 def test_initial_power_limit(
     ds_device_proxy: tango.DeviceProxy,
     dish_manager_proxy: tango.DeviceProxy,
