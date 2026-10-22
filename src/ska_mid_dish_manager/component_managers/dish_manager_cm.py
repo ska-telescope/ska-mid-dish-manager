@@ -13,6 +13,7 @@ from typing import Callable, Dict, List, Optional, Tuple, cast
 import requests
 import tango
 from ska_control_model import (
+    AdminMode,
     CommunicationStatus,
     HealthState,
     ResultCode,
