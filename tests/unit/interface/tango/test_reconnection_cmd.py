@@ -99,7 +99,13 @@ def test_reset_subs_connection_ignored_devices(
 
     with pytest.raises(tango.DevFailed) as err:
         device_proxy.ResetComponentConnection(device_name)
-    assert f"Reconnection denied, device {device_name} is ignored" in str(err.value)
+    
+    expected_message = (
+        f"Reconnection denied, device {device_name} is in "
+        f"{ControlMode.NO_MONITOR_NO_CONTROL.name} mode."
+    )
+    
+    assert expected_message in str(err.value)
     device_proxy.write_attribute(control_mode_attr_name, ControlMode.MONITOR_AND_CONTROL)
     ignore_dev_event_store.wait_for_value(ControlMode.MONITOR_AND_CONTROL)
     device_proxy.unsubscribe_event(event_id)
