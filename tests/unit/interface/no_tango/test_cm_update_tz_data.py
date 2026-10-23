@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 from ska_control_model import ResultCode
-from ska_tango_base.future import ControlMode
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.constants import TZ_DATA_URL_ENV_VAR

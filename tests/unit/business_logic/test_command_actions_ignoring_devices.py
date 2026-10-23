@@ -6,8 +6,8 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import AdminMode, TaskStatus  # ty: ignore[deprecated]
-from ska_tango_base.future import ControlMode
+from ska_control_model import TaskStatus  # ty: ignore[deprecated]
+from ska_control_model.future import AdminMode, ControlMode
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
