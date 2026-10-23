@@ -1648,7 +1648,7 @@ class DishManager(SKAController):
     @requires_component_manager
     def spfControlMode(self, value: ControlMode):
         """Set the SPF control mode."""
-        self.component_manager.set_spf_control_mode(value)
+        self.component_manager.set_spf_control_mode(ControlMode(value))
 
     @attribute(
         dtype=ControlMode,
@@ -1673,7 +1673,7 @@ class DishManager(SKAController):
     @requires_component_manager
     def spfrxControlMode(self, value: ControlMode):
         """Set the SPFRx control mode."""
-        self.component_manager.set_spfrx_control_mode(value)
+        self.component_manager.set_spfrx_control_mode(ControlMode(value))
 
     @attribute(
         dtype=bool,
