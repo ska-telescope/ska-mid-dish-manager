@@ -5,6 +5,11 @@ global:
 
 ska-mid-dish-ds-manager:
   enabled: true
+  dishstructuremanager:
+    image:
+      registry: artefact.skao.int
+      image: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager/ska-mid-dish-ds-manager
+      tag: 9.2.0-dev.c119afd5f
 
 ska-tango-base:
   enabled: true
