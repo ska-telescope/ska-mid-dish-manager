@@ -13,12 +13,13 @@ from typing import Callable, Dict, List, Optional, Tuple, cast
 import requests
 import tango
 from ska_control_model import (
+    AdminMode,
     CommunicationStatus,
     HealthState,
     ResultCode,
     TaskStatus,
 )
-from ska_control_model.future import AdminMode, ControlMode
+from ska_control_model.future import ControlMode
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
