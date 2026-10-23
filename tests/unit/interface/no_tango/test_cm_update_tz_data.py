@@ -127,9 +127,7 @@ def test_update_tz_data_rejected_when_spfrx_ignored(
     :param monkeypatch: pytest fixture for patching the environment
     """
     monkeypatch.setenv(TZ_DATA_URL_ENV_VAR, TZ_DATA_URL)
-    component_manager._update_component_state(
-        spfrxcontrolmode=ControlMode.NO_MONITOR_NO_CONTROL
-    )
+    component_manager._update_component_state(spfrxcontrolmode=ControlMode.NO_MONITOR_NO_CONTROL)
     task_callback = MagicMock()
 
     with patch("ska_mid_dish_manager.component_managers.dish_manager_cm.requests.get") as mock_get:
@@ -138,6 +136,5 @@ def test_update_tz_data_rejected_when_spfrx_ignored(
     mock_get.assert_not_called()
     assert _get_result_code(task_callback) == ResultCode.FAILED
     assert _get_result_message(task_callback) == (
-        "UpdateTZData rejected. SPFRx is in NO_MONITOR_NO_CONTROL "
-        "mode, cannot upload TZ data."
+        "UpdateTZData rejected. SPFRx is in NO_MONITOR_NO_CONTROL mode, cannot upload TZ data."
     )

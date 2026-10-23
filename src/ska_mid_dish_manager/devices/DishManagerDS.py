@@ -1675,7 +1675,6 @@ class DishManager(SKAController):
         """Set the SPFRx control mode."""
         self.component_manager.set_spfrx_control_mode(value)
 
-
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,

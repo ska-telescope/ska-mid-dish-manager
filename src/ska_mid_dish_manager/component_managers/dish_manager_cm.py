@@ -584,15 +584,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def is_device_ignored(self, device: str) -> bool:
         """Return whether a subdevice is disabled for monitoring and control."""
         if device == "SPF":
-            return (
-                self.check_device_control_mode("SPF")
-                == ControlMode.NO_MONITOR_NO_CONTROL
-            )
+            return self.check_device_control_mode("SPF") == ControlMode.NO_MONITOR_NO_CONTROL
         if device == "SPFRX":
-            return (
-                self.check_device_control_mode("SPFRX")
-                == ControlMode.NO_MONITOR_NO_CONTROL
-            )
+            return self.check_device_control_mode("SPFRX") == ControlMode.NO_MONITOR_NO_CONTROL
         if device == "B5DC":
             return self.component_state["ignoreb5dc"]
         return False
@@ -639,10 +633,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if not self.is_device_ignored("SPFRX"):
             active_component_managers["SPFRX"] = self.sub_component_managers["SPFRX"]
 
-        if (
-            "B5DC" in self.sub_component_managers
-            and not self.is_device_ignored("B5DC")
-        ):
+        if "B5DC" in self.sub_component_managers and not self.is_device_ignored("B5DC"):
             active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
 
         return active_component_managers
@@ -725,9 +716,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self.logger.debug("Updating memorized attributes. Trying to read from database.")
         try:
             # spfControlMode
-            spf_control_mode_value = self._get_device_attribute_property_value(
-                "spfControlMode"
-            )
+            spf_control_mode_value = self._get_device_attribute_property_value("spfControlMode")
             if spf_control_mode_value is not None:
                 self.logger.debug(
                     "Updating spfControlMode value with value from database %s.",
@@ -1081,23 +1070,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         ]
 
         if all(
-            state == CommunicationStatus.ESTABLISHED
-            for state in sub_devices_communication_states
+            state == CommunicationStatus.ESTABLISHED for state in sub_devices_communication_states
         ):
-            self._update_communication_state(
-                CommunicationStatus.ESTABLISHED
-            )
+            self._update_communication_state(CommunicationStatus.ESTABLISHED)
         elif any(
             state == CommunicationStatus.NOT_ESTABLISHED
             for state in sub_devices_communication_states
         ):
-            self._update_communication_state(
-                CommunicationStatus.NOT_ESTABLISHED
-            )
+            self._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
         else:
-            self._update_communication_state(
-                CommunicationStatus.DISABLED
-            )
+            self._update_communication_state(CommunicationStatus.DISABLED)
 
         # Recompute the dish manager healthState following an update to the communication state
         self._update_dish_health_state_and_info()
@@ -1160,12 +1142,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     spf_opmode = (
                         spf_component_state["operatingmode"].name
                         if not self.is_device_ignored("SPF")
-                        else "ignored" # "ControlMode is NO_MONITOR_NO_CONTROL"
+                        else "ignored"  # "ControlMode is NO_MONITOR_NO_CONTROL"
                     )
                     spfrx_opmode = (
                         spfrx_component_state["operatingmode"].name
                         if not self.is_device_ignored("SPFRX")
-                        else "ignored" # "ControlMode is NO_MONITOR_NO_CONTROL"
+                        else "ignored"  # "ControlMode is NO_MONITOR_NO_CONTROL"
                     )
                     self.logger.info(
                         (
@@ -1244,7 +1226,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             configured_band = self._state_transition.compute_configured_band(
                 ds_component_state,
                 spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                spf_component_state if not self.is_device_ignored("SPF") else None
+                spf_component_state if not self.is_device_ignored("SPF") else None,
             )
             self.logger.debug(
                 (
@@ -1295,7 +1277,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ds_component_state,
                     self.component_state,
                     spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                    spf_component_state if not self.is_device_ignored("SPF") else None
+                    spf_component_state if not self.is_device_ignored("SPF") else None,
                 )
                 cap_state_updates[cap_state_name] = new_state
             self.logger.debug(
@@ -1315,7 +1297,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     ds_component_state,
                     self.component_state,
                     spfrx_component_state if not self.is_device_ignored("SPFRX") else None,
-                    spf_component_state if not self.is_device_ignored("SPF") else None
+                    spf_component_state if not self.is_device_ignored("SPF") else None,
                 )
                 self.logger.debug(
                     "Updating dish manager %s with: [%s]",
