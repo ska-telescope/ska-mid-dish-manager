@@ -5,6 +5,11 @@ ska-mid-dish-simulators:
 
 ska-mid-dish-ds-manager:
   enabled: false
+  dishstructuremanager:
+    image:
+      registry: artefact.skao.int
+      image: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager/ska-mid-dish-ds-manager
+      tag: 9.2.0-dev.c127e658a
 
 system: SW-infrastructure
 subsystem: ska-dish-lmc
@@ -136,9 +141,3 @@ ska-mid-meerkat-wms-tango-device:
 
 ska-mid-meerkat-wms-simulator:
   enabled: false
-
-dishstructuremanager:
-  image:
-    registry: artefact.skao.int
-    image: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager/ska-mid-dish-ds-manager
-    tag: 9.2.0-dev.c127e658a
