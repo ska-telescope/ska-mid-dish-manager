@@ -53,25 +53,47 @@ def test_maintenance_mode_cmd(
 
     dish_manager_proxy.SetMaintenanceMode()
 
-    mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
-    spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
-    spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
-    mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
-    dsc_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=30)
+    ds_fqdn = ds_device_proxy.name()
 
-    expected_progress_updates = [
-        "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
-        "Awaiting DS operatingmode change to STOW",
-        "Awaiting SPFRX operatingmode change to STANDBY",
-        "Awaiting SPF operatingmode change to MAINTENANCE",
-        "Awaiting dishmode change to STOW",
-        "SetMaintenanceMode completed",
-    ]
-    events = status_event_store.get_queue_events()
-    events_string = "".join([str(event.attr_value.value) for event in events])
-    # Check that all the expected progress messages appeared
-    for message in expected_progress_updates:
-        assert message in events_string
+    if "ds-manager" in ds_fqdn:
+        mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
+        spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
+        spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
+        mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
+        dsc_auth_event_store.wait_for_value(DscCmdAuthType.NO_AUTHORITY, timeout=30)
+
+        expected_progress_updates = [
+            "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
+            "Awaiting DS operatingmode change to STOW",
+            "Awaiting SPFRX operatingmode change to STANDBY",
+            "Awaiting SPF operatingmode change to MAINTENANCE",
+            "Awaiting dishmode change to STOW",
+            "SetMaintenanceMode completed",
+        ]
+        events = status_event_store.get_queue_events()
+        events_string = "".join([str(event.attr_value.value) for event in events])
+        # Check that all the expected progress messages appeared
+        for message in expected_progress_updates:
+            assert message in events_string
+    else:
+        # Expected test execution path when monitoring the AP Manager
+        dsc_event_store.wait_for_value(DSOperatingMode.MAINTENANCE, timeout=30)
+        spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
+        spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
+        mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
+
+        expected_progress_updates = [
+            "Fanned out commands: DS.APMaintenance, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
+            "Awaiting DS operatingmode change to MAINTENANCE",
+            "Awaiting SPFRX operatingmode change to STANDBY",
+            "Awaiting SPF operatingmode change to MAINTENANCE",
+            "SetMaintenanceMode completed",
+        ]
+        events = status_event_store.get_queue_events()
+        events_string = "".join([str(event.attr_value.value) for event in events])
+        # Check that all the expected progress messages appeared
+        for message in expected_progress_updates:
+            assert message in events_string
 
     remove_subscriptions(subscriptions)
 
@@ -147,6 +169,7 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
 
 @pytest.mark.movement
 @pytest.mark.acceptance
+@pytest.mark.excl_test_against_ap_manager
 def test_exiting_maintenance_mode_when_ds_not_on_stow(
     event_store_class: type[EventStore],
     dish_manager_proxy: DeviceProxy,

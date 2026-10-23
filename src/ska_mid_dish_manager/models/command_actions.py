@@ -295,6 +295,8 @@ class SetMaintenanceModeAction(Action):
         # This is not a FannedOutTangoLongRunningCommand because DSManager bypasses the lrcQueue
         # and does not return the command ID in its response.
 
+        awaited_dish_mode_before_maint_completion = {}
+
         # The command fanout to DS on going to DishMode MAINTENANCE requires fanning out;
         # - Command Stow() if the regular SKA DS Controller is being controlled
         # - Command APMaintenance() if the MeerKAT AP is being controlled
@@ -308,6 +310,7 @@ class SetMaintenanceModeAction(Action):
                 awaited_component_state={"operatingmode": DSOperatingMode.STOW},
                 progress_callback=self._progress_callback,
             )
+            awaited_dish_mode_before_maint_completion = {"dishmode": DishMode.STOW}
         else:
             ds_command = FannedOutTangoCommand(
                 logger=self.logger,
@@ -319,6 +322,10 @@ class SetMaintenanceModeAction(Action):
                 },
                 progress_callback=self._progress_callback,
             )
+            # Dish Mode calculation will go to UNKNOWN while DSOperatingMode is MAINTENANCE
+            # therefore we dont await a particular dish Mode
+            awaited_dish_mode_before_maint_completion = {}
+
         spfrx_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPFRX",
@@ -346,7 +353,7 @@ class SetMaintenanceModeAction(Action):
             # _dish_manager_cm.component_state will use the tango base property which will do a
             # deep copy
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"dishmode": DishMode.STOW},
+            awaited_component_state=awaited_dish_mode_before_maint_completion,
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,

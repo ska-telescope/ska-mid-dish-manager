@@ -20,6 +20,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.acceptance
+# TODO On completion of the AP manager confirm whether the test_mode
+# attr is still going to exposed
+@pytest.mark.excl_test_against_ap_manager
 def test_tango_device_component_manager_state(
     monitor_tango_servers, component_state_store, ds_device_fqdn
 ):
@@ -99,6 +102,7 @@ def test_stress_component_monitor(monitor_tango_servers, component_state_store, 
         (DEFAULT_DS_MANAGER_TRL, ("achievedTargetLock", "powerState")),
     ],
 )
+@pytest.mark.excl_test_against_ap_manager
 @pytest.mark.acceptance
 def test_tango_device_component_manager_threads_management(
     component_state_store, device_fqdn, subscribed_attrs
@@ -123,6 +127,42 @@ def test_tango_device_component_manager_threads_management(
     device_fqdn = device_fqdn.replace("-", "_").replace("/", ".")
     assert f"{device_fqdn}.attribute_subscription_thread" in threads_names
     assert f"{device_fqdn}.event_consumer_thread" in threads_names
+
+    com_man.stop_communicating()
+
+    threads = threading.enumerate()
+    assert len(threads) == 1  # (main thread)
+    assert threads[0].name == "MainThread"
+
+
+@pytest.mark.acceptance
+def test_ap_manager_component_manager_threads_management(
+    component_state_store, subscribed_attrs, ds_device_fqdn
+):
+    """Test AP Manager component mananger clears threads as expected."""
+    # This test case applies specifically for the AP Manager test, skip for DS Manager
+    if "ds-manager" in ds_device_fqdn:
+        pytest.skip(reason="Skipping AP manager test while monitoring DS Manager")
+
+    mock_callable = MagicMock()
+    com_man = TangoDeviceComponentManager(
+        ds_device_fqdn,
+        LOGGER,
+        subscribed_attrs,
+        component_state_callback=component_state_store,
+        communication_state_callback=mock_callable,
+    )
+    com_man.start_communicating()
+
+    threads = threading.enumerate()
+
+    assert len(threads) == 3  # (Subscription thread, Consumer thread,main thread)
+    threads_names = [t.name for t in threads]
+
+    assert "MainThread" in threads_names
+    ds_device_fqdn = ds_device_fqdn.replace("-", "_").replace("/", ".")
+    assert f"{ds_device_fqdn}.attribute_subscription_thread" in threads_names
+    assert f"{ds_device_fqdn}.event_consumer_thread" in threads_names
 
     com_man.stop_communicating()
 
