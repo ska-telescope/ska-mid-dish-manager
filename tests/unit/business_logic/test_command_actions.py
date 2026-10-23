@@ -6,7 +6,8 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import AdminMode, ResultCode, TaskStatus  # ty: ignore[deprecated]
+from ska_control_model import ResultCode, TaskStatus  # ty: ignore[deprecated]
+from ska_control_model.future import AdminMode
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,

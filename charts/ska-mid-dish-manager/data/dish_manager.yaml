@@ -1,3 +1,8 @@
+{{- $controlModeMap := dict
+      "NO_MONITOR_NO_CONTROL" "0"
+      "MONITOR_AND_CONTROL" "2"
+-}}
+
 name: "dishmanager-{{ .Release.Name }}"
 function: telescope-monitoring
 domain: general-monitoring

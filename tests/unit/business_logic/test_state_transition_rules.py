@@ -1,7 +1,7 @@
 """Unit tests verifying model against dishMode transitions."""
 
 import pytest
-from ska_control_model import AdminMode  # ty: ignore[deprecated]
+from ska_control_model.future import AdminMode
 
 from ska_mid_dish_manager.models.dish_enums import (
     Band,

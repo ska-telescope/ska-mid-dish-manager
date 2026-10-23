@@ -12,12 +12,12 @@ from functools import reduce
 from typing import List, Literal, Optional, Tuple
 
 from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
-from ska_control_model.future import ControlMode
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
+from ska_tango_base.future import ControlMode
 from tango import (
     AttrQuality,
     AttrWriteType,
@@ -1674,6 +1674,7 @@ class DishManager(SKAController):
     def spfrxControlMode(self, value: ControlMode):
         """Set the SPFRx control mode."""
         self.component_manager.set_spfrx_control_mode(value)
+
 
     @attribute(
         dtype=bool,
