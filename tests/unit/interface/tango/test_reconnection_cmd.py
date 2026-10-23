@@ -3,6 +3,7 @@
 import pytest
 import tango
 from ska_control_model import ResultCode
+from ska_control_model.future import ControlMode
 
 
 @pytest.mark.unit
@@ -86,21 +87,21 @@ def test_reset_subs_connection_ignored_devices(
     """
     ignore_dev_event_store = event_store_class()
     device_proxy, _ = dish_manager_resources
-    ignore_attr_name = f"ignore{device_name.lower()}"
+    control_mode_attr_name = f"{device_name.lower()}ControlMode"
 
-    device_proxy.write_attribute(ignore_attr_name, True)
+    device_proxy.write_attribute(control_mode_attr_name, ControlMode.NO_MONITOR_NO_CONTROL)
     event_id = device_proxy.subscribe_event(
-        ignore_attr_name,
+        control_mode_attr_name,
         tango.EventType.CHANGE_EVENT,
         ignore_dev_event_store,
     )
-    ignore_dev_event_store.wait_for_value(True)
+    ignore_dev_event_store.wait_for_value(ControlMode.NO_MONITOR_NO_CONTROL)
 
     with pytest.raises(tango.DevFailed) as err:
         device_proxy.ResetComponentConnection(device_name)
     assert f"Reconnection denied, device {device_name} is ignored" in str(err.value)
-    device_proxy.write_attribute(ignore_attr_name, False)
-    ignore_dev_event_store.wait_for_value(False)
+    device_proxy.write_attribute(control_mode_attr_name, ControlMode.MONITOR_AND_CONTROL)
+    ignore_dev_event_store.wait_for_value(ControlMode.MONITOR_AND_CONTROL)
     device_proxy.unsubscribe_event(event_id)
 
 
