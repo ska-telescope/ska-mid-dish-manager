@@ -18,11 +18,11 @@ from ska_control_model import (
     ResultCode,
     TaskStatus,
 )
+from ska_control_model.future import AdminMode, ControlMode
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
 from ska_tango_base.executor import TaskExecutorComponentManager
-from ska_tango_base.future import AdminMode, ControlMode
 
 from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
 from ska_mid_dish_manager.component_managers.component_manager_types import SubComponentManagers
