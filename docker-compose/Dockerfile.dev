@@ -1,0 +1,7 @@
+FROM artefact.skao.int/ska-tango-images-tango-dsconfig:1.8.7 AS tools
+FROM artefact.skao.int/ska-build-python-ubuntu26:1.0.0 AS build
+
+WORKDIR /app
+
+COPY . .
+
