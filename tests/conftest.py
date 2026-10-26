@@ -10,6 +10,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_B5DC_PROXY_TRL,
     DEFAULT_DISH_MANAGER_TRL,
     DEFAULT_DS_MANAGER_TRL,
+    DEFAULT_MK_WMS_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
@@ -89,3 +90,8 @@ def spfrx_device_fqdn():
 @pytest.fixture(scope="session")
 def b5dc_device_fqdn():
     return DEFAULT_B5DC_PROXY_TRL
+
+
+@pytest.fixture(scope="session")
+def wms_device_fqdn():
+    return DEFAULT_MK_WMS_TRL

@@ -2,6 +2,7 @@ global:
   minikube: true
   operator: true
   dishes: ["001", "MKT111"]
+  station_ids: ["s1"] # station ids of the meerkat weather stations
 
 ska-tango-base:
   enabled: true
@@ -20,7 +21,20 @@ ska-mid-dish-simulators:
     enabled: true
 
 ska-mid-wms:
+  enabled: false
+
+# Meerkat tango device
+ska-mid-meerkat-wms-tango-device:
   enabled: true
+  deviceServers:
+    meerkatwms:
+      enabled: true
+  
+# Meerkat weather simulator
+ska-mid-meerkat-wms-simulator:
+  enabled: true
+  weatherstation:
+    enabled: true
 
 ska-mid-dish-b5dc-proxy:
   enabled: true
@@ -28,6 +42,7 @@ ska-mid-dish-b5dc-proxy:
 dishmanager:
   wms:
     monitoring: true
-    station_ids: ["1"]
+    device_family: "mk-weather-monitoring"
+    station_ids: ["s1"]
   b5dcproxy:
     monitoring: true
