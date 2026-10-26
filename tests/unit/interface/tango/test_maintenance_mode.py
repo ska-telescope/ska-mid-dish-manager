@@ -6,7 +6,13 @@ import pytest
 import tango
 from ska_control_model import TaskStatus
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
+from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
@@ -47,6 +53,37 @@ def test_happy_case(dish_manager_resources, event_store_class):
     assert execute_command_args == call("ReleaseAuth", None)
 
     remove_subscriptions(subscriptions)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_happy_case_with_ap_manager(dish_manager_resources_with_ap_manager, event_store_class):
+    device_proxy, dish_manager_cm = dish_manager_resources_with_ap_manager
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+
+    assert isinstance(ds_cm, APComponentManager)
+
+    status_event_store = event_store_class()
+    setup_subscriptions(
+        device_proxy,
+        {"Status": status_event_store},
+    )
+
+    device_proxy.SetMaintenanceMode()
+
+    # The AP path awaits reported operating modes, not a dishMode of STOW.
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.MAINTENANCE)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+
+    status_event_store.wait_for_progress_update(
+        "SetMaintenanceMode completed",
+        timeout=60,
+    )
+
+    ds_cm.execute_command.assert_called_once_with("APMaintenance", None)
 
 
 @pytest.mark.unit

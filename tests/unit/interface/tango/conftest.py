@@ -10,6 +10,7 @@ from ska_control_model import CommunicationStatus, TaskStatus
 from tango import server
 from tango.test_context import DeviceTestContext
 
+from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -142,6 +143,64 @@ def dish_manager_resources_with_b5dc_monitoring():
             setattr(b5dc_cm, method_name, mock_method)
 
         # trigger transition to StandbyLP mode
+        ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
+        ds_cm._update_component_state(powerstate=DSPowerState.LOW_POWER)
+        spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+        spf_cm._update_component_state(operatingmode=SPFOperatingMode.STANDBY_LP)
+
+        yield device_proxy, dish_manager_cm
+
+
+@pytest.fixture
+def dish_manager_resources_with_ap_manager():
+    with (
+        patch("ska_mid_dish_manager.component_managers.spfrx_cm.MonitorPing"),
+        patch(
+            "ska_mid_dish_manager.component_managers.tango_device_cm."
+            "TangoDeviceComponentManager.start_communicating"
+        ),
+        patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
+    ):
+
+        class PatchedDishManager(DishManager):
+            DSDeviceFqdn = server.device_property(
+                dtype=str,
+                default_value="tango://127.0.0.1:12345/a/meerkat-ap-manager/c#dbase=no",
+            )
+
+        tango_context = DeviceTestContext(PatchedDishManager)
+        tango_context.start()
+
+        device_proxy = tango_context.device
+        assert device_proxy is not None
+
+        device_instance = cast(
+            PatchedDishManager,
+            PatchedDishManager.instances.get(device_proxy.name()),
+        )
+        dish_manager_cm = cast(
+            DishManagerComponentManager,
+            device_instance.component_manager,
+        )
+
+        ds_cm = dish_manager_cm.sub_component_managers["DS"]
+        spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+        spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+
+        assert isinstance(ds_cm, APComponentManager)
+
+        for component_manager in (ds_cm, spf_cm, spfrx_cm):
+            component_manager.update_state_from_monitored_attributes = Mock()
+            component_manager.write_attribute_value = Mock()
+            component_manager.read_attribute_value = Mock()
+            component_manager.execute_command = Mock(
+                return_value=(TaskStatus.IN_PROGRESS, "Command called in progress")
+            )
+
+        for component_manager in (ds_cm, spf_cm, spfrx_cm):
+            component_manager._update_communication_state(CommunicationStatus.ESTABLISHED)
+
+        # Go to StandbyLP
         ds_cm._update_component_state(operatingmode=DSOperatingMode.STANDBY)
         ds_cm._update_component_state(powerstate=DSPowerState.LOW_POWER)
         spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)

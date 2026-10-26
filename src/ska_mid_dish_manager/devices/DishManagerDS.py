@@ -6,7 +6,6 @@ and the subservient devices
 
 import json
 import logging
-import time
 import weakref
 from datetime import datetime
 from functools import reduce
@@ -29,7 +28,6 @@ from tango import (
 )
 from tango.server import attribute, command, device_property, run
 
-from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
