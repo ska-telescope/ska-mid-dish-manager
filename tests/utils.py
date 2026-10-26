@@ -16,6 +16,7 @@ from ska_control_model import CommunicationStatus
 from tango.utils import EventCallback
 
 from ska_mid_dish_manager.models.constants import (
+    AP_MANAGER_TRL_FAMILY_NAME,
     MAX_AZIMUTH_ACU,
     MAX_ELEVATION_ACU,
     MIN_AZIMUTH_ACU,
@@ -751,7 +752,7 @@ def calculate_slew_target(dish_structure_fqdn, current_az, current_el, offset_az
     :rtype: Tuple[float, float]
     """
     # TODO Confirm the standard format of the AP Manager FQDN
-    if "meerkat-ap-manager" in dish_structure_fqdn:
+    if AP_MANAGER_TRL_FAMILY_NAME in dish_structure_fqdn:
         max_az = MAX_AZIMUTH_ACU
         min_az = MIN_AZIMUTH_ACU
         max_el = MAX_ELEVATION_ACU

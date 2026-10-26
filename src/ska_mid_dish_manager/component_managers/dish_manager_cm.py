@@ -48,6 +48,7 @@ from ska_mid_dish_manager.models.command_actions import (
     TrackStopAction,
 )
 from ska_mid_dish_manager.models.constants import (
+    AP_MANAGER_TRL_FAMILY_NAME,
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
@@ -354,7 +355,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
                 tango_error_callback=self._sub_device_tango_error_occurred,
             )
-            if "meerkat-ap-manager" in ds_device_fqdn
+            if AP_MANAGER_TRL_FAMILY_NAME in ds_device_fqdn
             else DSComponentManager(
                 ds_device_fqdn,
                 logger,

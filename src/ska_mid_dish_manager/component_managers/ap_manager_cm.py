@@ -2,9 +2,9 @@
 
 import logging
 from threading import Lock
-from typing import Any, Callable, Optional, Tuple, override
+from typing import Any, Callable, Optional, override
 
-from ska_control_model import CommunicationStatus, HealthState, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState
 from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
@@ -29,14 +29,6 @@ class APComponentManager(TangoDeviceComponentManager):
         component_state_callback: Optional[Callable] = None,
         **kwargs: Any,
     ):
-        # The following is a set of commands, usually fanned out to the
-        # DS Manager, that are rejected when called on the AP Manager
-        self.unmapped_ds_manager_commands = set(
-            [
-                "TrackLoadStaticOff",
-            ]
-        )
-
         # The following is a set of attrs, usually writable on the
         # DS Manager, that cannot be written on the AP Manager
         self.unwritable_dsm_attrs = set(
@@ -139,21 +131,6 @@ class APComponentManager(TangoDeviceComponentManager):
                 kwargs[attr] = enum_(kwargs[attr])
 
         super()._update_component_state(**kwargs)
-
-    @override
-    def execute_command(
-        self, command_name: str, command_arg: Any, truncate_arg_in_logs: bool = False
-    ) -> Tuple[TaskStatus, Any]:
-        """Intercept any commands that are known not to be executable on the AP Manager."""
-        # Immediately REJECT an unmapped command after STAGING it
-        if command_name in self.unmapped_ds_manager_commands:
-            return (
-                TaskStatus.REJECTED,
-                f"This dish structure command [{command_name}] can not be executed whilst "
-                "monitoring and controlling an AP Manager instance.",
-            )
-        else:
-            return super().execute_command(command_name, command_arg, truncate_arg_in_logs)
 
     @override
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:

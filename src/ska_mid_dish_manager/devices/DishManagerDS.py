@@ -592,25 +592,6 @@ class DishManager(SKAController):
         # Try to connect to DB and update memorized attributes if TANGO_HOST is set
         self.component_manager.try_update_memorized_attributes_from_db()
 
-        # Invalidate a set of irrelevant attrs if the AP Manager is being monitored
-        ds_sub_cm = self.component_manager.sub_component_managers["DS"]
-        if isinstance(ds_sub_cm, APComponentManager):
-            invaliation_time = time.time()
-            # The dict key is the attr to invalidate, with the value being the
-            # attr value to be assigned to the invalid attribute
-            attrs_to_invalidate = {
-                "actStaticOffsetValueEl": 0.0,
-                "actStaticOffsetValueXel": 0.0,
-            }
-
-            for attr_name, attr_value in attrs_to_invalidate.items():
-                attr_obj = getattr(self, attr_name)
-                attr_obj.set_value_date_quality(
-                    attr_value,
-                    invaliation_time,
-                    AttrQuality.ATTR_INVALID,
-                )
-
         # Register device instance and continue initialization
         self.instances[self.get_name()] = self
         self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)

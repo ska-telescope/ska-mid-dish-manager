@@ -44,6 +44,8 @@ MAX_ELEVATION_ACU = 92.0
 MIN_ELEVATION_ACU = 14.5
 MAX_AZIMUTH_ACU = 275.0
 MIN_AZIMUTH_ACU = -185.0
+# Expected Tango TRL family name for a MeerKAT AP Manager instance
+AP_MANAGER_TRL_FAMILY_NAME = "meerkat-ap-manager"
 
 
 OPERATOR_TAG = {"user": "operator"}

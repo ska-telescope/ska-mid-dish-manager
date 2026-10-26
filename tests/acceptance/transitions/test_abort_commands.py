@@ -3,6 +3,7 @@
 import pytest
 
 from ska_mid_dish_manager.models.constants import (
+    AP_MANAGER_TRL_FAMILY_NAME,
     MAX_AZIMUTH,
     MAX_ELEVATION_SCIENCE,
     MIN_AZIMUTH_ACU,
@@ -268,7 +269,7 @@ def test_abort_commands_during_stow(
     # Get the expected stow elevation based on whether the DS or
     # AP Manager is being monitored
     ds_fqdn = ds_device_proxy.name()
-    if "meerkat-ap-manager" in ds_fqdn:
+    if AP_MANAGER_TRL_FAMILY_NAME in ds_fqdn:
         stow_el_position = STOW_ELEVATION_DEGREES_ACU_SIMULATOR
     else:
         stow_el_position = STOW_ELEVATION_DEGREES
