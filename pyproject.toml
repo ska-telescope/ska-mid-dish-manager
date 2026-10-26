@@ -38,8 +38,6 @@ DishManager = 'ska_mid_dish_manager.devices.DishManagerDS:main'
 [tool.uv]
 default-groups = ["dev", "docs"]
 
-
-
 [[tool.uv.index]]
 name = "ska-nexus"
 url = "https://artefact.skao.int/repository/pypi-internal/simple"

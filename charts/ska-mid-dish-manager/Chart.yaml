@@ -27,14 +27,14 @@ maintainers:
     email: maryna.shedzko@skao.int
 dependencies:
 - name: ska-tango-util
-  version: 1.2.1
+  version: 1.2.2
   repository: https://artefact.skao.int/repository/helm-internal
 - name: ska-tango-base
-  version: 1.2.1
+  version: 1.2.2
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-tango-base.enabled
 - name: ska-mid-dish-simulators
-  version: 5.12.0
+  version: 6.0.2
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-simulators.enabled
 - name: ska-mid-dish-ds-manager
@@ -42,7 +42,7 @@ dependencies:
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-dish-ds-manager.enabled
 - name: ska-mid-wms
-  version: 1.1.1
+  version: 1.2.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-wms.enabled
 - name: ska-mid-dish-b5dc-proxy

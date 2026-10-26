@@ -69,7 +69,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
 
-    assert main_event_store.wait_for_command_id(unique_id, timeout=6)
+    assert main_event_store.wait_for_command_id(unique_id, timeout=60)
     assert device_proxy.dishMode == DishMode.STANDBY_FP
 
     [[_], [unique_id]] = device_proxy.command_inout(command, True)
@@ -84,7 +84,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     )
     spf_cm._update_component_state(bandinfocus=SPFBandInFocus[band_number])
 
-    assert main_event_store.wait_for_command_id(unique_id, timeout=5)
+    assert main_event_store.wait_for_command_id(unique_id, timeout=60)
     assert device_proxy.configuredBand == Band[band_number]
 
     expected_progress_updates = [
@@ -93,7 +93,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         f"{command} completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=60)
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

@@ -295,6 +295,7 @@ class ActionHandler:
             f"Starting Action {self.action_name}. Fanning out {fanned_out_commands_str} commands.",
             extra=OPERATOR_TAG,
         )
+        report_task_progress(f"{self.action_name} started", self.progress_callback)
 
         # Fan-out: Dispatch all fanned-out commands
         for cmd in self.fanned_out_commands:
@@ -408,6 +409,7 @@ class SequentialActionHandler(ActionHandler):
             ),
             extra=OPERATOR_TAG,
         )
+        report_task_progress(f"{self.action_name} started", self.progress_callback)
 
         for cmd in self.fanned_out_commands:
             cmd.execute()
