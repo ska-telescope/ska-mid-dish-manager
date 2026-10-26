@@ -17,6 +17,32 @@ def _make_baseline_healthy(dish_manager_cm) -> None:
 
 @pytest.mark.unit
 @pytest.mark.forked
+def test_ignoring_spfrx_handles_raw_healthstate_during_sync(dish_manager_resources):
+    """A cached health state during synchronisation does not fail the write."""
+    _, dish_manager_cm = dish_manager_resources
+    sub_component_managers = dish_manager_cm.sub_component_managers
+    spf_cm = sub_component_managers["SPF"]
+    ds_cm = sub_component_managers["DS"]
+
+    assert dish_manager_cm.component_state["ignorespfrx"] is False
+
+    spf_cm.update_state_from_monitored_attributes.reset_mock()
+    ds_cm.update_state_from_monitored_attributes.reset_mock()
+    ds_cm.update_state_from_monitored_attributes.side_effect = lambda: (
+        ds_cm._update_component_state(healthstate=HealthState.OK)
+    )
+
+    dish_manager_cm.set_spfrx_device_ignored(True)
+
+    assert dish_manager_cm.component_state["ignorespfrx"] is True
+    assert type(spf_cm.component_state["healthstate"]) is int
+    spf_cm.update_state_from_monitored_attributes.assert_called_with()
+    ds_cm.update_state_from_monitored_attributes.assert_called_with()
+    assert dish_manager_cm.component_state["healthinfo"] == []
+
+
+@pytest.mark.unit
+@pytest.mark.forked
 def test_healthinfo_reports_ds_reasons(dish_manager_resources, event_store_class):
     """HealthInfo reports DS's real reasons instead of the generic placeholder."""
     device_proxy, dish_manager_cm = dish_manager_resources

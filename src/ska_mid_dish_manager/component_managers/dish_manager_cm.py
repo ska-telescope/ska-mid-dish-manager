@@ -6,6 +6,7 @@ import logging
 import os
 import threading
 import time
+from enum import IntEnum
 from functools import partial
 from threading import Lock
 from typing import Callable, Dict, List, Optional, Tuple, cast
@@ -844,7 +845,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         for key, com_man in self.get_active_sub_component_managers().items():
             health_state = com_man.component_state.get("healthstate")
-            if health_state is None:
+            if not isinstance(health_state, IntEnum):
                 continue
 
             fqdn = com_man._tango_device_fqdn
