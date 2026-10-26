@@ -181,7 +181,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band5bpointingmodelparams=[],
             spfcontrolmode=ControlMode.MONITOR_AND_CONTROL,
             spfrxcontrolmode=ControlMode.MONITOR_AND_CONTROL,
-            ignoreb5dc=False,
+            b5dccontrolmode=ControlMode.MONITOR_AND_CONTROL,
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[0, 0, 0],
             pseudorandomnoisediodepars=[0, 0, 0],
@@ -590,7 +590,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if device == "SPFRX":
             return self.check_device_control_mode("SPFRX") == ControlMode.NO_MONITOR_NO_CONTROL
         if device == "B5DC":
-            return self.component_state["ignoreb5dc"]
+            return self.check_device_control_mode("B5DC") == ControlMode.NO_MONITOR_NO_CONTROL
         return False
 
     def _validate_subdevice_control_mode(
@@ -598,7 +598,13 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         device: str,
         mode: ControlMode,
     ) -> None:
-        """Validate the control mode for an SPF or SPFRx subdevice."""
+        """Validate the control mode for a subdevice."""
+        if device not in ("SPF", "SPFRX", "B5DC"):
+            raise ValueError(f"Unsupported subdevice: {device}")
+
+        if not isinstance(mode, ControlMode):
+            raise ValueError(f"Invalid {device} control mode: {mode!r}")
+
         if mode == ControlMode.MONITOR_NO_CONTROL:
             raise NotImplementedError(
                 f"{device} control mode MONITOR_NO_CONTROL is not implemented"
@@ -614,16 +620,17 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         self,
         device: str,
     ) -> ControlMode:
-        """Return the control mode for the given subdevice."""
-        if device == "SPF":
-            control_mode = self.component_state["spfcontrolmode"]
-        elif device == "SPFRX":
-            control_mode = self.component_state["spfrxcontrolmode"]
-        else:
+        """Return the stored control mode for a subdevice."""
+        control_mode_keys = {
+            "SPF": "spfcontrolmode",
+            "SPFRX": "spfrxcontrolmode",
+            "B5DC": "b5dccontrolmode",
+        }
+
+        if device not in control_mode_keys:
             raise ValueError(f"Control mode is not supported for device {device}")
 
-        self._validate_subdevice_control_mode(device, control_mode)
-        return control_mode
+        return self.component_state[control_mode_keys[device]]
 
     def get_active_sub_component_managers(self) -> Dict:
         """Return subservient device component managers enabled for monitoring and control."""
@@ -635,9 +642,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if not self.is_device_ignored("SPFRX"):
             active_component_managers["SPFRX"] = self.sub_component_managers["SPFRX"]
 
-        if "B5DC" in self.sub_component_managers and not self.is_device_ignored("B5DC"):
+        if not self.is_device_ignored("B5DC"):
             active_component_managers["B5DC"] = self.sub_component_managers["B5DC"]
-
         return active_component_managers
 
     def _get_device_attribute_property_value(self, attribute_name) -> Optional[str]:
@@ -667,14 +673,21 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     @staticmethod
     def _parse_control_mode_value(value: str) -> ControlMode:
-        """Convert a memorized Tango attribute value to a ControlMode."""
+        """Parse a ControlMode from its enum name or numeric string."""
+        if not isinstance(value, str):
+            raise ValueError(f"Invalid control mode value: {value!r}")
+
+        value = value.strip()
+
         try:
             return ControlMode[value]
         except KeyError:
-            try:
-                return ControlMode(int(value))
-            except (TypeError, ValueError) as error:
-                raise ValueError(f"Invalid control mode value: {value}") from error
+            pass
+
+        try:
+            return ControlMode(int(value))
+        except ValueError as error:
+            raise ValueError(f"Invalid control mode value: {value}") from error
 
     def _is_maintenance_mode_active(self) -> bool:
         """Check if MaintenanceModeActive property is set to True.
@@ -743,16 +756,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     sync=False,
                 )
 
-            # ignoreB5dc
-            ignore_b5dc_value = self._get_device_attribute_property_value("ignoreB5dc")
+            # B5dcControlMode
+            b5dc_control_mode_value = self._get_device_attribute_property_value("b5dcControlMode")
 
-            if ignore_b5dc_value is not None:
+            if b5dc_control_mode_value is not None:
                 self.logger.debug(
-                    "Updating ignoreB5dc value with value from database %s.",
-                    ignore_b5dc_value,
+                    "Updating b5dcControlMode value with value from database %s.",
+                    b5dc_control_mode_value,
                 )
-                ignore_b5dc = ignore_b5dc_value.lower() == "true"
-                self.set_b5dc_device_ignored(ignore_b5dc, sync=False)
+                self.set_b5dc_control_mode(
+                    self._parse_control_mode_value(b5dc_control_mode_value),
+                    sync=False,
+                )
         except tango.DevFailed:
             self.logger.debug(
                 "Could not update memorized attributes. Failed to connect to database."
@@ -1506,10 +1521,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         sync: bool = True,
     ) -> None:
         """Set the SPF control mode and update device communication."""
-        self._validate_subdevice_control_mode("SPF", mode)
-
         if mode == self.component_state["spfcontrolmode"]:
+            self.logger.warning(
+                "SPF is already in %s. No changes applied.",
+                mode.name,
+                extra=OPERATOR_TAG,
+            )
             return
+        self._validate_subdevice_control_mode("SPF", mode)
 
         self.logger.info(
             "Setting SPF control mode to %s.",
@@ -1532,10 +1551,14 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         sync: bool = True,
     ) -> None:
         """Set the SPFRx control mode and update device communication."""
-        self._validate_subdevice_control_mode("SPFRX", mode)
-
         if mode == self.component_state["spfrxcontrolmode"]:
+            self.logger.warning(
+                "SPFRx is already in %s. No changes applied.",
+                mode.name,
+                extra=OPERATOR_TAG,
+            )
             return
+        self._validate_subdevice_control_mode("SPFRX", mode)
 
         self.logger.info(
             "Setting SPFRx control mode to %s.",
@@ -1552,23 +1575,31 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         if sync:
             self.sync_component_states()
 
-    def set_b5dc_device_ignored(self, ignored: bool, sync: bool = True):
-        """Set the B5DC device ignored boolean and update device communication."""
-        if "B5DC" not in self.sub_component_managers:
-            self.logger.debug("B5DC device is not monitored, cannot set ignored state.")
+    def set_b5dc_control_mode(self, mode: ControlMode, sync: bool = True):
+        """Set the B5DC control mode and update device communication."""
+        if mode == self.component_state["b5dccontrolmode"]:
+            self.logger.warning(
+                "B5DC is already in %s. No changes applied.",
+                mode.name,
+                extra=OPERATOR_TAG,
+            )
             return
+        self._validate_subdevice_control_mode("B5DC", mode)
 
-        if ignored != self.component_state["ignoreb5dc"]:
-            self.logger.debug("Setting ignore B5DC device as %s", ignored)
-            self._update_component_state(ignoreb5dc=ignored)
+        self.logger.info(
+            "Setting B5DC control mode to %s.",
+            mode.name,
+            extra=OPERATOR_TAG,
+        )
+        self._update_component_state(b5dccontrolmode=mode)
 
-            if ignored:
-                self.sub_component_managers["B5DC"].stop_communicating()
-            else:
-                self.sub_component_managers["B5DC"].start_communicating()
+        if mode == ControlMode.NO_MONITOR_NO_CONTROL:
+            self.sub_component_managers["B5DC"].stop_communicating()
+        else:
+            self.sub_component_managers["B5DC"].start_communicating()
 
-            if sync:
-                self.sync_component_states()
+        if sync:
+            self.sync_component_states
 
     def sync_component_states(self):
         """Sync monitored attributes on component managers with their respective sub devices.

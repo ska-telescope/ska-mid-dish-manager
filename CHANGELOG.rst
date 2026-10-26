@@ -7,7 +7,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Fixed bug that raised exception on setting ignoreSpf and ignoreSpfrx which prevented persistence in tango database. 
+- Fixed bug that raised exception on setting ignoreSpf and ignoreSpfrx which prevented persistence in tango database.
+- Added three attributes spfcontrolmode, spfrxcontrolmode and b5dccontrolmode to report the control mode of the subdevices (ADR-114). 
 
 Version 11.1.0
 **************

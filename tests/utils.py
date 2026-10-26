@@ -669,7 +669,7 @@ def set_ignored_devices(
     device_proxy,
     spf_control_mode: ControlMode,
     spfrx_control_mode: ControlMode,
-    ignore_b5dc: bool,
+    b5dc_control_mode: ControlMode,
 ):
     """Configure SPF, SPFRx and B5DC communication."""
     _set_control_mode(
@@ -685,27 +685,7 @@ def set_ignored_devices(
         "spfrxConnectionState",
         spfrx_control_mode,
     )
-
-    if device_proxy.ignoreB5dc != ignore_b5dc:
-        b5dc_connection_event_store = EventStore()
-
-        subscription_id = device_proxy.subscribe_event(
-            "b5dcConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            b5dc_connection_event_store,
-        )
-
-        try:
-            device_proxy.ignoreB5dc = ignore_b5dc
-
-            expected_status = (
-                CommunicationStatus.DISABLED if ignore_b5dc else CommunicationStatus.ESTABLISHED
-            )
-
-            b5dc_connection_event_store.wait_for_value(expected_status)
-
-        finally:
-            device_proxy.unsubscribe_event(subscription_id)
+    _set_control_mode(device_proxy, "b5dcControlMode", "b5dcConnectionState")
 
 
 def _set_control_mode(

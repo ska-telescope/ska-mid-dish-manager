@@ -5,6 +5,7 @@ from unittest import mock
 from unittest.mock import MagicMock
 
 import pytest
+import tango
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 
@@ -65,3 +66,63 @@ def test_get_attribute_property_value(
         assert result == expected_response, (
             "Expected [{expected_response}], but got [{result}] for [{read_response}]"
         )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "properties, expected",
+    [
+        # Valid
+        (
+            {"spfControlMode": {"__value": ["2"]}},
+            "2",
+        ),
+        (
+            {"spfControlMode": {"spfControlMode": ["0"]}},
+            "0",
+        ),
+        (
+            {
+                "spfControlMode": {
+                    "__value": [],
+                    "spfControlMode": ["2"],
+                }
+            },
+            "2",
+        ),
+        # Invalid
+        (
+            {"spfControlMode": {}},
+            None,
+        ),
+        (
+            {},
+            None,
+        ),
+    ],
+)
+def test_get_device_attribute_property_value(
+    component_manager,
+    monkeypatch,
+    properties,
+    expected,
+):
+    """Test reading memorized attribute properties from TangoDB."""
+    mock_database = MagicMock()
+
+    mock_database.get_device_attribute_property.return_value = properties
+
+    monkeypatch.setattr(
+        tango,
+        "Database",
+        lambda: mock_database,
+    )
+
+    result = component_manager._get_device_attribute_property_value("spfControlMode")
+
+    assert result == expected
+
+    mock_database.get_device_attribute_property.assert_called_once_with(
+        component_manager.tango_device_name,
+        "spfControlMode",
+    )

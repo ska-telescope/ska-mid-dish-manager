@@ -479,7 +479,8 @@ class DishManager(SKAController):
             "scanid": "scanID",
             "spfcontrolmode": "spfControlMode",
             "spfrxcontrolmode": "spfrxControlMode",
-            "ignoreb5dc": "ignoreB5dc",
+            "b5dccontrolmode": "b5dcControlMode",
+            # "ignoreb5dc": "ignoreB5dc",
             "spfconnectionstate": "spfConnectionState",
             "spfrxconnectionstate": "spfrxConnectionState",
             "dsconnectionstate": "dsConnectionState",
@@ -1676,24 +1677,29 @@ class DishManager(SKAController):
         self.component_manager.set_spfrx_control_mode(ControlMode(value))
 
     @attribute(
-        dtype=bool,
+        dtype=ControlMode,
         access=AttrWriteType.READ_WRITE,
-        doc="Flag to disable B5DC device communication. When ignored, no commands will be issued "
-        "to the device, it will be excluded from state aggregation, and no device related "
-        "attributes will be updated.",
+        doc=(
+            "Control mode for the B5DC subdevice. NO_MONITOR_NO_CONTROL disables "
+            "monitoring and control, stops communication, and excludes B5DC from "
+            "state aggregation. MONITOR_AND_CONTROL enables monitoring and control. "
+            "MONITOR_NO_CONTROL is not implemented."
+        ),
         memorized=True,
     )
-    def ignoreB5dc(self):
-        """Returns ignoreB5dc."""
-        return self.component_manager.component_state.get("ignoreb5dc", False)
+    def b5dcControlMode(self):
+        """Return the B5DC control mode."""
+        return self.component_manager.component_state.get(
+            "b5dccontrolmode", ControlMode.MONITOR_AND_CONTROL
+        )
 
-    @ignoreB5dc.write
+    @b5dcControlMode.write
     @time_tango_write()
     @log_tango_attr_write()
     @requires_component_manager
-    def ignoreB5dc(self, value):
-        """Sets ignoreB5dc."""
-        self.component_manager.set_b5dc_device_ignored(value)
+    def b5dcControlMode(self, value: ControlMode):
+        """Set the B5DC control mode."""
+        self.component_manager.set_b5dc_control_mode(ControlMode(value))
 
     @attribute(
         dtype=NoiseDiodeMode,
