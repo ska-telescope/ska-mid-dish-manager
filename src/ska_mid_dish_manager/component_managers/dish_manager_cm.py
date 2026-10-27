@@ -1579,6 +1579,11 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
     def set_b5dc_control_mode(self, mode: ControlMode, sync: bool = True):
         """Set the B5DC control mode and update device communication."""
+        self._validate_subdevice_control_mode("B5DC", mode)
+
+        if "B5DC" not in self.sub_component_managers:
+            self.logger.debug("B5DC device is not monitored, cannot set control mode.")
+            return
         if mode == self.component_state["b5dccontrolmode"]:
             if sync:
                 self.logger.warning(
@@ -1587,7 +1592,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                     extra=OPERATOR_TAG,
                 )
             return
-        self._validate_subdevice_control_mode("B5DC", mode)
 
         self.logger.info(
             "Setting B5DC control mode to %s.",

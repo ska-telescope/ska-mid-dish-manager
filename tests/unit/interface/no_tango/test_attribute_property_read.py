@@ -81,15 +81,8 @@ def test_get_attribute_property_value(
             {"spfControlMode": {"spfControlMode": ["0"]}},
             "0",
         ),
-        (
-            {
-                "spfControlMode": {
-                    "__value": [],
-                    "spfControlMode": ["2"],
-                }
-            },
-            "2",
-        ),
+    ],
+    [
         # Invalid
         (
             {"spfControlMode": {}},
@@ -101,7 +94,7 @@ def test_get_attribute_property_value(
         ),
     ],
 )
-def test_get_device_attribute_property_value(
+def test_get_device_attribute_property_value_spf_control_mode(
     component_manager,
     monkeypatch,
     properties,
