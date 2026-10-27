@@ -1,5 +1,7 @@
 """Tango interface regression tests for SPF/SPFRx ControlMode attributes."""
 
+from unittest.mock import patch
+
 import pytest
 import tango
 from ska_control_model import CommunicationStatus
@@ -158,9 +160,9 @@ def test_parse_control_mode_value_invalid(value):
     ],
 )
 def test_validate_subdevice_control_mode_valid(
-    component_manager,
-    device,
-    mode,
+    component_manager: DishManagerComponentManager,
+    device: str,
+    mode: ControlMode,
 ):
     """Test that supported control modes are accepted."""
     component_manager._validate_subdevice_control_mode(
@@ -175,8 +177,8 @@ def test_validate_subdevice_control_mode_valid(
     ["SPF", "SPFRX", "B5DC"],
 )
 def test_validate_subdevice_control_mode_unsupported(
-    component_manager,
-    device,
+    component_manager: DishManagerComponentManager,
+    device: str,
 ):
     """Test that MONITOR_NO_CONTROL is rejected."""
     with pytest.raises(
@@ -195,8 +197,8 @@ def test_validate_subdevice_control_mode_unsupported(
     [99, "INVALID", "2", None],
 )
 def test_validate_subdevice_control_mode_invalid(
-    component_manager,
-    mode,
+    component_manager: DishManagerComponentManager,
+    mode: ControlMode,
 ):
     """Test that invalid values are rejected."""
     with pytest.raises(ValueError):
@@ -204,3 +206,81 @@ def test_validate_subdevice_control_mode_invalid(
             "SPF",
             mode,
         )
+
+
+@pytest.mark.unit
+@pytest.mark.parametrize(
+    "device, setter_name, state_key",
+    [
+        ("SPF", "set_spf_control_mode", "spfcontrolmode"),
+        ("SPFRX", "set_spfrx_control_mode", "spfrxcontrolmode"),
+        ("B5DC", "set_b5dc_control_mode", "b5dccontrolmode"),
+    ],
+)
+def test_setting_existing_control_mode(
+    component_manager: DishManagerComponentManager,
+    device: str,
+    setter_name: str,
+    state_key: str,
+):
+    """Verify repeated control mode requests do not change communication."""
+    mode = ControlMode.NO_MONITOR_NO_CONTROL
+
+    component_manager._update_component_state(**{state_key: mode})
+
+    subdevice_cm = component_manager.sub_component_managers[device]
+
+    setter = getattr(component_manager, setter_name)
+
+    with (
+        patch.object(component_manager.logger, "warning") as mock_warning,
+        patch.object(subdevice_cm, "stop_communicating") as mock_stop,
+        patch.object(subdevice_cm, "start_communicating") as mock_start,
+        patch.object(component_manager, "sync_component_states") as mock_sync,
+    ):
+        setter(mode)
+
+    mock_warning.assert_called_once()
+    assert "already in" in mock_warning.call_args.args[0]
+
+    mock_stop.assert_not_called()
+    mock_start.assert_not_called()
+    mock_sync.assert_not_called()
+
+    assert component_manager.component_state[state_key] == mode
+
+
+@pytest.mark.unit
+def test_setting_existing_b5dc_control_mode(
+    component_manager: DishManagerComponentManager,
+    mocker: pytest.MockFixture,
+):
+    """Repeated requests should not restart B5DC communication."""
+    mode = ControlMode.NO_MONITOR_NO_CONTROL
+
+    component_manager.set_b5dc_control_mode(
+        mode,
+        sync=False,
+    )
+
+    b5dc_cm = component_manager.sub_component_managers["B5DC"]
+
+    mock_stop = mocker.patch.object(
+        b5dc_cm,
+        "stop_communicating",
+    )
+
+    mock_start = mocker.patch.object(
+        b5dc_cm,
+        "start_communicating",
+    )
+
+    component_manager.set_b5dc_control_mode(
+        mode,
+        sync=False,
+    )
+
+    mock_stop.assert_not_called()
+    mock_start.assert_not_called()
+
+    assert component_manager.check_device_control_mode("B5DC") == mode

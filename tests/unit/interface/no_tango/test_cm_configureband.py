@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, Mock, call, patch
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
@@ -477,7 +478,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
     """Verify behaviour of ConfigureBand for Band 5b with sub-band when B5DC is ignored.
 
     This test checks that the ConfigureBand command succeeds and correctly fans out
-    commands to SPFRx and DS, but excludes B5DC because the ignoreb5dc flag is set.
+    commands to SPFRx and DS, but excludes B5DC because the b5dcControlMode is set to NO_MONITOR.
 
     :param component_manager: the component manager under test
     :param callbacks: a dictionary of mocks, passed as callbacks to
@@ -496,7 +497,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
                 }
             ] }
     }"""
-    component_manager._component_state["ignoreb5dc"] = True
+    component_manager._component_state["b5dccontrolmode"] = ControlMode.NO_MONITOR_NO_CONTROL
     component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
     mock_apply_pointing_model.return_value = None
     status, response = component_manager.configure_band_with_json(
@@ -511,7 +512,8 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         {"status": TaskStatus.QUEUED},
         {"status": TaskStatus.IN_PROGRESS},
     )
-
+    assert component_manager.check_device_control_mode("B5DC") == ControlMode.NO_MONITOR_NO_CONTROL
+    assert component_manager.is_device_ignored("B5DC")
     # check that the initial lrc updates come through
     actual_call_kwargs = callbacks["task_cb"].call_args_list
     for count, mock_call in enumerate(actual_call_kwargs):
@@ -647,12 +649,18 @@ def test_configureband_without_b5dc_component_manager(
     caplog.set_level(logging.DEBUG, logger=component_manager.logger.name)
     # kill all attribute monitoring threads on the b5dc component
     # manager to avoid thread check errors on session finish check
-    component_manager.set_b5dc_device_ignored(True, sync=False)
+    component_manager.set_b5dc_control_mode(
+        ControlMode.NO_MONITOR_NO_CONTROL,
+        sync=False,
+    )
     # remove the b5dc component manager to simulate it not being present
     component_manager.sub_component_managers.pop("B5DC")
 
     # attempt to set ignored state on b5dc and check log message is emitted
-    component_manager.set_b5dc_device_ignored(False, sync=False)
+    component_manager.set_b5dc_control_mode(
+        ControlMode.MONITOR_AND_CONTROL,
+        sync=False,
+    )
     set_b5dc_device_ignored_log_message = "B5DC device is not monitored, cannot set ignored state."
     assert set_b5dc_device_ignored_log_message in caplog.text
 

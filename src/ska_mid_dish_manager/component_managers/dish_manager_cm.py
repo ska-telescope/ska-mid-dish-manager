@@ -1522,11 +1522,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> None:
         """Set the SPF control mode and update device communication."""
         if mode == self.component_state["spfcontrolmode"]:
-            self.logger.warning(
-                "SPF is already in %s. No changes applied.",
-                mode.name,
-                extra=OPERATOR_TAG,
-            )
+            if sync:
+                self.logger.warning(
+                    "SPF is already in %s. No changes applied.",
+                    mode.name,
+                    extra=OPERATOR_TAG,
+                )
             return
         self._validate_subdevice_control_mode("SPF", mode)
 
@@ -1552,11 +1553,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     ) -> None:
         """Set the SPFRx control mode and update device communication."""
         if mode == self.component_state["spfrxcontrolmode"]:
-            self.logger.warning(
-                "SPFRx is already in %s. No changes applied.",
-                mode.name,
-                extra=OPERATOR_TAG,
-            )
+            if sync:
+                self.logger.warning(
+                    "SPFRx is already in %s. No changes applied.",
+                    mode.name,
+                    extra=OPERATOR_TAG,
+                )
             return
         self._validate_subdevice_control_mode("SPFRX", mode)
 
@@ -1578,11 +1580,12 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
     def set_b5dc_control_mode(self, mode: ControlMode, sync: bool = True):
         """Set the B5DC control mode and update device communication."""
         if mode == self.component_state["b5dccontrolmode"]:
-            self.logger.warning(
-                "B5DC is already in %s. No changes applied.",
-                mode.name,
-                extra=OPERATOR_TAG,
-            )
+            if sync:
+                self.logger.warning(
+                    "B5DC is already in %s. No changes applied.",
+                    mode.name,
+                    extra=OPERATOR_TAG,
+                )
             return
         self._validate_subdevice_control_mode("B5DC", mode)
 
