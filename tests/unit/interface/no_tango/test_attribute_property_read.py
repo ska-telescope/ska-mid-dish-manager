@@ -81,8 +81,6 @@ def test_get_attribute_property_value(
             {"spfControlMode": {"spfControlMode": ["0"]}},
             "0",
         ),
-    ],
-    [
         # Invalid
         (
             {"spfControlMode": {}},
