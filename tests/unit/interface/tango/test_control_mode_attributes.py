@@ -5,6 +5,7 @@ import tango
 from pytest_mock import MockerFixture
 from ska_control_model import CommunicationStatus
 from ska_control_model.future import ControlMode
+from ska_tango_base.base.base_component_manager import BaseComponentManager
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
@@ -174,7 +175,10 @@ def test_b5dc_control_mode_disables_and_restores_communication(
     connection_events = event_store_class()
 
     def simulate_start_communicating() -> None:
-        b5dc_cm._update_communication_state(communication_state=CommunicationStatus.ESTABLISHED)
+        BaseComponentManager._update_communication_state(
+            b5dc_cm,
+            CommunicationStatus.ESTABLISHED,
+        )
 
     mock_start = mocker.patch.object(
         b5dc_cm,
@@ -214,7 +218,9 @@ def test_b5dc_control_mode_disables_and_restores_communication(
             ControlMode(device_proxy.read_attribute(attr_name).value)
             == ControlMode.MONITOR_AND_CONTROL
         )
+
         mock_start.assert_called_once()
+
         connection_events.wait_for_value(
             CommunicationStatus.ESTABLISHED,
             timeout=10,
