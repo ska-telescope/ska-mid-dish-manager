@@ -16,7 +16,7 @@ from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize("device", ["spf", "spfrx", "b5dc"])
+@pytest.mark.parametrize("device", ["spf", "spfrx"])
 def test_control_mode_is_read_write_tango_enum(dish_manager_resources, device):
     """Both new attributes should be exposed as writable Tango DevEnum."""
     device_proxy, _ = dish_manager_resources
@@ -40,7 +40,7 @@ def test_control_mode_is_enabled_by_default(dish_manager_resources, device):
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize("device", ["spf", "spfrx", "b5dc"])
+@pytest.mark.parametrize("device", ["spf", "spfrx"])
 def test_control_mode_disables_and_restores_communication(
     dish_manager_resources, event_store_class, device
 ):
@@ -76,7 +76,7 @@ def test_control_mode_disables_and_restores_communication(
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.parametrize("device", ["spf", "spfrx", "b5dc"])
+@pytest.mark.parametrize("device", ["spf", "spfrx"])
 def test_monitor_no_control_is_rejected(dish_manager_resources, device):
     """Test that we report MONITOR_NO_CONTROL as unsupported by the current implementation."""
     device_proxy, _ = dish_manager_resources
@@ -152,7 +152,7 @@ def test_parse_control_mode_value_invalid(value):
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "device",
-    ["SPF", "SPFRX", "B5DC"],
+    ["SPF", "SPFRX"],
 )
 @pytest.mark.parametrize(
     "mode",
@@ -176,7 +176,7 @@ def test_validate_subdevice_control_mode_valid(
 @pytest.mark.unit
 @pytest.mark.parametrize(
     "device",
-    ["SPF", "SPFRX", "B5DC"],
+    ["SPF", "SPFRX"],
 )
 def test_validate_subdevice_control_mode_unsupported(
     component_manager: DishManagerComponentManager,
@@ -216,7 +216,6 @@ def test_validate_subdevice_control_mode_invalid(
     [
         ("SPF", "set_spf_control_mode", "spfcontrolmode"),
         ("SPFRX", "set_spfrx_control_mode", "spfrxcontrolmode"),
-        ("B5DC", "set_b5dc_control_mode", "b5dccontrolmode"),
     ],
 )
 def test_setting_existing_control_mode(
@@ -294,3 +293,63 @@ def test_setting_existing_b5dc_control_mode(
     mock_start.assert_not_called()
 
     assert component_manager.check_device_control_mode("B5DC") == mode
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_b5dc_control_mode_disables_and_restores_communication(
+    dish_manager_resources_with_b5dc_monitoring,
+    event_store_class,
+) -> None:
+    """Verify B5DC communication changes according to its control mode."""
+    device_proxy, component_manager = dish_manager_resources_with_b5dc_monitoring
+
+    assert "B5DC" in component_manager.sub_component_managers
+
+    attr_name = "b5dcControlMode"
+    connection_attr = "b5dcConnectionState"
+
+    connection_events = event_store_class()
+
+    original_mode = ControlMode(device_proxy.read_attribute(attr_name).value)
+
+    subscription_id = device_proxy.subscribe_event(
+        connection_attr,
+        tango.EventType.CHANGE_EVENT,
+        connection_events,
+    )
+
+    try:
+        device_proxy.write_attribute(
+            attr_name,
+            ControlMode.NO_MONITOR_NO_CONTROL,
+        )
+
+        assert (
+            ControlMode(device_proxy.read_attribute(attr_name).value)
+            == ControlMode.NO_MONITOR_NO_CONTROL
+        )
+
+        connection_events.wait_for_value(
+            CommunicationStatus.DISABLED,
+            timeout=10,
+        )
+
+        device_proxy.write_attribute(
+            attr_name,
+            ControlMode.MONITOR_AND_CONTROL,
+        )
+
+        assert (
+            ControlMode(device_proxy.read_attribute(attr_name).value)
+            == ControlMode.MONITOR_AND_CONTROL
+        )
+
+        connection_events.wait_for_value(
+            CommunicationStatus.ESTABLISHED,
+            timeout=10,
+        )
+
+    finally:
+        device_proxy.write_attribute(attr_name, original_mode)
+        device_proxy.unsubscribe_event(subscription_id)
