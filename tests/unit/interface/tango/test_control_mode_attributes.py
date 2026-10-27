@@ -1,6 +1,5 @@
 """Tango interface regression tests for SPF, SPFRx and B5DC ControlMode attributes."""
 
-
 import pytest
 import tango
 from pytest_mock import MockerFixture
