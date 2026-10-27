@@ -4,12 +4,14 @@ from unittest.mock import patch
 
 import pytest
 import tango
+from pytest_mock import MockerFixture
 from ska_control_model import CommunicationStatus
 from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
 )
+from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 
 
 @pytest.mark.unit
@@ -253,7 +255,7 @@ def test_setting_existing_control_mode(
 @pytest.mark.unit
 def test_setting_existing_b5dc_control_mode(
     component_manager: DishManagerComponentManager,
-    mocker: pytest.MockFixture,
+    mocker: "MockerFixture",
 ):
     """Repeated requests should not restart B5DC communication."""
     mode = ControlMode.NO_MONITOR_NO_CONTROL
@@ -279,7 +281,15 @@ def test_setting_existing_b5dc_control_mode(
         mode,
         sync=False,
     )
-
+    mock_warning = mocker.patch.object(
+        component_manager.logger,
+        "warning",
+    )
+    mock_warning.assert_called_once_with(
+        "B5DC is already in %s control mode. No changes applied.",
+        mode.name,
+        extra=OPERATOR_TAG,
+    )
     mock_stop.assert_not_called()
     mock_start.assert_not_called()
 
