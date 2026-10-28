@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import time
 
 import pytest
 import tango
@@ -261,9 +262,16 @@ def reset_dish_to_standby(
     dish_mode_events = event_store_class()
     lrc_finished_events = event_store_class()
 
+    # A command left running by the previous test keeps waiting on the sub devices we are
+    # about to reset, and blocks the queue for the next test. Let it finish first, aborting
+    # is a last resort as sub device commands already in flight still land after an abort.
+    deadline = time.time() + DEFAULT_ACTION_TIMEOUT_S
+    while dish_manager_proxy.lrcExecuting or dish_manager_proxy.lrcQueue:
+        if time.time() > deadline:
+            break
+        time.sleep(0.5)
+
     if dish_manager_proxy.lrcExecuting or dish_manager_proxy.lrcQueue:
-        # A command left running by the previous test keeps waiting on the sub devices we
-        # are about to reset, and blocks the queue for the next test. Abort it first.
         abort_subscriptions = setup_subscriptions(
             dish_manager_proxy, {"lrcFinished": lrc_finished_events}
         )
