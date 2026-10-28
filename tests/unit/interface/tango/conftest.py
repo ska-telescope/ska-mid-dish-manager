@@ -161,9 +161,10 @@ def dish_manager_resources_with_ap_manager():
         ),
         patch("ska_mid_dish_manager.component_managers.dish_manager_cm.TangoDbAccessor"),
     ):
-
+        # Disable the DS Manager monitor and setup monitoring for an AP Manager instance
         class PatchedDishManager(DishManager):
-            DSDeviceFqdn = server.device_property(
+            DSDeviceFqdn = ""
+            APManagerDeviceFqdn = server.device_property(
                 dtype=str,
                 default_value="tango://127.0.0.1:12345/a/meerkat-ap-manager/c#dbase=no",
             )

@@ -120,6 +120,8 @@ class DishManager(SKAController):
 
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
+    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
+
     # B5DC device is not monitored by default, so default value is empty string
     B5DCDeviceFqdn = device_property(dtype=str, default_value="")
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
@@ -450,6 +452,7 @@ class DishManager(SKAController):
         self._last_commanded_pointing_params = ""
         self._release_info = ReleaseInfo(
             ds_manager_address=self.DSDeviceFqdn,
+            # ap_manager_address=self.APManagerDeviceFqdn,
             spfc_address=self.SPFDeviceFqdn,
             spfrx_address=self.SPFRxDeviceFqdn,
             b5dc_address=self.B5DCDeviceFqdn,

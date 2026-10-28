@@ -35,10 +35,20 @@ server:
                     - ""
                 - name: "DSDeviceFqdn"
                   values:
-                    {{- if $.Values.dishmanager.ds.fqdn }}
+                    # Disable DS Manager monitoring is AP Manager monitoring is configured
+                    {{- if $.Values.dishmanager.ap_manager.fqdn }}
+                    - ""
+                    {{- else if $.Values.dishmanager.ds.fqdn }}
                     - "{{ $.Values.dishmanager.ds.fqdn }}"
                     {{- else }}
                     - "{{ $.Values.dishmanager.ds.domain_name }}/{{ $.Values.dishmanager.ds.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- end }}
+                - name: "APManagerDeviceFqdn"
+                  values:
+                    {{- if $.Values.dishmanager.ap_manager.fqdn }}
+                    - "{{ $.Values.dishmanager.ap_manager.fqdn }}"
+                    {{- else }}
+                    - ""
                     {{- end }}
                 - name: "SPFDeviceFqdn"
                   values:

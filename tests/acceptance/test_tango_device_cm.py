@@ -136,13 +136,13 @@ def test_tango_device_component_manager_threads_management(
 
 
 @pytest.mark.acceptance
-def test_ap_manager_component_manager_threads_management(
-    component_state_store, subscribed_attrs, ds_device_fqdn
-):
+def test_ap_manager_component_manager_threads_management(component_state_store, ds_device_fqdn):
     """Test AP Manager component mananger clears threads as expected."""
     # This test case applies specifically for the AP Manager test, skip for DS Manager
     if "ds-manager" in ds_device_fqdn:
         pytest.skip(reason="Skipping AP manager test while monitoring DS Manager")
+
+    subscribed_attrs = ("achievedTargetLock", "powerState")
 
     mock_callable = MagicMock()
     com_man = TangoDeviceComponentManager(

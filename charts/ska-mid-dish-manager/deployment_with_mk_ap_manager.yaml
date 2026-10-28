@@ -26,10 +26,8 @@ ska-mid-dish-simulators:
 dishmanager:
   b5dcproxy:
     monitoring: false
-  ds:
-    fqdn: ""
-    domain_name: "mid-dish"
-    family_name: "meerkat-ap-manager"
+  ap_manager:
+    fqdn: "mid-dish/meerkat-ap-manager/SKA001"
 
 # -------------------------------------------------------
 # MeerKAT AP Manager and AP Simulator (TBD) configuration

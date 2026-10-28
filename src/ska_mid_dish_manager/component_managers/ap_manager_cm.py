@@ -92,8 +92,6 @@ class APComponentManager(TangoDeviceComponentManager):
             "trackInterpolationMode",
             "achievedTargetLock",
             "dscCmdAuth",
-            "actStaticOffsetValueXel",
-            "actStaticOffsetValueEl",
             "dscpowerlimitkw",
             "trackTableCurrentIndex",
             "trackTableEndIndex",

@@ -48,7 +48,6 @@ from ska_mid_dish_manager.models.command_actions import (
     TrackStopAction,
 )
 from ska_mid_dish_manager.models.constants import (
-    AP_MANAGER_TRL_FAMILY_NAME,
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
@@ -138,16 +137,20 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
         )
 
-        # Select the correct Dish Structure type or fail if both configured
+        # Select the correct dish dtructure type or fail if both configured
         if ds_device_fqdn and ap_manager_device_fqdn:
-            raise RuntimeError("Failed to instatiate dish manager whilest both the "
+            raise RuntimeError(
+                "Failed to instantiate dish manager whilest both the "
                 f"DS Manager FQDN [{ds_device_fqdn}] and the AP Manager "
-                f"FQDN [{ap_manager_device_fqdn}] are configured. Please only configure one of "
+                f"FQDN [{ap_manager_device_fqdn}] are configured. Please configure only one of "
                 "the dish structure FQDN properties, disabling the other by setting it to an "
-                "empty string")
+                "empty string."
+            )
         elif ap_manager_device_fqdn:
-            self.logger.info(f"The AP Manager at [{ap_manager_device_fqdn}] is being configured "
-                "as the monitored and controller dish structure")
+            self.logger.debug(
+                f"The AP Manager at [{ap_manager_device_fqdn}] is being configured "
+                "as the monitored and controller dish structure instance."
+            )
             ds_device_fqdn = ap_manager_device_fqdn
 
         default_dish_mode = DishMode.UNKNOWN
@@ -324,8 +327,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 tango_error_callback=self._sub_device_tango_error_occurred,
             ),
             # Override DS subcomponent manager to use APComponentManager if
-            # DS device TRL indicates so, else, use the standard SKA DS manager
-            # subcomponent manager
+            # the APFqdn property is configured
             "DS": APComponentManager(
                 ds_device_fqdn,
                 logger,
