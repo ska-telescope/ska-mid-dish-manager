@@ -90,6 +90,7 @@ def component_manager(
             "sub-device-2",
             "sub-device-3",
             "sub-device-4",
+            "sub-device-5",
             action_timeout_s=120,
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
