@@ -102,7 +102,22 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
+
+    # On Dish Manager instatiation, both the DS and AP FQDNs will be evaluated.
+    # The subcomponent manager for the configured FQDN will be created. If both FQDNs
+    # are configured dish manager instantiation will fail. Set the FQDN to an empty string
+    # to disable the unwanted dish structure type
+    DSDeviceFqdn = device_property(
+        dtype=str,
+        doc="The TRL of the SKA Dish Structure Manager instance to control and monitor.",
+        default_value=DEFAULT_DS_MANAGER_TRL,
+    )
+    APManagerDeviceFqdn = device_property(
+        dtype=str,
+        doc="The TRL of the SKA Dish Structure Manager instance to control and monitor.",
+        default_value="",
+    )
+
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
     # B5DC device is not monitored by default, so default value is empty string
@@ -141,6 +156,7 @@ class DishManager(SKAController):
             self._attr_quality_state_changed,
             self.get_name(),
             self.DSDeviceFqdn,
+            self.APManagerDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
             self.B5DCDeviceFqdn,

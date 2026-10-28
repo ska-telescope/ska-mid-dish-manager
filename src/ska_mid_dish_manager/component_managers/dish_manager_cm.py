@@ -115,6 +115,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         quality_state_callback,
         tango_device_name: str,
         ds_device_fqdn: str,
+        ap_manager_device_fqdn: str,
         spf_device_fqdn: str,
         spfrx_device_fqdn: str,
         b5dc_device_fqdn: str,
@@ -136,6 +137,18 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         default_wind_gust_threshold = kwargs.pop(
             "default_wind_gust_threshold", WIND_GUST_THRESHOLD_MPS
         )
+
+        # Select the correct Dish Structure type or fail if both configured
+        if ds_device_fqdn and ap_manager_device_fqdn:
+            raise RuntimeError("Failed to instatiate dish manager whilest both the "
+                f"DS Manager FQDN [{ds_device_fqdn}] and the AP Manager "
+                f"FQDN [{ap_manager_device_fqdn}] are configured. Please only configure one of "
+                "the dish structure FQDN properties, disabling the other by setting it to an "
+                "empty string")
+        elif ap_manager_device_fqdn:
+            self.logger.info(f"The AP Manager at [{ap_manager_device_fqdn}] is being configured "
+                "as the monitored and controller dish structure")
+            ds_device_fqdn = ap_manager_device_fqdn
 
         default_dish_mode = DishMode.UNKNOWN
         # Check tangodb whether maintenance mode is active
@@ -355,7 +368,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 quality_state_callback=self._quality_state_callback,
                 tango_error_callback=self._sub_device_tango_error_occurred,
             )
-            if AP_MANAGER_TRL_FAMILY_NAME in ds_device_fqdn
+            if ap_manager_device_fqdn
             else DSComponentManager(
                 ds_device_fqdn,
                 logger,
