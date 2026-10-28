@@ -11,21 +11,31 @@ def test_capability_state_b1(monitor_tango_servers, event_store_class, dish_mana
     """Test transition on CapabilityState b1."""
     main_event_store = event_store_class()
     cap_state_event_store = event_store_class()
+    result_event_store = event_store_class()
     attr_cb_mapping = {
         "configuredBand": main_event_store,
         "b1CapabilityState": cap_state_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # ensure current band is not B1
-    dish_manager_proxy.ConfigureBand2(True)
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     main_event_store.wait_for_value(Band.B2, timeout=10)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
     cap_state_event_store.clear_queue()
 
-    dish_manager_proxy.ConfigureBand1(True)
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
     cap_state_event_store.wait_for_value(CapabilityStates.CONFIGURING, timeout=30)
     cap_state_event_store.wait_for_value(CapabilityStates.OPERATE_FULL, timeout=30)
+    # the command only finishes once SPFRx has been given time to configure, wait for it so
+    # that it is not still running when the next test resets the sub devices
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
