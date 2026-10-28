@@ -53,10 +53,10 @@ def test_component_manager_gracefully_cleans_up_resources(caplog):
             mock.MagicMock(name="mock_attr_quality_callback"),
             "device-1",
             "sub-device-1",
+            "",  # Disable AP Manager monitoring while DS Manager is enabled
             "sub-device-2",
             "sub-device-3",
             "sub-device-4",
-            "sub-device-5",
             action_timeout_s=DEFAULT_ACTION_TIMEOUT_S,
         )
         weak_ref = weakref.ref(component_manager)
