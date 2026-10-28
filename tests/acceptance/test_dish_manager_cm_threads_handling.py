@@ -6,6 +6,7 @@ import pytest
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.constants import (
+    AP_MANAGER_TRL_FAMILY_NAME,
     DEFAULT_ACTION_TIMEOUT_S,
     DEFAULT_B5DC_PROXY_TRL,
     DEFAULT_DISH_MANAGER_TRL,
@@ -22,6 +23,14 @@ LOGGER = logging.getLogger(__name__)
 @pytest.mark.acceptance
 def test_dish_manager_component_manager_threads_management(component_state_store, ds_device_fqdn):
     """Test dish manager component mananger clears threads on stop communication."""
+    # Configure the dish structure FQDN properties based on the type (DS/AP) being tested.
+    ds_manager_fqdn = ""
+    ap_manager_fqdn = ""
+    if AP_MANAGER_TRL_FAMILY_NAME in ds_device_fqdn:
+        ap_manager_fqdn = ds_device_fqdn
+    else:
+        ds_manager_fqdn = ds_device_fqdn
+
     ds_device_trl = ds_device_fqdn
     mock_callable = MagicMock()
     cm = DishManagerComponentManager(
@@ -30,7 +39,8 @@ def test_dish_manager_component_manager_threads_management(component_state_store
         build_state_callback=mock_callable,
         quality_state_callback=mock_callable,
         tango_device_name=DEFAULT_DISH_MANAGER_TRL,
-        ds_device_fqdn=ds_device_trl,
+        ds_device_fqdn=ds_manager_fqdn,
+        ap_manager_device_fqdn=ap_manager_fqdn,
         spf_device_fqdn=DEFAULT_SPFC_TRL,
         spfrx_device_fqdn=DEFAULT_SPFRX_TRL,
         b5dc_device_fqdn=DEFAULT_B5DC_PROXY_TRL,
