@@ -1319,7 +1319,7 @@ requires-dist = [
     { name = "pytango", specifier = ">=10.3.1,<11.0.0" },
     { name = "requests", specifier = ">=2.34.2,<3.0.0" },
     { name = "rule-engine", specifier = "==3.5.0" },
-    { name = "ska-control-model", specifier = ">=1.0.0" },
+    { name = "ska-control-model", specifier = ">=1.4.0" },
     { name = "ska-mid-dish-dcp-lib", specifier = ">=0.0.9,<0.0.10" },
     { name = "ska-ser-logging", specifier = ">=0.4.1" },
     { name = "ska-tango-base", specifier = "==1.7.0" },
