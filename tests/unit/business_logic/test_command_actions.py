@@ -29,6 +29,18 @@ LOGGER = logging.getLogger(__name__)
 LOGGER.setLevel(logging.DEBUG)
 
 
+@pytest.fixture(autouse=True)
+def no_spfrx_configure_completion_delay():
+    """Remove the SPFRx configure completion delay.
+
+    The mocked SPFRx component state is set directly, so there is no transition to wait for.
+    """
+    with mock.patch(
+        "ska_mid_dish_manager.models.command_actions.SPFRX_CONFIGURE_COMPLETION_DELAY_S", 0
+    ):
+        yield
+
+
 @pytest.mark.unit
 class TestCommandActions:
     """Tests for CommandActions."""

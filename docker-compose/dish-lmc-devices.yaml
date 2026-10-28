@@ -13,18 +13,18 @@
 services:
   ds-opcua-server:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:5.12.0
+    image: artefact.skao.int/ska-mid-dish-simulators:6.0.2
     container_name: ds-opcua-server
     network_mode: ${NETWORK_MODE}
     ports:
       - "4840:4840"
     restart: unless-stopped
     command: >
-      /app/.venv/bin/python /app/src/ska_mid_dish_simulators/devices/ds_opcua_server.py
+      /app/.venv/bin/python3 /app/src/ska_mid_dish_simulators/devices/ds_opcua_server.py
 
   dish-logger:
     platform: linux/amd64
-    image: artefact.skao.int/ska-dish-lmc:9.3.0
+    image: artefact.skao.int/ska-dish-lmc:11.0.1
     container_name: dish-logger
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -39,7 +39,7 @@ services:
 
   spfrx-simulator:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:5.12.0
+    image: artefact.skao.int/ska-mid-dish-simulators:6.0.2
     container_name: spfrx-simulator
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -54,7 +54,7 @@ services:
 
   spf-simulator:
     platform: linux/amd64
-    image: artefact.skao.int/ska-mid-dish-simulators:5.12.0
+    image: artefact.skao.int/ska-mid-dish-simulators:6.0.2
     container_name: spf-simulator
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -69,7 +69,7 @@ services:
 
   ds-manager:
     platform: linux/amd64
-    image: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager/ska-mid-dish-ds-manager:9.2.0
+    image: artefact.skao.int/ska-mid-dish-ds-manager:9.2.0
     container_name: ds-manager
     network_mode: ${NETWORK_MODE}
     restart: unless-stopped
@@ -121,10 +121,13 @@ services:
       - spfrx-simulator
     environment:
       - TANGO_HOST=${TANGO_HOST}
-    # To run tests,  "cd /tmp && pytest tests "
+    # To run tests,  "cd /app, uv sync, uv run pytest tests/acceptance "
     command: >
       sh -c "wait-for-it.sh ${TANGO_HOST} --timeout=30 --strict --
           sleep infinity"
     volumes:
       - ../src:/app/src
       - ../tests:/app/tests
+      - ../pyproject.toml:/app/pyproject.toml
+      - ../README.md:/app/README.md
+      - ${HOME}/.cache/uv:/root/.cache/uv
