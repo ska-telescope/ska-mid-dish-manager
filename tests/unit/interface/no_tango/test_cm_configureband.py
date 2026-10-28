@@ -661,8 +661,8 @@ def test_configureband_without_b5dc_component_manager(
         ControlMode.MONITOR_AND_CONTROL,
         sync=False,
     )
-    set_b5dc_device_ignored_log_message = "B5DC device is not monitored, cannot set ignored state."
-    assert set_b5dc_device_ignored_log_message in caplog.text
+    set_b5dc_control_mode_log_message = "B5DC device is not monitored, cannot set control mode."
+    assert set_b5dc_control_mode_log_message in caplog.text
 
     # attempt to configure band 5b with sub-band and check that the
     # expected log message about skipping B5DC configuration is emitted

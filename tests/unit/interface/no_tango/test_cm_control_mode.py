@@ -138,21 +138,25 @@ def test_setting_existing_b5dc_control_mode(
         b5dc_cm,
         "start_communicating",
     )
-
-    component_manager.set_b5dc_control_mode(
-        mode,
-        sync=False,
+    mock_sync = mocker.patch.object(
+        component_manager,
+        "sync_component_states",
     )
     mock_warning = mocker.patch.object(
         component_manager.logger,
         "warning",
     )
+    component_manager.set_b5dc_control_mode(
+        mode,
+        sync=True,
+    )
     mock_warning.assert_called_once_with(
-        "B5DC is already in %s control mode. No changes applied.",
+        "B5DC is already in %s. No changes applied.",
         mode.name,
         extra=OPERATOR_TAG,
     )
     mock_stop.assert_not_called()
     mock_start.assert_not_called()
+    mock_sync.assert_not_called()
 
     assert component_manager.check_device_control_mode("B5DC") == mode
