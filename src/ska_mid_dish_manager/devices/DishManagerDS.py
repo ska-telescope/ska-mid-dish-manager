@@ -121,12 +121,6 @@ class DishManager(SKAController):
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
 
-    # Remove after testing
-    DSDeviceFqdn = ""
-    APManagerDeviceFqdn = "tango://127.0.0.1:12345/a/meerkat-ap-manager/c#dbase=no"
-    SPFDeviceFqdn = "tango://0.0.0.0:34567/mid-dish/simulator-spfc/SKA001#dbase=no"
-    SPFRxDeviceFqdn = "tango://0.0.0.0:56789/mid-dish/simulator-spfrx/SKA001#dbase=no"
-
     # B5DC device is not monitored by default, so default value is empty string
     B5DCDeviceFqdn = device_property(dtype=str, default_value="")
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
