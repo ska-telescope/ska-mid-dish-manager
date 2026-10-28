@@ -259,14 +259,21 @@ def reset_dish_to_standby(
     op_mode_events = event_store_class()
     power_state_events = event_store_class()
     dish_mode_events = event_store_class()
+    lrc_finished_events = event_store_class()
 
-    lrc_executing = dish_manager_proxy.lrcExecuting
-
-    if len(lrc_executing) > 0:
-        # this wait is very important for our AUTOMATED tests!!!
-        # wait for task status updates to finish before resetting the
-        # sub devices to a clean state for the next test.
-        op_mode_events.get_queue_events(timeout=5)
+    if dish_manager_proxy.lrcExecuting or dish_manager_proxy.lrcQueue:
+        # A command left running by the previous test keeps waiting on the sub devices we
+        # are about to reset, and blocks the queue for the next test. Abort it first.
+        abort_subscriptions = setup_subscriptions(
+            dish_manager_proxy, {"lrcFinished": lrc_finished_events}
+        )
+        try:
+            [[_], [unique_id]] = dish_manager_proxy.Abort()
+            lrc_finished_events.wait_for_finished_command_result(
+                unique_id, '[0, "Abort sequence completed"]', timeout=30
+            )
+        finally:
+            remove_subscriptions(abort_subscriptions)
 
     subscriptions = {}
     subscriptions.update(
