@@ -68,8 +68,10 @@ dishmanager:
   
   ap_manager:
     # To configure dish manager to control an AP instance (and not a DS Manager instance) set the expected
-    # fqdn/TRL here, else the AP Manager monitoring will be disabled
+    # complete AP fqdn or the AP TRL domain and family properties here, else the AP Manager monitoring will be disabled
     fqdn: ""
+    domain_name: ""
+    family_name: ""
 
   spfrx:
     # if true will set the ignoreSpfrx memorised attribute to True and not account for spfrx state in aggregation logic
