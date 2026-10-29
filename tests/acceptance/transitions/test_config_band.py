@@ -7,6 +7,31 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
+@pytest.fixture
+def slow_spfrx_proxy(spfrx_device_proxy, event_store_class):
+    """Make the SPFRx configureband slower."""
+    # introduce a delay in SPFRx band configuration to simulate a
+    # long-running operation (10s before and 10s during configuration)
+    spfrx_device_proxy.configureBandStartDelay = 10
+    spfrx_device_proxy.configureModeDuration = 10
+
+    yield spfrx_device_proxy
+
+    event_store = event_store_class()
+
+    retry_interval = 1
+    timeout = 60
+
+    counter = 0
+    while spfrx_device_proxy.configureBandStartDelay != 0.5 and counter <= timeout:
+        counter += 1
+        try:
+            spfrx_device_proxy.configureBandStartDelay = 0.5
+            spfrx_device_proxy.configureModeDuration = 0.5
+        except Exception:
+            event_store.get_queue_values(timeout=retry_interval)
+
+
 @pytest.mark.acceptance
 def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test ConfigureBand2."""
@@ -109,7 +134,7 @@ def test_configure_band_b(
     res = dish_manager_proxy.command_inout(band_request, True)
     assert res
     assert len(res) == 2
-    main_event_store.wait_for_value(expected_band, timeout=15)
+    main_event_store.wait_for_value(expected_band, timeout=60)
     assert dish_manager_proxy.configuredBand == expected_band
 
     spfrx_config_band_cmd = f"SPFRX.{band_request}"
@@ -121,7 +146,7 @@ def test_configure_band_b(
         f"Awaiting configuredband change to {message_str}",
         f"{band_request} complete",
     ]
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=60)
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
@@ -483,5 +508,144 @@ def test_configure_band_6_from_stow(
 
     assert dish_manager_proxy.configuredBand == Band.B6
     assert dish_manager_proxy.dishMode == DishMode.STOW
+
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+def test_slow_spfrx_configure_band(
+    monitor_tango_servers, event_store_class, dish_manager_proxy, slow_spfrx_proxy
+):
+    """Test ConfigureBand with JSON string with a slow SPFRx."""
+    assert slow_spfrx_proxy.configureBandStartDelay == 10
+    assert slow_spfrx_proxy.configureModeDuration == 10
+    dm_event_store = event_store_class()
+    result_event_store = event_store_class()
+    status_event_store = event_store_class()
+
+    attr_cb_mapping = {
+        "dishMode": dm_event_store,
+        "Status": status_event_store,
+        "lrcFinished": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    json_payload_1 = """
+    {
+        "dish": {
+            "receiver_band": "1",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    # make sure configuredBand is not B2
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert dish_manager_proxy.configuredBand == Band.B1
+
+    result_event_store.clear_queue()
+    status_event_store.clear_queue()
+    dm_event_store.clear_queue()
+
+    json_payload_2 = """
+    {
+        "dish": {
+            "receiver_band": "2",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert dish_manager_proxy.configuredBand == Band.B2
+    events = status_event_store.get_queue_values(timeout=0)
+
+    expected_progress_updates = (
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
+        "Awaiting configuredband change to B2",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.ConfigureBand completed",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
+    )
+
+    events_string = " ".join([str(attr_value) for _, attr_value in events])
+    for message in expected_progress_updates:
+        assert message in events_string
+
+    # Do it again to check result
+    result_event_store.clear_queue()
+    status_event_store.clear_queue()
+    dm_event_store.clear_queue()
+    # Check that dish manager allows configure band when already in requested band
+    # but does not set the indexer position again.
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
+    result_event = result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+
+    config_event = dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
+    operate_event = dm_event_store.wait_for_value(DishMode.OPERATE, timeout=20)
+    assert dish_manager_proxy.configuredBand == Band.B2
+
+    # Check that the LRC finishes AFTER all the mode transitions
+    assert result_event.reception_date.totime() > config_event.reception_date.totime()
+    assert result_event.reception_date.totime() > operate_event.reception_date.totime()
+
+    # Check that we go CONFIG -> OPERATE
+    assert operate_event.reception_date.totime() > config_event.reception_date.totime()
+
+    expected_progress_updates = [
+        # ConfigureBand action
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Fanned out commands: SPFRX.ConfigureBand",
+        "Awaiting configuredband change to B2",
+        "SPFRX configuredband changed to B2",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.ConfigureBand completed",
+        "ConfigureBand complete. Triggering on success action.",
+        # SetOperateMode action
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
+    ]
+
+    events = status_event_store.get_queue_values(timeout=0)
+
+    events_string = "".join([str(attr_value) for _, attr_value in events])
+    for message in expected_progress_updates:
+        assert message in events_string
 
     remove_subscriptions(subscriptions)

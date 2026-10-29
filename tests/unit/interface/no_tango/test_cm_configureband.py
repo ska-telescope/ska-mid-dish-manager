@@ -22,6 +22,18 @@ from ska_mid_dish_manager.models.dish_enums import (
 )
 
 
+@pytest.fixture(autouse=True)
+def no_spfrx_configure_completion_delay():
+    """Remove the SPFRx configure completion delay.
+
+    The mocked SPFRx component state is set directly, so there is no transition to wait for.
+    """
+    with patch(
+        "ska_mid_dish_manager.models.command_actions.SPFRX_CONFIGURE_COMPLETION_DELAY_S", 0
+    ):
+        yield
+
+
 @pytest.mark.unit
 @patch(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",

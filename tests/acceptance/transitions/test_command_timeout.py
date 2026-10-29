@@ -5,7 +5,10 @@ import time
 
 import pytest
 
-from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
+from ska_mid_dish_manager.models.constants import (
+    DEFAULT_ACTION_TIMEOUT_S,
+    SPFRX_CONFIGURE_COMPLETION_DELAY_S,
+)
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
@@ -33,14 +36,16 @@ def test_action_timeout(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     try:
-        dish_manager_proxy.actionTimeoutSeconds = 3
+        # long enough for the configure band step to wait out the SPFRx completion delay, so
+        # that it is the SetOperateMode step that times out
+        dish_manager_proxy.actionTimeoutSeconds = SPFRX_CONFIGURE_COMPLETION_DELAY_S + 3
 
         # Attempt to configure which will take SPF to Operate mode, this won't happen as
         # skipAttributeUpdates was set to True
         [[_], [configure_unique_id]] = dish_manager_proxy.ConfigureBand1(True)
 
         # Check that the Dish Manager did not transition
-        dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=10)
+        dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=60)
         assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
 
         executing_uids = [json.loads(cmd).get("uid") for cmd in dish_manager_proxy.lrcExecuting]
@@ -51,7 +56,7 @@ def test_action_timeout(
 
         # Check lrcFinished event for the ConfigureBand1 command timeout
         result_event_store.wait_for_finished_command_result(
-            configure_unique_id, '[3, "SetOperateMode failed"]', timeout=5
+            configure_unique_id, '[3, "SetOperateMode failed"]', timeout=30
         )
 
         dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S
@@ -82,7 +87,7 @@ def test_action_timeout(
         result_event_store.wait_for_finished_command_result(
             unique_id, '[0, "Abort sequence completed"]', timeout=30
         )
-        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=60)
     finally:
         remove_subscriptions(subscriptions)
         dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S
