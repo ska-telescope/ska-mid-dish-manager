@@ -139,8 +139,8 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         # Select the correct dish dtructure type or fail if both configured
         if ds_device_fqdn and ap_manager_device_fqdn:
-            raise RuntimeError(
-                "Failed to instantiate dish manager whilest both the "
+            raise tango.DevFailed(
+                "Failed to instantiate dish manager while both the "
                 f"DS Manager FQDN [{ds_device_fqdn}] and the AP Manager "
                 f"FQDN [{ap_manager_device_fqdn}] are configured. Please configure only one of "
                 "the dish structure FQDN properties, disabling the other by setting it to an "

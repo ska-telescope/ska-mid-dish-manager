@@ -110,11 +110,11 @@ class DishManager(SKAController):
     DSDeviceFqdn = device_property(
         dtype=str,
         doc="The TRL of the SKA Dish Structure Manager instance to control and monitor.",
-        default_value=DEFAULT_DS_MANAGER_TRL,
+        default_value="",
     )
     APManagerDeviceFqdn = device_property(
         dtype=str,
-        doc="The TRL of the SKA Dish Structure Manager instance to control and monitor.",
+        doc="The TRL of the AP Manager instance to control and monitor.",
         default_value="",
     )
 
@@ -150,13 +150,20 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
         self._configure_additional_user_tags_for_logging()
+
+        # Set the DSDeviceFqdn to the DEFAULT_DS_MANAGER_TRL if both the AP
+        # Manager TRL and DS Manager TRL properties are not configured
+        ds_device_fqdn = self.DSDeviceFqdn
+        if not self.APManagerDeviceFqdn and not ds_device_fqdn:
+            ds_device_fqdn = DEFAULT_DS_MANAGER_TRL
+
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
             self._update_version_of_subdevice_on_success,
             self._attr_quality_state_changed,
             self.get_name(),
-            self.DSDeviceFqdn,
+            ds_device_fqdn,
             self.APManagerDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
