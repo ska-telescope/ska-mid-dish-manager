@@ -42,19 +42,20 @@ ska-mid-meerkat-ap-manager:
     meerkatapmanager:
       enabled: true
 
-  # meerkatapmanager:
-    # image:
-    #   registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
-    #   image: ska-mid-meerkat-lmc
-    #   tag: 0.2.0-dev.ce74d0374
-    #   pullPolicy: IfNotPresent
-
     # Configure MK AP server instance to connect to
     # deviceproperties:
-      # katcp_hosts: []
-      # katcp_ports: []
-      # sampling_strategies: []
-      # sensors_to_ignore: []
+    #   katcp_hosts: []
+    #   katcp_ports: []
+    #   sampling_strategies: []
+    #   sensors_to_ignore: []
+
+    image:
+      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
+      image: ska-mid-meerkat-ap-manager
+      tag: 0.2.0-dev.c42f657cd
+      pullPolicy: IfNotPresent
+
+    
     
 # ska-mid-meerkat-ap-simulator:
 #   enabled: true
@@ -63,7 +64,7 @@ ska-mid-meerkat-ap-manager:
 #     name: katcp-ap-sim
 #     enabled: false
 #     image:
-#       registry: artefact.skao.int
+#       registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
 #       image: ska-mid-meerkat-lmc-katcp-sims
 #       tag: 0.1.0
 #       pullPolicy: IfNotPresent

@@ -14,7 +14,6 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.devices.DishManagerDS import DishManager
 from ska_mid_dish_manager.models.constants import (
-    DEFAULT_DS_MANAGER_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
@@ -70,7 +69,7 @@ class TestDishManagerVersioning:
             == ReleaseInfo.get_dish_manager_release_version()
         )
         assert build_state_json["ds_manager_device"]["version"] == ""
-        assert build_state_json["ds_manager_device"]["address"] == DEFAULT_DS_MANAGER_TRL
+        assert build_state_json["ds_manager_device"]["address"] == ""
         assert build_state_json["spfrx_device"]["version"] == ""
         assert build_state_json["spfrx_device"]["address"] == DEFAULT_SPFRX_TRL
         assert build_state_json["spfc_device"]["version"] == ""
