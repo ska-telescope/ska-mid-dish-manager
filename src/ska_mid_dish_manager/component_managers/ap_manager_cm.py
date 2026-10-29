@@ -134,8 +134,10 @@ class APComponentManager(TangoDeviceComponentManager):
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Call the appropriate write command or do nothing if AP Man attr write not possible."""
         if attribute_name in self.unwritable_dsm_attrs:
-            write_unavailable_msg = f"Attribute [{attribute_name}] cannot be written whilst "
-            "monitoring and controlling an AP Manager instance."
+            write_unavailable_msg = (
+                f"Attribute [{attribute_name}] cannot be written while "
+                "monitoring and controlling an AP Manager instance."
+            )
             self.logger.warning(write_unavailable_msg)
         else:
             return super().write_attribute_value(attribute_name, attribute_value)

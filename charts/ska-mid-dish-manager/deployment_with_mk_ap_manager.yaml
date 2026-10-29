@@ -29,43 +29,31 @@ dishmanager:
   ap_manager:
     fqdn: "mid-dish/meerkat-ap-manager/SKA001"
 
-# -------------------------------------------------------
-# MeerKAT AP Manager and AP Simulator (TBD) configuration
-# -------------------------------------------------------
-
-# TODO Configure Meerkat AP Manager to AP simulator instance once
-# simulator released
-
+# -------------------------------------------------
+# MeerKAT AP Manager and AP Simulator configuration
+# -------------------------------------------------
 ska-mid-meerkat-ap-manager:
   enabled: true
+
   deviceServers:
     meerkatapmanager:
       enabled: true
 
-    # Configure MK AP server instance to connect to
-    # deviceproperties:
-    #   katcp_hosts: []
-    #   katcp_ports: []
-    #   sampling_strategies: []
-    #   sensors_to_ignore: []
+  # Configure MK AP server instance to connect to
+  deviceproperties:
+    katcp_hosts: ["katcp-ap-sim-001-svc"]
+    katcp_ports: [4022]
+    sampling_strategies: []
+    sensors_to_ignore: []
 
-    image:
-      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
-      image: ska-mid-meerkat-ap-manager
-      tag: 0.2.0-dev.c42f657cd
-      pullPolicy: IfNotPresent
-
-    
-    
-# ska-mid-meerkat-ap-simulator:
-#   enabled: true
-
-#   apSimulator:
-#     name: katcp-ap-sim
-#     enabled: false
-#     image:
-#       registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
-#       image: ska-mid-meerkat-lmc-katcp-sims
-#       tag: 0.1.0
-#       pullPolicy: IfNotPresent
-    
+ska-mid-meerkat-ap-simulator:
+  enabled: true
+  apSimulator:
+    name: katcp-ap-sim
+    enabled: true
+    # example override: pull image from gitlab registry for testing
+    # image:
+    #   registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
+    #   image: ska-mid-meerkat-ap-simulator
+    #   tag: 0.3.0-dev.cd1a107e8
+    #   pullPolicy: IfNotPresent

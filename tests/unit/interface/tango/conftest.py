@@ -166,7 +166,7 @@ def dish_manager_resources_with_ap_manager():
             DSDeviceFqdn = ""
             APManagerDeviceFqdn = server.device_property(
                 dtype=str,
-                default_value="tango://127.0.0.1:12345/a/meerkat-ap-manager/c#dbase=no",
+                default_value="mid-dish/meerkat-ap-manager/SKA001",
             )
 
         tango_context = DeviceTestContext(PatchedDishManager)

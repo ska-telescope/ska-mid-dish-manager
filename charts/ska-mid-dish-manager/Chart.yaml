@@ -56,23 +56,22 @@ dependencies:
   condition: ska-mid-dish-dcp-lib.enabled
 # Meerkat Tango Device
 - name: ska-mid-meerkat-wms-tango-device
-  version: 0.2.0
+  version: 0.3.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-meerkat-wms-tango-device.enabled
 # Meerkat Weather Simulator
 - name: ska-mid-meerkat-wms-simulator
-  version: 0.2.0
+  version: 0.3.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-meerkat-wms-simulator.enabled
 # Meerkat AP device
 - name: ska-mid-meerkat-ap-manager
-  version: 0.2.0
+  version: 0.3.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-meerkat-ap-manager.enabled
 # Meerkat AP simulator
-# TODO: Uncomment once AP simulator released
-# - name: ska-mid-meerkat-ap-simulator
-#   version: 0.2.0
-#   repository: https://artefact.skao.int/repository/helm-internal
-#   condition: ska-mid-meerkat-ap-simulator.enabled
+- name: ska-mid-meerkat-ap-simulator
+  version: 0.3.0
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-meerkat-ap-simulator.enabled
 
