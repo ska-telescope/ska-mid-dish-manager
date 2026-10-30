@@ -751,7 +751,6 @@ def calculate_slew_target(dish_structure_fqdn, current_az, current_el, offset_az
     :return: Tuple containing the constrained azimuth and elevation values.
     :rtype: Tuple[float, float]
     """
-    # TODO Confirm the standard format of the AP Manager FQDN
     if AP_MANAGER_TRL_FAMILY_NAME in dish_structure_fqdn:
         max_az = MAX_AZIMUTH_ACU
         min_az = MIN_AZIMUTH_ACU

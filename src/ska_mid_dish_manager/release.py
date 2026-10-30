@@ -25,7 +25,6 @@ class ReleaseInfo:
         self,
         timestamp: float = time.time(),
         ds_manager_address: str = "",
-        # ap_manager_address: str = "",
         spfc_address: str = "",
         spfrx_address: str = "",
         b5dc_address: str = "",

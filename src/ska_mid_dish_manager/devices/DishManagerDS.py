@@ -964,7 +964,7 @@ class DishManager(SKAController):
     )
     def actStaticOffsetValueXel(self) -> float:
         """Indicate actual cross-elevation static offset in arcsec."""
-        return self.component_manager.component_state.get("actstaticoffsetvaluexel")
+        return self.component_manager.component_state.get("actstaticoffsetvaluexel", 0.0)
 
     @attribute(
         dtype=float,
@@ -973,7 +973,7 @@ class DishManager(SKAController):
     )
     def actStaticOffsetValueEl(self) -> float:
         """Indicate actual elevation static offset in arcsec."""
-        return self.component_manager.component_state.get("actstaticoffsetvalueel")
+        return self.component_manager.component_state.get("actstaticoffsetvalueel", 0.0)
 
     @attribute(
         dtype=(float,),

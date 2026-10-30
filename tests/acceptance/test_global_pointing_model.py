@@ -59,8 +59,3 @@ def test_track_load_static_off(
     model_event_store.wait_for_value(write_values[1], timeout=7)
 
     remove_subscriptions(subscriptions)
-
-
-# TODO Confirm whether the AP Manager device will take the global
-# pointing corrections or if they need to be intercepted by the
-# AP subcomponent manager
