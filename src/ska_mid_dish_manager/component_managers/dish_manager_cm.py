@@ -1450,7 +1450,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             else:
                 # Handle completion of MAINTENANCE mode transition if DS is an
                 # AP Manager instance
-                ap_operating_mode = ds_cm._component_state.get("operatingMode")
+                ap_operating_mode = ds_cm._component_state.get("operatingmode")
                 if ap_operating_mode == DSOperatingMode.MAINTENANCE:
                     self.logger.debug("Completing transition to MAINTENANCE mode.")
                     self._set_maintenance_mode_active()

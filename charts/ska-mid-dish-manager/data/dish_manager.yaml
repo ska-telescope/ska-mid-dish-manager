@@ -47,8 +47,8 @@ server:
                   values:
                     {{- if $.Values.dishmanager.ap_manager.fqdn }}
                     - "{{ $.Values.dishmanager.ap_manager.fqdn }}"
-                    {{- else if and $.Values.dishmanager.ap_manager.domain_name $.Values.dishmanager.ap_manager.family }}
-                    - "{{ $.Values.dishmanager.ap_manager.domain_name }}/{{ $.Values.dishmanager.ap_manager.family }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- else if and $.Values.dishmanager.ap_manager.domain_name $.Values.dishmanager.ap_manager.family_name }}
+                    - "{{ $.Values.dishmanager.ap_manager.domain_name }}/{{ $.Values.dishmanager.ap_manager.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
                     {{- else }}
                     - ""
                     {{- end }}
