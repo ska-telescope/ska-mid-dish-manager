@@ -36,15 +36,16 @@ ska-mid-meerkat-ap-manager:
   enabled: true
 
   deviceServers:
+    # Test development image of the Meerkat AP Manager
+    image:
+      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
+      image: ska-mid-meerkat-ap-manager
+      tag: 0.2.0-dev.c42f657cd
+      pullPolicy: IfNotPresent
+      
     meerkatapmanager:
       enabled: true
-      
-      # Test development image of the Meerkat AP Manager
-      image:
-        registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
-        image: ska-mid-meerkat-ap-manager
-        tag: 0.2.0-dev.c42f657cd
-        pullPolicy: IfNotPresent
+    
 
   # Configure MK AP server instance to connect to
   deviceproperties:
