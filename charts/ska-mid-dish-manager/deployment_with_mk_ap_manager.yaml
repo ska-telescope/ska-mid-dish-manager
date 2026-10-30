@@ -40,7 +40,7 @@ ska-mid-meerkat-ap-manager:
     # Test development image of the Meerkat AP Manager
     image:
       registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
-      image: ska-mid-meerkat-ap-manager
+      image: ska-mid-meerkat-lmc
       tag: 0.2.0-dev.c42f657cd
       pullPolicy: IfNotPresent
 
