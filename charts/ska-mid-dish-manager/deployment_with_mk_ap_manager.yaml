@@ -35,24 +35,26 @@ dishmanager:
 ska-mid-meerkat-ap-manager:
   enabled: true
 
-  deviceServers:
+  meerkatapmanager:
+    enabled: true
     # Test development image of the Meerkat AP Manager
     image:
       registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
       image: ska-mid-meerkat-ap-manager
       tag: 0.2.0-dev.c42f657cd
       pullPolicy: IfNotPresent
-      
+
+    # Configure MK AP server instance to connect to
+    deviceproperties:
+      katcp_hosts: ["katcp-ap-sim-001-svc"]
+      katcp_ports: [4022]
+      sampling_strategies: []
+      sensors_to_ignore: []
+
+  deviceServers:
     meerkatapmanager:
       enabled: true
     
-
-  # Configure MK AP server instance to connect to
-  deviceproperties:
-    katcp_hosts: ["0.0.0.0"]
-    katcp_ports: [4022]
-    sampling_strategies: []
-    sensors_to_ignore: []
 
 ska-mid-meerkat-ap-simulator:
   enabled: true
