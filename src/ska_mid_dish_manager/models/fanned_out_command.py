@@ -321,9 +321,33 @@ class FannedOutTangoCommand(FannedOutCommand):
 
     def refresh_state_from_device(self) -> None:
         """Read the awaited attributes off the device to refresh the component state."""
+        # An empty tuple would make the component manager read every monitored attribute
+        if not self.awaited_component_state:
+            return
         self.device_component_manager.update_state_from_monitored_attributes(
             tuple(self.awaited_component_state.keys())
         )
+
+    def _refresh_state(self) -> None:
+        """Refresh the component state while the command is running.
+
+        A failed refresh is logged and retried on the next check, it must not end the action.
+        """
+        if self.finished:
+            return
+
+        try:
+            self.refresh_state_from_device()
+        except Exception:  # pylint:disable=broad-except
+            self.logger.exception(
+                f"Failed to refresh the component state of {self.device}.{self.command_name}"
+            )
+
+    @typing.override
+    def report_progress(self) -> None:
+        """Refresh the component state, then report the progress of the command."""
+        self._refresh_state()
+        super().report_progress()
 
     def _execute_tango_command(self) -> tuple:
         """Fan out the respective command to the subservient devices."""
