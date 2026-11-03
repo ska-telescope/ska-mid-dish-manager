@@ -49,7 +49,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b5bLnaPowerState",
             "b1HealthState",
             "b2HealthState",
-            "b345HealthState"
+            "b345HealthState",
         )
         super().__init__(
             tango_device_fqdn,
@@ -78,7 +78,7 @@ class SPFComponentManager(TangoDeviceComponentManager):
             "b5bcapabilitystate": SPFCapabilityStates,
             "b1healthstate": SPFHealthState,
             "b2healthstate": SPFHealthState,
-            "b345HealthState": SPFHealthState
+            "b345healthstate": SPFHealthState,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:

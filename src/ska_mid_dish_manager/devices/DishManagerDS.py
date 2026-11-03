@@ -2288,8 +2288,9 @@ class DishManager(SKAController):
     )
     def spfcB345HealthState(self):
         """Return the Band 345 healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b345healthstate", SPFHealthState.UNKNOWN)
-
+        return self.component_manager.component_state.get(
+            "b345healthstate", SPFHealthState.UNKNOWN
+        )
 
     # --------
     # Commands
