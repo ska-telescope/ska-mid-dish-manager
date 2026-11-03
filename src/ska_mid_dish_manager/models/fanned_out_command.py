@@ -5,6 +5,7 @@ import json
 import logging
 import time
 import typing
+from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
@@ -210,8 +211,12 @@ class FannedOutCommand:
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
                 self._set_status(FannedOutCommandStatus.TIMED_OUT)
 
-    def report_progress(self) -> None:
-        """Report the progress of fanned out command."""
+    def report_progress(self, task_abort_event: Optional[Event] = None) -> None:
+        """Report the progress of fanned out command.
+
+        :param task_abort_event: Event signalling that an abort has been scheduled.
+        :type task_abort_event: Optional[Event]
+        """
         current_comp_state = dict(self.component_state)
 
         # Report awaited component state updates
@@ -344,10 +349,17 @@ class FannedOutTangoCommand(FannedOutCommand):
             )
 
     @typing.override
-    def report_progress(self) -> None:
-        """Refresh the component state, then report the progress of the command."""
-        self._refresh_state()
-        super().report_progress()
+    def report_progress(self, task_abort_event: Optional[Event] = None) -> None:
+        """Refresh the component state, then report the progress of the command.
+
+        The refresh is skipped if an abort has been scheduled.
+
+        :param task_abort_event: Event signalling that an abort has been scheduled.
+        :type task_abort_event: Optional[Event]
+        """
+        if task_abort_event is None or not task_abort_event.is_set():
+            self._refresh_state()
+        super().report_progress(task_abort_event)
 
     def _execute_tango_command(self) -> tuple:
         """Fan out the respective command to the subservient devices."""
