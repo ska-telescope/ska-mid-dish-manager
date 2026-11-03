@@ -1178,6 +1178,19 @@ Attributes
 	:data format: SCALAR
 
 .. index::
+	single: lastTangoEventError; DishManager.lastTangoEventError
+
+.. py:attribute:: lastTangoEventError
+	:module: DishManager
+
+	Reports the last tango error event received from a subservient device. The returned tuple contains:- Timestamp of the error (UNIX UTC format)- Device name (TRL of the device which emitted the error event)- Attribute name (the attribute subscription the error was reported on)- Reason for the error (as reported by tango)
+
+	:access: READ
+	:data type: DevString
+	:data format: SPECTRUM
+	:max_dim_x: 4
+
+.. index::
 	single: lastWatchdogReset; DishManager.lastWatchdogReset
 
 .. py:attribute:: lastWatchdogReset
@@ -1198,7 +1211,7 @@ Attributes
 	Read the logging level of the device.
 
 	Initialises to LoggingLevelDefault on startup.
-	See :py:class:`~ska_control_model.LoggingLevel`
+	See :class:`~ska_control_model.LoggingLevel`
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -1226,14 +1239,7 @@ Attributes
 .. py:attribute:: longRunningCommandIDsInQueue
 	:module: DishManager
 
-	Read the IDs of the long running commands in the queue.
-
-	Every client that executes a command will receive a command ID as response.
-	Keep track of IDs currently allocated.
-	Entries are removed ``self._command_tracker._removal_time`` seconds
-	after they have finished.
-
-	**DEPRECATED**: A client can check for the queued command(s) in 'lrcQueue'.
+	A Tango attribute backed by a software signal.
 
 	:access: READ
 	:data type: DevString
@@ -1246,12 +1252,7 @@ Attributes
 .. py:attribute:: longRunningCommandInProgress
 	:module: DishManager
 
-	Read the name(s) of the currently executing long running command(s).
-
-	Name(s) of command and possible abort in progress or empty string(s).
-
-	**DEPRECATED**: A client can check for the command(s) in progress in
-	'lrcExecuting'.
+	A Tango attribute backed by a software signal.
 
 	:access: READ
 	:data type: DevString
@@ -1264,13 +1265,7 @@ Attributes
 .. py:attribute:: longRunningCommandProgress
 	:module: DishManager
 
-	Read the progress of the currently executing long running command(s).
-
-	ID, progress of the currently executing command(s).
-	Clients can subscribe to on change event and wait
-	for the ID they are interested in.
-
-	**DEPRECATED**: A client can check the progress of command(s) in 'lrcExecuting'.
+	A Tango attribute backed by a software signal.
 
 	:access: READ
 	:data type: DevString
@@ -1283,13 +1278,7 @@ Attributes
 .. py:attribute:: longRunningCommandResult
 	:module: DishManager
 
-	Read the result of the completed long running command.
-
-	Reports unique ID and json-encoded result.
-	Clients can subscribe to on change event and wait for
-	the ID they are interested in.
-
-	**DEPRECATED**: A client can check for the result of a command in 'lrcFinished'.
+	A Tango attribute backed by a software signal.
 
 	:access: READ
 	:data type: DevString
@@ -1302,14 +1291,7 @@ Attributes
 .. py:attribute:: longRunningCommandStatus
 	:module: DishManager
 
-	Read the status of the currently executing long running commands.
-
-	ID, status pairs of the currently executing commands.
-	Clients can subscribe to on change event and wait for the
-	ID they are interested in.
-
-	**DEPRECATED**: A client can check for the status of a command in the
-	'lrcQueue', 'lrcExecuting' and 'lrcFinished' attributes.
+	A Tango attribute backed by a software signal.
 
 	:access: READ
 	:data type: DevString
@@ -1322,13 +1304,7 @@ Attributes
 .. py:attribute:: longRunningCommandsInQueue
 	:module: DishManager
 
-	Read the long running commands in the queue.
-
-	Keep track of which commands are that are currently known about.
-	Entries are removed ``self._command_tracker._removal_time`` seconds
-	after they have finished.
-
-	**DEPRECATED**: A client can check for the queued command(s) in 'lrcQueue'.
+	A Tango attribute backed by a software signal.
 
 	:access: READ
 	:data type: DevString
@@ -1641,7 +1617,7 @@ Attributes
 .. py:attribute:: simulationMode
 	:module: DishManager
 
-	When TRUE the device is using a simulator
+	When TRUE the device is using a simulator.
 
 	:access: READ_WRITE
 	:data type: DevEnum
@@ -1717,48 +1693,12 @@ Attributes
 	:data format: SCALAR
 
 .. index::
-	single: spfcB3HealthState; DishManager.spfcB3HealthState
+	single: spfcB345HealthState; DishManager.spfcB345HealthState
 
-.. py:attribute:: spfcB3HealthState
+.. py:attribute:: spfcB345HealthState
 	:module: DishManager
 
 	The Band 3 healthState as reported by the SPF controller.
-
-	:access: READ
-	:data type: DevEnum
-	:data format: SCALAR
-
-.. index::
-	single: spfcB4HealthState; DishManager.spfcB4HealthState
-
-.. py:attribute:: spfcB4HealthState
-	:module: DishManager
-
-	The Band 4 healthState as reported by the SPF controller.
-
-	:access: READ
-	:data type: DevEnum
-	:data format: SCALAR
-
-.. index::
-	single: spfcB5aHealthState; DishManager.spfcB5aHealthState
-
-.. py:attribute:: spfcB5aHealthState
-	:module: DishManager
-
-	The Band 5a healthState as reported by the SPF controller.
-
-	:access: READ
-	:data type: DevEnum
-	:data format: SCALAR
-
-.. index::
-	single: spfcB5bHealthState; DishManager.spfcB5bHealthState
-
-.. py:attribute:: spfcB5bHealthState
-	:module: DishManager
-
-	The Band 5b healthState as reported by the SPF controller.
 
 	:access: READ
 	:data type: DevEnum
@@ -1782,7 +1722,7 @@ Attributes
 .. py:attribute:: testMode
 	:module: DishManager
 
-	If TEST the device is using testing logic
+	If TEST the device is using testing logic.
 
 	:access: READ_WRITE
 	:data type: DevEnum
