@@ -9,6 +9,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Fixed bug that raised exception on setting ignoreSpf and ignoreSpfrx which prevented persistence in tango database.
 - Updated ska-tango-base to v1.7.0
+- Updated base images to 1.1.4
+- Resolved SKB-1677
 
 Version 11.1.0
 **************

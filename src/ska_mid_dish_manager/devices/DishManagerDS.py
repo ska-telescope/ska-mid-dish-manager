@@ -532,10 +532,7 @@ class DishManager(SKAController):
             "healthinfo": "healthInfo",
             "b1healthstate": "spfcB1HealthState",
             "b2healthstate": "spfcB2HealthState",
-            "b3healthstate": "spfcB3HealthState",
-            "b4healthstate": "spfcB4HealthState",
-            "b5ahealthstate": "spfcB5aHealthState",
-            "b5bhealthstate": "spfcB5bHealthState",
+            "b345healthstate": "spfcB345HealthState",
         }
         for attr in self._component_state_attr_map.values():
             self.set_change_event(attr, True, False)
@@ -2289,36 +2286,10 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="The Band 3 healthState as reported by the SPF controller.",
     )
-    def spfcB3HealthState(self):
+    def spfcB345HealthState(self):
         """Return the Band 3 healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b3healthstate", SPFHealthState.UNKNOWN)
+        return self.component_manager.component_state.get("b345healthstate", SPFHealthState.UNKNOWN)
 
-    @attribute(
-        dtype=SPFHealthState,
-        access=AttrWriteType.READ,
-        doc="The Band 4 healthState as reported by the SPF controller.",
-    )
-    def spfcB4HealthState(self):
-        """Return the Band 4 healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b4healthstate", SPFHealthState.UNKNOWN)
-
-    @attribute(
-        dtype=SPFHealthState,
-        access=AttrWriteType.READ,
-        doc="The Band 5a healthState as reported by the SPF controller.",
-    )
-    def spfcB5aHealthState(self):
-        """Return the Band 5a healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b5ahealthstate", SPFHealthState.UNKNOWN)
-
-    @attribute(
-        dtype=SPFHealthState,
-        access=AttrWriteType.READ,
-        doc="The Band 5b healthState as reported by the SPF controller.",
-    )
-    def spfcB5bHealthState(self):
-        """Return the Band 5b healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b5bhealthstate", SPFHealthState.UNKNOWN)
 
     # --------
     # Commands
