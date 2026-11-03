@@ -244,10 +244,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             healthinfo=[],
             b1healthstate=SPFHealthState.UNKNOWN,
             b2healthstate=SPFHealthState.UNKNOWN,
-            b3healthstate=SPFHealthState.UNKNOWN,
-            b4healthstate=SPFHealthState.UNKNOWN,
-            b5ahealthstate=SPFHealthState.UNKNOWN,
-            b5bhealthstate=SPFHealthState.UNKNOWN,
+            b345healthstate=SPFHealthState.UNKNOWN,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
@@ -295,10 +292,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 b5blnapowerstate=False,
                 b1healthstate=SPFHealthState.UNKNOWN,
                 b2healthstate=SPFHealthState.UNKNOWN,
-                b3healthstate=SPFHealthState.UNKNOWN,
-                b4healthstate=SPFHealthState.UNKNOWN,
-                b5ahealthstate=SPFHealthState.UNKNOWN,
-                b5bhealthstate=SPFHealthState.UNKNOWN,
+                b345healthstate=SPFHealthState.UNKNOWN,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
@@ -468,10 +462,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 "b5bLnaPowerState",
                 "b1HealthState",
                 "b2HealthState",
-                "b3HealthState",
-                "b4HealthState",
-                "b5aHealthState",
-                "b5bHealthState",
+                "b345HealthState",
             ],
             "B5DC": [
                 "rfcmPllLock",
