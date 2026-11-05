@@ -457,7 +457,9 @@ class DishManager(SKAController):
         self._track_table_load_mode = TrackTableLoadMode.APPEND
         self._last_commanded_pointing_params = ""
         self._release_info = ReleaseInfo(
-            ds_manager_address=self.DSDeviceFqdn or self.APManagerDeviceFqdn,
+            ds_manager_address=(
+                self.DSDeviceFqdn or self.APManagerDeviceFqdn or DEFAULT_DS_MANAGER_TRL
+            ),
             spfc_address=self.SPFDeviceFqdn,
             spfrx_address=self.SPFRxDeviceFqdn,
             b5dc_address=self.B5DCDeviceFqdn,
