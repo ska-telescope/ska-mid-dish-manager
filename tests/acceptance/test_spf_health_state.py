@@ -20,10 +20,7 @@ def reset_band_health_states_to_normal(
         band_health_states = [
             "b1HealthState",
             "b2HealthState",
-            "b3HealthState",
-            "b4HealthState",
-            "b5aHealthState",
-            "b5bHealthState",
+            "b345HealthState",
         ]
 
         for band in band_health_states:
