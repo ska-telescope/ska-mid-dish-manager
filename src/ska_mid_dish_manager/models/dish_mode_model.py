@@ -1,14 +1,16 @@
-"""This model enforces the legal transitions when a command is triggered. It assesses the current
-state of the device to decide if the requested state is a nearby node to allow or reject a command.
+"""This model enforces the legal transitions when a command is triggered.
+
+It assesses the current state of the dish to decide whether a requested command is allowed.
+Mode transition commands are checked against the dish mode transition graph, while other
+commands (such as Track and Slew) have their own checks on the component state.
 """
 
-import typing
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any, Dict
 
 import networkx as nx
 
-from ska_mid_dish_manager.models.dish_enums import DishMode
-from ska_mid_dish_manager.utils.action_helpers import report_task_progress
+from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 CONFIG_COMMANDS = (
     "ConfigureBand1",
@@ -17,6 +19,7 @@ CONFIG_COMMANDS = (
     "ConfigureBand4",
     "ConfigureBand5a",
     "ConfigureBand5b",
+    "ConfigureBand6",
     "ConfigureBand",
 )
 
@@ -33,14 +36,25 @@ DISH_MODE_NODES = (
 )
 
 
+class CommandNotAllowedError(Exception):
+    """Raised when a command is not allowed in the current state of the dish."""
+
+
 class DishModeModel:
     """Representation of the mode transition diagram, depicting commanded transitions."""
 
     def __init__(self) -> None:
         self.dishmode_graph = self._build_model()
+        self._allowed_commands_by_dish_mode = self._build_allowed_commands(self.dishmode_graph)
+        self._command_other_state_check_mapping: dict[str, Callable[[Dict], None]] = {
+            "SetOperateMode": self._is_set_operate_mode_allowed,
+            "Slew": self._is_slew_allowed,
+            "Track": self._is_track_allowed,
+            "TrackStop": self._is_track_stop_allowed,
+        }
 
     @classmethod
-    def _build_model(cls) -> Any:
+    def _build_model(cls) -> nx.DiGraph:
         dishmode_graph = nx.DiGraph()
         for node in DISH_MODE_NODES:
             dishmode_graph.add_node(node)
@@ -80,70 +94,110 @@ class DishModeModel:
 
         return dishmode_graph
 
-    @typing.no_type_check
+    @staticmethod
+    def _build_allowed_commands(dishmode_graph: nx.DiGraph) -> dict[str, frozenset[str]]:
+        """Precompute the commands allowed from each dish mode.
+
+        :param dishmode_graph: The dish mode transition graph.
+        :return: The set of allowed commands, keyed by dish mode name.
+        """
+        allowed_commands_by_mode: dict[str, frozenset[str]] = {}
+        for mode in dishmode_graph.nodes:
+            commands: set[str] = set()
+            for _, _, edge_data in dishmode_graph.out_edges(mode, data=True):
+                commands.update(edge_data.get("commands", ()))
+            allowed_commands_by_mode[mode] = frozenset(commands)
+        return allowed_commands_by_mode
+
+    @staticmethod
+    def _get_current_dish_mode(component_state: Dict[str, Any]) -> str:
+        """Return the current dish mode name from the component state."""
+        return DishMode(component_state["dishmode"]).name
+
+    @staticmethod
+    def _require_operate_and_ready(command: str, component_state: Dict[str, Any]) -> None:
+        """Require dishMode OPERATE and pointingState READY for a command."""
+        if component_state["dishmode"] != DishMode.OPERATE:
+            raise CommandNotAllowedError(
+                f"{command} command rejected for current dishMode. "
+                f"{command} command is allowed for dishMode OPERATE"
+            )
+        if component_state["pointingstate"] != PointingState.READY:
+            raise CommandNotAllowedError(
+                f"{command} command rejected for current pointingState. "
+                f"{command} command is allowed for pointingState READY"
+            )
+
     def is_command_allowed(
         self,
         cmd_name: str,
-        dish_mode: str | None = None,
-        component_manager: Any | None = None,
-        progress_callback: Callable | None = None,
+        component_state: Dict,
     ) -> bool:
-        """Determine if requested tango command is allowed based on current dish mode.
+        """Check whether a Tango command is allowed in the current state of the dish.
 
-        This method is used by the executor to evaluate the command pre-condition after it's
-        taken off the queue. To ensure the evaluation is always performed using an updated
-        component state (and not the old state used when the command is queued), the component
-        manager should be passed for the enqueue operation. In testing scenarios for example,
-        the function can be evoked directly with the dishmode parameter.
+        Mode transition commands are checked against the dish mode transition graph. Commands
+        with their own state checks (such as Track and Slew) need the component manager, since
+        they depend on more than the dish mode.
 
-        NOTE: Though the function signature has only one required argument, it still needs either
-        the dish_mode or component_manager passed to it to perform the evaluation.
+        :param cmd_name: The requested command.
+        :param component_state: The current component state dictionary.
 
-        :param cmd_name: the requested command
-        :param dish_mode: the current dishMode reported by the component state
-        :param component_manager: the component manager containing the component state
-        :param progress_callback: progress_callback function to report progress
+        :raises ValueError: If the command has no rule, or the dish mode is unknown to the model.
+        :raises CommandNotAllowedError: If the command is not allowed in the current state.
 
-        :raises TypeError: when no dish_mode or component_manager is provided to function call
-
-        :return: boolean indicating the function execution is allowed
+        :return: True if the command is allowed.
         """
-        try:
-            current_dish_mode = (
-                dish_mode or DishMode(component_manager.component_state["dishmode"]).name
+        current_dish_mode = self._get_current_dish_mode(component_state)
+        allowed_dish_mode_commands = self._allowed_commands_by_dish_mode.get(current_dish_mode)
+        check_other_command_allowed = self._command_other_state_check_mapping.get(cmd_name)
+
+        # SetMaintenanceMode is allowed from any dish mode except MAINTENANCE itself
+        if cmd_name == "SetMaintenanceMode":
+            if current_dish_mode == "MAINTENANCE":
+                raise CommandNotAllowedError(
+                    "SetMaintenanceMode not allowed: the dish is already in MAINTENANCE dishMode."
+                )
+            return True
+        elif check_other_command_allowed is not None:
+            check_other_command_allowed(component_state)
+            return True
+        elif allowed_dish_mode_commands is not None:
+            if cmd_name not in allowed_dish_mode_commands:
+                raise CommandNotAllowedError(
+                    f"{cmd_name} not allowed in {current_dish_mode} dishMode."
+                    f" Commands allowed from {current_dish_mode} are: "
+                    f"{sorted(allowed_dish_mode_commands)}."
+                )
+            return True
+        else:
+            raise ValueError(f"No rule is defined for command '{cmd_name}'.")
+
+    # ------------------------------------
+    # checks for commands NOT in the model
+    # ------------------------------------
+
+    def _is_track_allowed(self, component_state: Dict) -> None:
+        self._require_operate_and_ready("Track", component_state)
+
+    def _is_slew_allowed(self, component_state: Dict) -> None:
+        self._require_operate_and_ready("Slew", component_state)
+
+    def _is_track_stop_allowed(self, component_state: Dict) -> None:
+        dish_mode = component_state["dishmode"]
+        pointing_state = component_state["pointingstate"]
+        if dish_mode != DishMode.OPERATE and pointing_state not in (
+            PointingState.TRACK,
+            PointingState.SLEW,
+        ):
+            raise CommandNotAllowedError(
+                "TrackStop command rejected for current dishMode and pointingState. "
+                "TrackStop command is allowed for dishMode OPERATE or "
+                "pointingState SLEW/TRACK"
             )
-        except AttributeError as exc:
-            raise TypeError(
-                "is_command_allowed() requires either the dish_mode or"
-                " the component_manager to be specified"
-            ) from exc
 
-        # For a call to SetMaintenanceMode, the command is allowed regardless of the current
-        # dish mode. SetMaintenanceMode should not be allowed in Maintenance dish mode
-        if cmd_name == "SetMaintenanceMode" and not current_dish_mode == "MAINTENANCE":
-            return True
-
-        allowed_commands = []
-        for from_node, to_node in self.dishmode_graph.edges(current_dish_mode):
-            commands = self.dishmode_graph.get_edge_data(from_node, to_node).get("commands", None)
-            if commands:
-                allowed_commands.extend(commands)
-
-        if cmd_name in allowed_commands:
-            return True
-
-        # report the reason for the command rejection to logs and lrc attribute
-        msg = (
-            f"{cmd_name} not allowed in {current_dish_mode} dishMode."
-            f" Commands allowed from {current_dish_mode} are: {allowed_commands}."
-        )
-        if component_manager:
-            logger = component_manager.logger
-            logger.debug(msg)
-
-        report_task_progress(msg, progress_callback)
-        if component_manager:
-            # This is a pre-condition rejection, not an execution failure.
-            component_manager.publish_last_command_failure(cmd_name, msg)
-
-        return False
+    def _is_set_operate_mode_allowed(self, component_state: Dict) -> None:
+        if component_state["dishmode"] != DishMode.STANDBY_FP:
+            raise CommandNotAllowedError(
+                "Set operate mode command rejected for current dishMode. "
+                "Set operate mode command is allowed for dishMode STANDBY_FP"
+            )

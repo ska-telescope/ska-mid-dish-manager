@@ -5,10 +5,11 @@ from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
+from ska_tango_base.executor import TaskAborted
 
 from ska_mid_dish_manager.models.command_actions import SetStandbyFPModeAction, TrackStopAction
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
-from ska_mid_dish_manager.utils.action_helpers import report_task_progress, update_task_status
+from ska_mid_dish_manager.utils.action_helpers import update_task_status
 
 
 class AbortSequenceCommandHandler:
@@ -18,31 +19,26 @@ class AbortSequenceCommandHandler:
         """Initialize the abort sequence command handler."""
         self._component_manager = component_manager
         self.logger = logger or component_manager.logger
-        self._progress_callback = component_manager._command_progress_callback
+        self.action_timeout_s = component_manager.get_action_timeout()
         self._abort_event = Event()
-
-    def _dummy_task_cb(self, *args, **kwargs):
-        # TODO: remove after action handlers are updated to accept None for task callbacks
-        pass
 
     def _reset_track_table(self, task_abort_event: Event) -> None:
         if task_abort_event.is_set():
-            self.logger.debug("abort-sequence: failed to reset track table")
-            return
+            self.logger.error("abort-sequence: failed to reset track table")
+            raise TaskAborted()
 
         self.logger.debug("abort-sequence: resetting track table")
         result_code, msg = self._component_manager.reset_track_table()
         if result_code == ResultCode.FAILED:
             self.logger.error(f"abort-sequence: ResetTrackTable failed: {msg}")
-            task_abort_event.set()
-            return
+            raise RuntimeError(f"ResetTrackTable failed: {msg}")
 
         self.logger.debug("abort-sequence: track table has been successfully reset")
 
     def _stop_dish(self, task_abort_event: Event) -> None:
         if task_abort_event.is_set():
-            self.logger.debug("abort-sequence: failed to stop dish")
-            return
+            self.logger.error("abort-sequence: failed to stop dish")
+            raise TaskAborted()
 
         current_dish_mode = self._component_manager.component_state.get("dishmode")
         current_pointing_state = self._component_manager.component_state.get("pointingstate")
@@ -57,15 +53,19 @@ class AbortSequenceCommandHandler:
             return
 
         self.logger.debug("abort-sequence: stopping dish")
-        TrackStopAction(self.logger, self._component_manager).execute(
-            self._dummy_task_cb, task_abort_event
-        )
+        result_code, msg = TrackStopAction(
+            self.logger, self._component_manager, self.action_timeout_s
+        ).execute(task_abort_event)
+        if result_code == ResultCode.FAILED:
+            self.logger.error(f"TrackStop failed: {msg}")
+            raise RuntimeError(f"TrackStop failed: {msg}")
+
         self.logger.debug("abort-sequence: dish has been successfully stopped")
 
     def _ensure_transition_to_fp_mode(self, task_abort_event: Event) -> None:
         if task_abort_event.is_set():
-            self.logger.debug("abort-sequence: failed to transition to StandbyFP mode")
-            return
+            self.logger.error("abort-sequence: failed to transition to StandbyFP mode")
+            raise TaskAborted()
 
         self.logger.debug("abort-sequence: transitioning to StandbyFP dish mode")
 
@@ -79,14 +79,19 @@ class AbortSequenceCommandHandler:
             return
 
         # fan out respective FP command to the sub devices
-        SetStandbyFPModeAction(self.logger, self._component_manager).execute(
-            self._dummy_task_cb, task_abort_event
-        )
+        result_code, msg = SetStandbyFPModeAction(
+            self.logger, self._component_manager, self.action_timeout_s
+        ).execute(task_abort_event)
+        if result_code == ResultCode.FAILED:
+            self.logger.error(f"SetStandbyFPMode failed: {msg}")
+            raise RuntimeError(f"SetStandbyFPMode failed: {msg}")
+
         self.logger.debug("abort-sequence: SetStandbyFPMode command completed successfully")
 
     def complete_abort_sequence(
         self, task_abort_event: Optional[Event] = None, task_callback: Optional[Callable] = None
     ):
+        self.logger.debug("Executing abort sequence")
         update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
         task_abort_event = task_abort_event or self._abort_event
 
@@ -101,46 +106,37 @@ class AbortSequenceCommandHandler:
         # The EndScan provides sufficient delay so that there is no contention when
         # ResetTrackTable is called after it - TODO: improvement chain commands on completion.
 
-        # stop the dish
-        self._stop_dish(task_abort_event)
+        try:
+            # stop the dish
+            self._stop_dish(task_abort_event)
 
-        # go to STANDBY-FP
-        self._ensure_transition_to_fp_mode(task_abort_event)
+            # go to STANDBY-FP
+            self._ensure_transition_to_fp_mode(task_abort_event)
 
-        # clear the scan id
-        self.logger.debug("abort-sequence: issuing EndScan")
-        self._component_manager._end_scan(task_abort_event)
+            # clear the scan id
+            self.logger.debug("abort-sequence: issuing EndScan")
+            self._component_manager.clear_scan_id_callback()
 
-        # reset the track table
-        self._reset_track_table(task_abort_event)
-
-        if task_abort_event.is_set():
-            self.logger.debug("Abort sequence failed")
-            report_task_progress("Abort sequence failed", self._progress_callback)
+            # reset the track table
+            self._reset_track_table(task_abort_event)
+        except TaskAborted:
             update_task_status(
                 task_callback,
                 status=TaskStatus.FAILED,
                 result=(ResultCode.FAILED, "Abort sequence failed"),
             )
+        except RuntimeError as e:
+            update_task_status(
+                task_callback,
+                status=TaskStatus.FAILED,
+                result=(ResultCode.FAILED, f"Abort sequence failed: {str(e)}"),
+            )
             return
 
-        report_task_progress("Abort sequence completed", self._progress_callback)
+        # report_task_progress("Abort sequence completed", self._progress_callback)
         update_task_status(
             task_callback,
             status=TaskStatus.COMPLETED,
             result=(ResultCode.OK, "Abort sequence completed"),
         )
         self.logger.debug("Abort sequence completed")
-
-    def on_abort_task_complete(
-        self, task_callback: Optional[Callable] = None, *args, **kwargs
-    ) -> None:
-        """Executes the abort sequence."""
-        status = kwargs.get("status")
-        if status == TaskStatus.COMPLETED:
-            self.logger.debug("Submitting abort sequence to executor")
-            self._abort_event.clear()
-            self._component_manager.submit_task(
-                self.complete_abort_sequence,
-                task_callback=task_callback,
-            )

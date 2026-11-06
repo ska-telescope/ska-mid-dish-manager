@@ -1187,7 +1187,6 @@ dependencies = [
     { name = "pytango" },
     { name = "requests" },
     { name = "rule-engine" },
-    { name = "ska-control-model" },
     { name = "ska-mid-dish-dcp-lib" },
     { name = "ska-ser-logging" },
     { name = "ska-tango-base" },
@@ -1239,10 +1238,9 @@ requires-dist = [
     { name = "pytango", specifier = ">=10.3.1,<11.0.0" },
     { name = "requests", specifier = ">=2.34.2,<3.0.0" },
     { name = "rule-engine", specifier = "==3.5.0" },
-    { name = "ska-control-model", specifier = ">=1.0.0" },
     { name = "ska-mid-dish-dcp-lib", specifier = ">=0.0.9,<0.0.10" },
     { name = "ska-ser-logging", specifier = ">=0.4.1" },
-    { name = "ska-tango-base", specifier = "==1.7.0" },
+    { name = "ska-tango-base", git = "https://gitlab.com/ska-telescope/ska-tango-base.git?branch=main" },
     { name = "typing-extensions", specifier = ">=4.3.0" },
 ]
 
@@ -1307,8 +1305,8 @@ wheels = [
 
 [[package]]
 name = "ska-tango-base"
-version = "1.7.0"
-source = { registry = "https://artefact.skao.int/repository/pypi-internal/simple" }
+version = "1.8.0.dev0"
+source = { git = "https://gitlab.com/ska-telescope/ska-tango-base.git?branch=main#f7a53a61bc2e76503d65bb691aa8d48fb3044217" }
 dependencies = [
     { name = "debugpy" },
     { name = "jsonschema" },
@@ -1317,10 +1315,6 @@ dependencies = [
     { name = "ska-control-model" },
     { name = "ska-ser-logging" },
     { name = "transitions" },
-]
-sdist = { url = "https://artefact.skao.int/repository/pypi-internal/packages/ska-tango-base/1.7.0/ska_tango_base-1.7.0.tar.gz", hash = "sha256:1446539b8537857ada3a096f05dc4eb3fd94f8ea7130a7b6ca2ca1314f40937a" }
-wheels = [
-    { url = "https://artefact.skao.int/repository/pypi-internal/packages/ska-tango-base/1.7.0/ska_tango_base-1.7.0-py3-none-any.whl", hash = "sha256:71564dd2a5c5de8c96217cd2f5442d21084fa12918b2e3e83b44f2159ff041b8" },
 ]
 
 [[package]]

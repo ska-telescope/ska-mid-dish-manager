@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: sandbox-pod
-      image: artefact.skao.int/ska-tango-images-tango-itango:9.5.0
+      image: artefact.skao.int/ska-tango-images-tango-itango:10.3.2
       imagePullPolicy: IfNotPresent
       stdin: true
       stdinOnce: true

@@ -1,11 +1,11 @@
 """Utility decorators."""
 
 import functools
-import logging
 import time
 from typing import Any, Callable
 
-from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_control_model import ResultCode, TaskStatus
+from ska_tango_base.long_running_commands import LRCReqType, long_running_command
 
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 
@@ -34,21 +34,24 @@ def time_tango_write() -> Callable[[Any], Any]:
     return decorator
 
 
-def record_command(record_mode: bool = False) -> Callable[[Any], Any]:
-    """Return a function that records the 'lastcommandinvoked' and or 'lastcommandedmode'
-       before calling the command.
+def record_command(record_mode: bool | Callable[..., Any] = False) -> Callable[..., Any]:
+    """Record 'lastcommandinvoked' and optionally 'lastcommandedmode' before calling the command.
 
-    :param record_mode: Flag to update both or only 'lastcommandinvoked', 'lastcommandedmode'.
+    Can be used with or without arguments:
+
+        @record_command          # records only 'lastcommandinvoked'
+        @record_command(True)    # records both 'lastcommandinvoked' and 'lastcommandedmode'
+
+    :param record_mode: Whether to also record 'lastcommandedmode'. Defaults to False.
     """
 
-    def decorator(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             device_instance = args[0]
             component_manager = device_instance.component_manager
             command_and_time = (str(time.time()), func.__name__)  # ty: ignore[unresolved-attribute]
-            # record both if True
-            if record_mode:
+            if record_mode is True:
                 component_manager._update_component_state(
                     lastcommandinvoked=command_and_time,
                     lastcommandedmode=command_and_time,
@@ -59,81 +62,13 @@ def record_command(record_mode: bool = False) -> Callable[[Any], Any]:
 
         return wrapper
 
+    # Used without parentheses: @record_command
+    if callable(record_mode):
+        func, record_mode = record_mode, False
+        return decorator(func)
+
+    # Used with parentheses: @record_command() or @record_command(True)
     return decorator
-
-
-def check_communicating(func: Any) -> Any:
-    """Return a function that checks component communication before calling a function.
-
-    The component manager needs to have established communications with
-    the component before the function is called but if there is no communication
-    the function will be sent to the component and the client will be informed
-
-    This function is intended to be used as a decorator:
-
-    .. code-block:: python
-
-        @check_communicating
-        def slew(self): ...
-
-    :param func: the wrapped function
-
-    :return: the wrapped function
-    """
-
-    @functools.wraps(func)
-    def _wrapper(
-        component_manager: Any,
-        *args: Any,
-        **kwargs: Any,
-    ) -> Any:
-        """Check for component communication before calling the function.
-
-        This is a wrapper function that implements the functionality of
-        the decorator.
-
-        :param component_manager: the component manager to check
-        :param args: positional arguments to the wrapped function
-        :param kwargs: keyword arguments to the wrapped function
-
-        :return: whatever the wrapped function returns
-        """
-        # Don't bother to run the function if the client
-        # intentionally severed connection to the component
-        if component_manager.communication_state == CommunicationStatus.DISABLED:
-            raise ConnectionError(
-                "Commmunication with sub-components is disabled, issue `StartCommunication`"
-            )
-
-        # If communication is being actively attempted but
-        # the status is uncertain, log a warning and proceed
-        if component_manager.communication_state == CommunicationStatus.NOT_ESTABLISHED:
-            warning_message = (
-                "Communication with component is not established: "
-                f"'{type(component_manager).__name__}.{func.__name__}' may fail."
-            )
-            logging.warning(warning_message)
-        return func(component_manager, *args, **kwargs)
-
-    return _wrapper
-
-
-def requires_component_manager(func: Any) -> Any:
-    """Decorator that checks if component_manager is available."""
-
-    @functools.wraps(func)
-    def _wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
-        cm = getattr(self, "component_manager", None)
-        if cm:
-            return func(self, *args, **kwargs)
-
-        msg = "Component manager not initialized."
-        logger = getattr(self, "logger", None)
-        if logger:
-            logger.error(msg, extra=OPERATOR_TAG)
-        raise RuntimeError(msg)
-
-    return _wrapper
 
 
 def log_tango_command() -> Callable[[Any], Any]:
@@ -237,3 +172,35 @@ def last_command_failure_decorator(func: Any) -> Any:
             raise
 
     return last_command_failure_wrapper
+
+
+def slow_command(
+    *, check_allowed: bool = True, **cmd_kwargs: Any
+) -> Callable[[Callable[..., Any]], Any]:
+    """Mark a DishManager method as a long running command.
+
+    By default, the command is gated by the dish mode model: the check is built from the
+    method's name and runs when the command is queued and again just before it executes.
+
+    :param check_allowed: Whether to gate the command with the dish mode model. Set to False
+        for commands the model has no rule for.
+    :param cmd_kwargs: Passed on to long_running_command, and from there to tango.server.command.
+    """
+
+    def decorator(tango_cmd: Callable[..., Any]) -> Any:
+        if not check_allowed:
+            return long_running_command(tango_cmd, **cmd_kwargs)
+
+        command_name = tango_cmd.__name__
+
+        def is_allowed(device: Any, request_type: LRCReqType = LRCReqType.ENQUEUE_REQ) -> bool:
+            return device.is_command_allowed(command_name)
+
+        # Tango looks up fisallowed by name, so every command's check needs a unique name.
+        # Without this, all commands share the check of the last command decorated.
+        is_allowed.__name__ = f"is_{command_name}_allowed"
+        is_allowed.__qualname__ = is_allowed.__name__
+
+        return long_running_command(tango_cmd, fisallowed=is_allowed, **cmd_kwargs)
+
+    return decorator

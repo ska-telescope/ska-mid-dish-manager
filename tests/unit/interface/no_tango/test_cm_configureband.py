@@ -10,7 +10,6 @@ from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManager
-from ska_mid_dish_manager.models.command_actions import apply_pointing_model
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DSOperatingMode,
@@ -26,9 +25,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
-@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_handler(
-    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict[str, MagicMock],
 ) -> None:
@@ -40,7 +37,7 @@ def test_configureband_handler(
     """
     component_state_cb = callbacks["comp_state_cb"]
     component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
-    mock_apply_pointing_model.return_value = None
+    component_manager.reapply_pointing_model = Mock(return_value=(ResultCode.OK, "msg"))
 
     component_manager.configure_band_cmd(Band.B2, True, callbacks["task_cb"])
     # wait a bit for the lrc updates to come through
@@ -91,7 +88,7 @@ def test_configureband_handler(
     progress_cb.wait_for_args(("SetOperateMode completed.",))
 
     # Verify apply_pointing_model was called
-    mock_apply_pointing_model.assert_called_once()
+    component_manager.reapply_pointing_model.assert_called_once()
 
 
 @pytest.mark.unit
@@ -99,9 +96,7 @@ def test_configureband_handler(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
-@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_json_handler_happy(
-    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict[str, MagicMock],
 ) -> None:
@@ -126,7 +121,7 @@ def test_configureband_json_handler_happy(
     }
     """
     component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
-    mock_apply_pointing_model.return_value = None
+    component_manager.reapply_pointing_model = Mock(return_value=(ResultCode.OK, "msg"))
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
@@ -181,7 +176,7 @@ def test_configureband_json_handler_happy(
     progress_cb.wait_for_args(("SetOperateMode completed.",))
 
     # Verify apply_pointing_model was called
-    mock_apply_pointing_model.assert_called_once()
+    component_manager.reapply_pointing_model.assert_called_once()
 
 
 @pytest.mark.unit
@@ -468,9 +463,7 @@ def test_configureband_5b_with_subband(
     "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
     Mock(return_value=True),
 )
-@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
 def test_configureband_5b_with_subband_ignore_b5dc(
-    mock_apply_pointing_model,
     component_manager: DishManagerComponentManager,
     callbacks: dict[str, MagicMock],
 ) -> None:
@@ -498,7 +491,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
     }"""
     component_manager._component_state["ignoreb5dc"] = True
     component_manager.component_state["band2pointingmodelparams"] = [1.8] * 18
-    mock_apply_pointing_model.return_value = None
+    component_manager.reapply_pointing_model = Mock(return_value=(ResultCode.OK, "msg"))
     status, response = component_manager.configure_band_with_json(
         configure_json, callbacks["task_cb"]
     )
@@ -697,18 +690,17 @@ def test_apply_pointing_model_behavior(caplog, pointing_values, should_skip):
     - skips applying pointing model if values are empty or all zeros
     - applies otherwise
     """
+    reapply_pointing_model = DishManagerComponentManager.reapply_pointing_model
     caplog.set_level("DEBUG")
-    mock_logger = Mock()
     mock_cm = Mock()
-    mock_task_cb = Mock()
     band_name = "2"
     band_param_name = "band2pointingmodelparams"
 
     mock_cm.component_state = {band_param_name: pointing_values}
 
-    apply_pointing_model(band_param_name, band_name, mock_task_cb, mock_logger, mock_cm)
+    reapply_pointing_model(mock_cm, band_param_name, band_name)
 
-    info_msgs = [call.args[0] for call in mock_logger.info.call_args_list]
+    info_msgs = [call.args[0] for call in mock_cm.logger.info.call_args_list]
 
     if should_skip:
         # nothing applied, logs contain skip message
