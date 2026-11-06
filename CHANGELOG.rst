@@ -9,6 +9,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 *************
 - Fixed bug that raised exception on setting ignoreSpf and ignoreSpfrx which prevented persistence in tango database.
 - Updated ska-tango-base to v1.7.0
+- Updated base images to 1.1.4
+- Resolved SKB-1677
 - Running fanned out tango commands now read their awaited attributes off the device on every progress check.
 - Using signals for `lastCommandInvoked` and `lastCommandedMode` updates so it does not block via the component state update.
 

@@ -41,10 +41,7 @@ def reset_band_health_states_to_normal(
     [
         ("b1healthstate", "spfcB1HealthState"),
         ("b2healthstate", "spfcB2HealthState"),
-        ("b3healthstate", "spfcB3HealthState"),
-        ("b4healthstate", "spfcB4HealthState"),
-        ("b5ahealthstate", "spfcB5aHealthState"),
-        ("b5bhealthstate", "spfcB5bHealthState"),
+        ("b345healthstate", "spfcB345HealthState"),
     ],
 )
 def test_spf_per_band_health_state_monitoring(
