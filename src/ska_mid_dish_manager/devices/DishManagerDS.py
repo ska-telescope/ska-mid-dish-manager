@@ -6,6 +6,7 @@ and the subservient devices
 
 import json
 import logging
+import time
 import weakref
 from datetime import datetime
 from functools import reduce
@@ -17,6 +18,7 @@ from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
 )
 from ska_tango_base import SKAController
 from ska_tango_base.commands import SubmittedSlowCommand
+from ska_tango_base.software_bus import Signal, attribute_from_signal
 from tango import (
     AttrQuality,
     AttrWriteType,
@@ -127,6 +129,24 @@ class DishManager(SKAController):
         default_value=DEFAULT_ACTION_TIMEOUT_S,
     )
 
+    # lastCommandInvoked and lastCommandedMode are enqueued on the shared bus.
+    _last_command_invoked = Signal[tuple[str, str]](initial_value=("0.0", ""))
+    _last_commanded_mode = Signal[tuple[str, str]](initial_value=("0.0", ""))
+
+    def _record_command(self, command_name: str, record_mode: bool = False) -> None:
+        """Record the last command invoked and, optionally, the last commanded mode.
+
+        Used by the component manager for commands it triggers itself (e.g. WindStow,
+        HeartbeatStow). Tango commands are recorded by the `record_command` decorator.
+
+        :param command_name: the name of the command (or trigger source) to record
+        :param record_mode: if True also record it as the last commanded mode
+        """
+        command_and_time = (str(time.time()), command_name)
+        self._last_command_invoked = command_and_time
+        if record_mode:
+            self._last_commanded_mode = command_and_time
+
     def create_component_manager(self) -> DishManagerComponentManager:
         """Create the component manager for DishManager.
 
@@ -153,6 +173,7 @@ class DishManager(SKAController):
             default_watchdog_timeout=self.DefaultWatchdogTimeout,
             default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
             default_wind_gust_threshold=self.WindGustThreshold,
+            record_command_callback=self._record_command,
         )
 
     def init_command_objects(self) -> None:
@@ -501,8 +522,6 @@ class DishManager(SKAController):
             "meanwindspeed": "meanWindSpeed",
             "windgust": "windGust",
             "autowindstowenabled": "autoWindStowEnabled",
-            "lastcommandedmode": "lastCommandedMode",
-            "lastcommandinvoked": "lastCommandInvoked",
             "lastcommandfailure": "lastCommandFailure",
             "lasttangoeventerror": "lastTangoEventError",
             "dscctrlstate": "dscCtrlState",
@@ -616,8 +635,9 @@ class DishManager(SKAController):
     # ----------
 
     # pylint: disable=invalid-name
-    @attribute(
-        dtype=(str, str),
+    lastCommandedMode = attribute_from_signal(  # noqa: N815
+        _last_commanded_mode,
+        dtype=(str,),
         max_dim_x=2,
         access=AttrWriteType.READ,
         doc=(
@@ -625,22 +645,14 @@ class DishManager(SKAController):
             "Time is a UNIX UTC timestamp."
         ),
     )
-    @time_tango_write()
-    @requires_component_manager
-    def lastCommandedMode(self) -> tuple[str, str]:
-        """Return the last commanded mode."""
-        return self.component_manager.component_state["lastcommandedmode"]
 
-    @attribute(
-        dtype=(str, str),
+    lastCommandInvoked = attribute_from_signal(  # noqa: N815
+        _last_command_invoked,
+        dtype=(str,),
         max_dim_x=2,
         access=AttrWriteType.READ,
         doc="Stores the name and timestamp (in UNIX UTC format) of the last invoked command.",
     )
-    @requires_component_manager
-    def lastCommandInvoked(self) -> tuple[str, str]:
-        """Return the last command invoked and its timestamp."""
-        return self.component_manager.component_state["lastcommandinvoked"]
 
     @attribute(
         dtype=(str, str, str),

@@ -35,26 +35,25 @@ def time_tango_write() -> Callable[[Any], Any]:
 
 
 def record_command(record_mode: bool = False) -> Callable[[Any], Any]:
-    """Return a function that records the 'lastcommandinvoked' and or 'lastcommandedmode'
+    """Return a function that records the 'lastCommandInvoked' and or 'lastCommandedMode'
        before calling the command.
 
-    :param record_mode: Flag to update both or only 'lastcommandinvoked', 'lastcommandedmode'.
+    The values are emitted on the device's `_last_command_invoked` and `_last_commanded_mode`
+    signals.
+
+    :param record_mode: Flag to update both or only 'lastCommandInvoked', 'lastCommandedMode'.
     """
 
     def decorator(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             device_instance = args[0]
-            component_manager = device_instance.component_manager
             command_and_time = (str(time.time()), func.__name__)  # ty: ignore[unresolved-attribute]
+            # setting a Signal emits the value on the device's shared signal bus
+            device_instance._last_command_invoked = command_and_time
             # record both if True
             if record_mode:
-                component_manager._update_component_state(
-                    lastcommandinvoked=command_and_time,
-                    lastcommandedmode=command_and_time,
-                )
-            else:
-                component_manager._update_component_state(lastcommandinvoked=command_and_time)
+                device_instance._last_commanded_mode = command_and_time
             return func(*args, **kwargs)
 
         return wrapper
