@@ -11,6 +11,8 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Updated ska-tango-base to v1.7.0
 - Updated base images to 1.1.4
 - Resolved SKB-1677
+- Running fanned out tango commands now read their awaited attributes off the device on every progress check.
+- Using signals for `lastCommandInvoked` and `lastCommandedMode` updates so it does not block via the component state update.
 
 Version 11.1.0
 **************

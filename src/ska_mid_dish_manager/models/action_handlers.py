@@ -333,7 +333,7 @@ class ActionHandler:
 
             # Update status of all running commands
             for cmd in self.fanned_out_commands:
-                cmd.report_progress()
+                cmd.report_progress(task_abort_event)
 
             # Handle any failed fanned out command
             if any(cmd.failed for cmd in self.fanned_out_commands):
@@ -445,7 +445,7 @@ class SequentialActionHandler(ActionHandler):
                     self._handle_abort(task_callback)
                     return
 
-                cmd.report_progress()
+                cmd.report_progress(task_abort_event)
 
                 if cmd.failed or cmd.successful:
                     break
