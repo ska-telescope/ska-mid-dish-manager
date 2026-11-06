@@ -2284,7 +2284,7 @@ class DishManager(SKAController):
     @attribute(
         dtype=SPFHealthState,
         access=AttrWriteType.READ,
-        doc="The Band 3 healthState as reported by the SPF controller.",
+        doc="The Band 345 healthState as reported by the SPF controller.",
     )
     def spfcB345HealthState(self):
         """Return the Band 345 healthState as reported by the SPF controller."""

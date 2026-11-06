@@ -1698,7 +1698,7 @@ Attributes
 .. py:attribute:: spfcB345HealthState
 	:module: DishManager
 
-	The Band 3 healthState as reported by the SPF controller.
+	The Band 345 healthState as reported by the SPF controller.
 
 	:access: READ
 	:data type: DevEnum
