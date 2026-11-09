@@ -12,6 +12,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_DS_MANAGER_TRL,
     DEFAULT_MK_WMS_TRL,
     DEFAULT_SPFC_TRL,
+    DEFAULT_SPFRX_TRL,
 )
 from tests.utils import ComponentStateStore, EventStore
 
@@ -68,27 +69,22 @@ def component_state_store():
 
 @pytest.fixture(scope="session")
 def dish_manager_device_fqdn():
-    return "tango://0.0.0.0:8237/test/nodb/dishmanager#dbase=no"
     return DEFAULT_DISH_MANAGER_TRL
 
 
 @pytest.fixture(scope="session")
 def ds_device_fqdn():
-    return "tango://0.0.0.0:8236/test/nodb/dsmanager#dbase=no"
     return DEFAULT_DS_MANAGER_TRL
 
 
 @pytest.fixture(scope="session")
 def spf_device_fqdn():
-    return "tango://0.0.0.0:8235/test/nodb/spfdevice#dbase=no"
     return DEFAULT_SPFC_TRL
 
 
 @pytest.fixture(scope="session")
 def spfrx_device_fqdn():
-    return "tango://0.0.0.0:8234/test/nodb/spfrxdevice#dbase=no"
-
-    # return DEFAULT_SPFRX_TRL
+    return DEFAULT_SPFRX_TRL
 
 
 @pytest.fixture(scope="session")
