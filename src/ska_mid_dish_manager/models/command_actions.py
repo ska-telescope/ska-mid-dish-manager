@@ -648,13 +648,13 @@ class ConfigureBandAction(Action):
             awaited_component_state={
                 "configuredband": spfrx_awaited_band,
             },
-            timeout_s=10,
-            continue_on_timeout=True,
+            timeout_s=15,
+            continue_on_timeout=False,
             progress_callback=self._progress_callback,
             wait_name="Wait for operatingMode.CONFIGURE",
         )
 
-        fanned_out_commands: list[FannedOutTangoCommand|FannedOutWaitForState] = [
+        fanned_out_commands: list[FannedOutTangoCommand | FannedOutWaitForState] = [
             spfrx_configure_band_command,
             spfrx_wait_for_config_action,
             spfrx_wait_for_operate_action,
