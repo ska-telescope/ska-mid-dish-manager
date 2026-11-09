@@ -234,14 +234,14 @@ class EventStore:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
-                        return True
+                        return event
                     if np.isclose(event.attr_value.value, value).all():
-                        return True
+                        return event
                     continue
                 if event.attr_value.value != value:
                     continue
                 if event.attr_value.value == value:
-                    return True
+                    return event
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
             if proxy:
@@ -381,17 +381,17 @@ class EventStore:
                     last_received_result = received_result
 
                     if received_result == expected_obj:
-                        return True
+                        return event
 
                     if isinstance(received_result, str):
                         try:
                             if json.loads(received_result) == expected_obj:
-                                return True
+                                return event
                         except json.JSONDecodeError:
                             pass
 
                     if str(received_result) == command_result:
-                        return True
+                        return event
 
                     continue
 

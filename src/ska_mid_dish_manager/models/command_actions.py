@@ -626,7 +626,7 @@ class ConfigureBandAction(Action):
             device="SPFRX",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
             awaited_component_state={"operatingmode": SPFRxOperatingMode.CONFIGURE},
-            timeout_s=15,
+            timeout_s=25,
             continue_on_timeout=True,
             progress_callback=self._progress_callback,
             wait_name="Wait for operatingMode.CONFIGURE",
@@ -638,7 +638,7 @@ class ConfigureBandAction(Action):
             awaited_component_state={
                 "operatingmode": SPFRxOperatingMode.OPERATE,
             },
-            timeout_s=15,
+            timeout_s=25,
             continue_on_timeout=True,
             progress_callback=self._progress_callback,
             wait_name="Wait for operatingMode.OPERATE",
@@ -651,7 +651,7 @@ class ConfigureBandAction(Action):
             awaited_component_state={
                 "configuredband": spfrx_awaited_band,
             },
-            timeout_s=15,
+            timeout_s=25,
             continue_on_timeout=False,
             progress_callback=self._progress_callback,
             wait_name=f"Wait for configuredband {spfrx_awaited_band}",
