@@ -624,7 +624,8 @@ class ConfigureBandAction(Action):
             device="SPFRX",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
             awaited_component_state={"operatingmode": SPFRxOperatingMode.CONFIGURE},
-            timeout_s=10,
+            timeout_s=15,
+            continue_on_timeout=True,
             progress_callback=self._progress_callback,
             wait_name="Wait for operatingMode.CONFIGURE",
         )
@@ -635,10 +636,10 @@ class ConfigureBandAction(Action):
             awaited_component_state={
                 "operatingmode": SPFRxOperatingMode.OPERATE,
             },
-            timeout_s=10,
+            timeout_s=15,
             continue_on_timeout=True,
             progress_callback=self._progress_callback,
-            wait_name="Wait for operatingMode.CONFIGURE",
+            wait_name="Wait for operatingMode.OPERATE",
         )
 
         spfrx_wait_for_band_action = FannedOutWaitForState(
@@ -651,7 +652,7 @@ class ConfigureBandAction(Action):
             timeout_s=15,
             continue_on_timeout=False,
             progress_callback=self._progress_callback,
-            wait_name="Wait for operatingMode.CONFIGURE",
+            wait_name=f"Wait for configuredband {spfrx_awaited_band}",
         )
 
         fanned_out_commands: list[FannedOutTangoCommand | FannedOutWaitForState] = [
