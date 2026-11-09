@@ -534,7 +534,7 @@ class ConfigureBandAction(Action):
         self.requested_cmd = requested_cmd
         b5dc_set_frequency_command = None
 
-        spfrx_awaited_band = self.band
+        spfrx_awaited_band = None
 
         if self.data is not None:
             data_json = json.loads(self.data)
@@ -543,6 +543,7 @@ class ConfigureBandAction(Action):
             sub_band = dish_data.get("sub_band")
             # Override band and indexer_enum if json data is provided
             self.band = Band[f"B{receiver_band}"]
+            spfrx_awaited_band = self.band
 
             self.indexer_enum = IndexerPosition[f"B{receiver_band}"]
 
@@ -602,6 +603,7 @@ class ConfigureBandAction(Action):
 
         else:
             spfrx_requested_cmd = self.requested_cmd
+            spfrx_awaited_band = self.band
             if self.band == Band.B5b:
                 # send B1 to SPFRx if the requested band is B5b for the old interface
                 spfrx_requested_cmd = "ConfigureBand1"

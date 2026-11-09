@@ -71,19 +71,35 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
     expected_progress_updates = [
         # ConfigureBand2
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+        "ConfigureBand2 started",
+        "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "SPFRX.ConfigureBand2 started",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Awaiting SPFRX configuredband change to B2",
+        (
+            "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2, SPFRX.Wait for "
+            "operatingMode.CONFIGURE, SPFRX.Wait for operatingMode.OPERATE, SPFRX.Wait"
+            " for configuredband 2"
+        ),
         "Awaiting configuredband change to B2",
+        "SPFRX.ConfigureBand2 completed",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
         "DS indexerposition changed to B2",
         "DS.SetIndexPosition completed",
         "SPFRX configuredband changed to B2",
-        "SPFRX.ConfigureBand2 completed",
+        "SPFRX.Wait for configuredband 2 completed",
         "ConfigureBand2 complete. Triggering on success action.",
-        # Then SetOperateMode
+        "SetOperateMode started",
         "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
         "DS operatingmode already POINT, not fanning out SetPointMode command",
-        "SetOperateMode completed",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
     ]
 
     events = status_event_store.get_queue_values()
@@ -206,7 +222,7 @@ def test_configure_band_2_from_stow(
         # ConfigureBand2
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Awaiting SPFRX configuredband change to B2",
         "Awaiting configuredband change to B2",
         "DS indexerposition changed to B2",
         "DS.SetIndexPosition completed",
@@ -295,7 +311,7 @@ def test_configure_band_json(
         # ConfigureBand
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Awaiting SPFRX configuredband change to B2",
         "Awaiting configuredband change to B2",
         "DS indexerposition changed to B2",
         "DS.SetIndexPosition completed",
@@ -322,11 +338,30 @@ def test_configure_band_json(
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
 
     expected_progress_updates = [
-        "Fanned out commands: SPFRX.ConfigureBand",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Awaiting SPFRX configuredband change to B2",
+        (
+            "Fanned out commands: SPFRX.ConfigureBand, SPFRX.Wait for operatingMode.CONFIGURE,"
+            " SPFRX.Wait for operatingMode.OPERATE, SPFRX.Wait for configuredband 2"
+        ),
         "Awaiting configuredband change to B2",
-        "SPFRX configuredband changed to B2",
         "SPFRX.ConfigureBand completed",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.Wait for configuredband 2 completed",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
     ]
 
     events = status_event_store.get_queue_values(timeout=0)
@@ -581,7 +616,7 @@ def test_slow_spfrx_configure_band(
     expected_progress_updates = (
         "ConfigureBand started",
         "SPFRX.ConfigureBand started",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Awaiting SPFRX configuredband change to B2",
         "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
         "Awaiting configuredband change to B2",
         "SPFRX operatingmode changed to OPERATE",
@@ -626,7 +661,7 @@ def test_slow_spfrx_configure_band(
         # ConfigureBand action
         "ConfigureBand started",
         "SPFRX.ConfigureBand started",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Awaiting SPFRX configuredband change to B2",
         "Fanned out commands: SPFRX.ConfigureBand",
         "Awaiting configuredband change to B2",
         "SPFRX configuredband changed to B2",
