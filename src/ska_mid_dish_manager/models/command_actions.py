@@ -679,8 +679,6 @@ class ConfigureBandAction(Action):
         if b5dc_set_frequency_command:
             fanned_out_commands.append(b5dc_set_frequency_command)
 
-        print("CCCCCC ", action_on_success)
-
         self._handler = SequentialActionHandler(
             logger=self.logger,
             action_name=self.requested_cmd,
@@ -744,8 +742,6 @@ class ConfigureBandActionSequence(Action):
         )
 
         final_action = operate_action if current_dish_mode != DishMode.STOW else None
-
-        print("BBBBBBB ", final_action)
 
         # Step 2: Configure band action
         configure_action = ConfigureBandAction(
