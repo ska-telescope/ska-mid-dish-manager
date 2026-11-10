@@ -428,7 +428,8 @@ class SequentialActionHandler(ActionHandler):
 
             if cmd.timeout_s <= 0:
                 report_task_progress(
-                    f"Not waiting for: {cmd} as the timeout is 0", self.progress_callback
+                    f"Not waiting for: {cmd.command_name} on device {cmd.device} as the timeout is 0",
+                    self.progress_callback,
                 )
                 continue
 
