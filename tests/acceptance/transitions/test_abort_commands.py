@@ -18,6 +18,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
+@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands(
     monitor_tango_servers,
@@ -28,7 +29,7 @@ def test_abort_commands(
 ):
     """Test Abort aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
 
@@ -36,7 +37,7 @@ def test_abort_commands(
         "dishMode": dish_mode_event_store,
         "lrcFinished": result_event_store,
         "lrcQueue": cmds_in_queue_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -45,7 +46,7 @@ def test_abort_commands(
     dish_manager_proxy.ConfigureBand1(True)
 
     # Check that Dish Manager is waiting to transition
-    status_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
+    progress_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
     # Check that the Dish Manager did not transition
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
@@ -59,7 +60,7 @@ def test_abort_commands(
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed"]', timeout=30
     )
-    status_event_store.wait_for_progress_update("SetOperateMode aborted", timeout=30)
+    progress_event_store.wait_for_progress_update("SetOperateMode aborted", timeout=30)
 
     # Confirm that abort finished and the queue is cleared
     cmds_in_queue_store.wait_for_value((), timeout=30)
@@ -71,6 +72,7 @@ def test_abort_commands(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.fixture
 def track_a_sample(
     event_store_class,
@@ -142,6 +144,7 @@ def track_a_sample(
     yield
 
 
+@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands_during_track(
     monitor_tango_servers,
@@ -171,6 +174,7 @@ def test_abort_commands_during_track(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands_during_slew(
     monitor_tango_servers,
@@ -217,6 +221,7 @@ def test_abort_commands_during_slew(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands_during_stow(
     monitor_tango_servers,

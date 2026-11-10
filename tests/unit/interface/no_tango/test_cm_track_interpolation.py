@@ -15,9 +15,9 @@ def test_set_track_interpolation_mode_handler(
     :param component_manager: the component manager under test
     """
     # set_track_interpolation_mode has no pre-condition.
-    status, message = component_manager.set_track_interpolation_mode("interpolation mode")
+    result_code, message = component_manager.set_track_interpolation_mode("interpolation mode")
     # this is a handler for an attribute write
-    assert (status, message) == (
+    assert (result_code, message) == (
         ResultCode.OK,
         "Successfully updated trackInterpolationMode on DSManager",
     )

@@ -6,7 +6,8 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import AdminMode, TaskStatus  # ty: ignore[deprecated]
+from ska_control_model import TaskStatus
+from ska_control_model.future import AdminMode
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,
@@ -57,7 +58,7 @@ class TestCommandActionsIgnoringDevices:
             "SPFRX": mock.MagicMock(
                 _component_state={
                     "operatingmode": SPFRxOperatingMode.STANDBY,
-                    "adminmode": AdminMode.ONLINE,  # ty: ignore[deprecated]
+                    "adminmode": AdminMode.ONLINE,
                 },
                 execute_command=mock.MagicMock(return_value=(None, None)),
             ),
@@ -67,10 +68,7 @@ class TestCommandActionsIgnoringDevices:
             _component_state={"dishmode": DishMode.STANDBY_LP}
         )
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
-
         self.progress_callback = MethodCallsStore()
-        self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
-        self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
 
         def is_device_ignored(device: str):
             """Check whether the given device is ignored."""
@@ -99,16 +97,12 @@ class TestCommandActionsIgnoringDevices:
         """Test ignoring SPF device in command map."""
         caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
-        # Save any progress calls
-
-        def my_task_callback(**kwargs):
-            pass
 
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=False)
 
-        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
-            my_task_callback, task_abort_event
-        )
+        SetStandbyLPModeAction(
+            LOGGER, self.dish_manager_cm_mock, progress_callback=self.progress_callback
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             "Fanned out commands: SPFRX.SetStandbyMode, DS.SetStandbyMode",
@@ -116,8 +110,10 @@ class TestCommandActionsIgnoringDevices:
             "SetStandbyLPMode completed.",
         ]
 
+        progress_updates = self.progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            assert msg in progress_messages
 
         assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
 
@@ -127,14 +123,11 @@ class TestCommandActionsIgnoringDevices:
         caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
 
-        def my_task_callback(**kwargs):
-            pass
-
         self.set_devices_ignored(spf_ignored=False, spfrx_ignored=True)
 
-        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
-            my_task_callback, task_abort_event
-        )
+        SetStandbyLPModeAction(
+            LOGGER, self.dish_manager_cm_mock, progress_callback=self.progress_callback
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             "Fanned out commands: SPF.SetStandbyLPMode, DS.SetStandbyMode",
@@ -142,8 +135,10 @@ class TestCommandActionsIgnoringDevices:
             "SetStandbyLPMode completed.",
         ]
 
+        progress_updates = self.progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            assert msg in progress_messages
 
         assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text
 
@@ -182,15 +177,11 @@ class TestCommandActionsIgnoringDevices:
         caplog.set_level(logging.DEBUG)
         task_abort_event = Event()
 
-        # pylint: disable=unused-argument
-        def my_task_callback(progress=None, status=None, result=None):
-            pass
-
         self.set_devices_ignored(spf_ignored=True, spfrx_ignored=True)
 
-        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
-            my_task_callback, task_abort_event
-        )
+        SetStandbyLPModeAction(
+            LOGGER, self.dish_manager_cm_mock, progress_callback=self.progress_callback
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             "Fanned out commands: DS.SetStandbyMode",
@@ -198,8 +189,10 @@ class TestCommandActionsIgnoringDevices:
             "SetStandbyLPMode completed.",
         ]
 
+        progress_updates = self.progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            assert msg in progress_messages
 
         assert "SPF device is disabled. SetStandbyLPMode call ignored" in caplog.text
         assert "SPFRX device is disabled. SetStandbyMode call ignored" in caplog.text

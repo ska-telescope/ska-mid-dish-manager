@@ -1,6 +1,7 @@
 """Tests dish manager component manager setstandbylp command handler."""
 
-from unittest.mock import MagicMock, Mock, patch
+import threading
+from unittest.mock import MagicMock, call
 
 import pytest
 from ska_control_model import ResultCode, TaskStatus
@@ -16,49 +17,29 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 
 @pytest.mark.unit
-@patch(
-    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
-    Mock(return_value=True),
-)
 def test_set_standbylp_handler(
     component_manager: DishManagerComponentManager,
     callbacks: dict[str, MagicMock],
+    task_abort_event: threading.Event,
 ) -> None:
     """Verify behaviour of SetStandbyLP command handler.
 
     :param component_manager: the component manager under test
-    :param callbacks: a dictionary of mocks, passed as callbacks to
-        the command tracker under test
+    :param callbacks: a dictionary of mocks
+    :param task_abort_event: the threading event used to signal task abortion
     """
-    component_manager.set_standby_lp_mode(callbacks["task_cb"])
-    # wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
-    component_state_cb.get_queue_values()
+    task_cb = callbacks["task_cb"]
 
-    expected_call_kwargs = (
-        {"status": TaskStatus.QUEUED},
-        {"status": TaskStatus.IN_PROGRESS},
-    )
+    threading.Thread(
+        target=component_manager.set_standby_lp_mode,
+        args=(),
+        kwargs={"task_callback": task_cb, "task_abort_event": task_abort_event},
+        daemon=True,
+    ).start()
+    # wait a bit for the lrc updates to come through
+    component_state_cb.get_queue_values(timeout=1)
 
-    # check that the initial lrc updates come through
-    actual_call_kwargs = callbacks["task_cb"].call_args_list
-    for count, mock_call in enumerate(actual_call_kwargs):
-        _, kwargs = mock_call
-        assert kwargs == expected_call_kwargs[count]
-
-    progress_cb = callbacks["progress_cb"]
-    expected_progress_updates = [
-        "Awaiting SPF operatingmode change to STANDBY_LP",
-        "Awaiting SPFRX operatingmode change to STANDBY",
-        "Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER",
-        "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
-        "Awaiting dishmode change to STANDBY_LP",
-    ]
-    progress_updates = progress_cb.get_args_queue()
-    for msg in expected_progress_updates:
-        assert (msg,) in progress_updates
-
-    # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(
         operatingmode=SPFOperatingMode.STANDBY_LP
     )
@@ -68,14 +49,36 @@ def test_set_standbylp_handler(
     component_manager.sub_component_managers["DS"]._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.LOW_POWER
     )
-    component_state_cb.wait_for_value("dishmode", DishMode.STANDBY_LP)
 
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values()
-    # check that the final lrc updates come through
-    task_cb = callbacks["task_cb"]
-    task_cb.assert_called_with(
-        status=TaskStatus.COMPLETED,
-        result=(ResultCode.OK, "SetStandbyLPMode completed."),
-    )
-    progress_cb.wait_for_args(("SetStandbyLPMode completed.",))
+    # check that the component state reports the requested command
+    received_updates = component_state_cb.get_queue_values()
+    last_update = received_updates[-1]
+    assert last_update == {"dishmode": DishMode.STANDBY_LP}
+
+    # check that the updates come through
+    assert task_cb.call_args_list == [
+        call(status=TaskStatus.IN_PROGRESS),
+        call(progress=None, progress_info="Awaiting SPF operatingmode change to STANDBY_LP"),
+        call(progress=None, progress_info="Awaiting SPFRX operatingmode change to STANDBY"),
+        call(
+            progress=None,
+            progress_info="Awaiting DS operatingmode, powerstate change to STANDBY, LOW_POWER",
+        ),
+        call(
+            progress=None,
+            progress_info=(
+                "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, "
+                "DS.SetStandbyMode"
+            ),
+        ),
+        call(progress=None, progress_info="Awaiting dishmode change to STANDBY_LP"),
+        call(progress=None, progress_info="SPF operatingmode changed to STANDBY_LP"),
+        call(progress=None, progress_info="SPF.SetStandbyLPMode completed"),
+        call(progress=None, progress_info="SPFRX operatingmode changed to STANDBY"),
+        call(progress=None, progress_info="SPFRX.SetStandbyMode completed"),
+        call(progress=None, progress_info="DS operatingmode changed to STANDBY"),
+        call(progress=None, progress_info="DS powerstate changed to LOW_POWER"),
+        call(progress=None, progress_info="DS.SetStandbyMode completed"),
+        call(progress=None, progress_info="SetStandbyLPMode completed."),
+        call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetStandbyLPMode completed.")),
+    ]

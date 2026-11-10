@@ -22,7 +22,6 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, ev
     device_proxy, _ = dish_manager_resources
 
     dish_mode_event_store = event_store_class()
-    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -30,20 +29,18 @@ def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, ev
         dish_mode_event_store,
     )
 
-    device_proxy.subscribe_event(
-        "lrcFinished",
-        tango.EventType.CHANGE_EVENT,
-        lrc_finished_event_store,
-    )
-
     dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
 
-    [[_], [unique_id]] = device_proxy.SetStandbyLPMode()
-    expected_result = '[6, "Command is not allowed"]'
-
-    lrc_finished_event_store.wait_for_finished_command_result(
-        unique_id, expected_result, timeout=5
+    error_msg = (
+        "CommandNotAllowedError: SetStandbyLPMode not allowed in STANDBY_LP dishMode. "
+        "Commands allowed from STANDBY_LP are: ['ConfigureBand', 'ConfigureBand1', "
+        "'ConfigureBand2', 'ConfigureBand3', 'ConfigureBand4', 'ConfigureBand5a', "
+        "'ConfigureBand5b', 'ConfigureBand6', 'SetStandbyFPMode', 'SetStowMode']"
     )
+    with pytest.raises(tango.DevFailed) as exc_info:
+        device_proxy.SetStandbyLPMode()
+
+    assert error_msg in str(exc_info.value)
 
 
 @pytest.mark.unit
@@ -59,7 +56,7 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
 
     dish_mode_event_store = event_store_class()
     power_state_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -74,9 +71,9 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     )
 
     device_proxy.subscribe_event(
-        "Status",
+        "lrcExecuting",
         tango.EventType.CHANGE_EVENT,
-        status_event_store,
+        progress_event_store,
     )
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
@@ -120,7 +117,9 @@ def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
         "SetStandbyLPMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=20)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=20
+    )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

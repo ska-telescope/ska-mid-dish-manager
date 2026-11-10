@@ -25,7 +25,6 @@ from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerC
     ],
 )
 def test_get_attribute_property_value(
-    mock_command_tracker: MagicMock,
     callbacks: dict[str, MagicMock],
     read_response,
     expected_response,
@@ -40,7 +39,6 @@ def test_get_attribute_property_value(
 
         dish_manager_cm = DishManagerComponentManager(
             logging.getLogger(__name__),
-            mock_command_tracker,
             callbacks["build_state_cb"],
             callbacks["quality_state_cb"],
             "device-1",
@@ -51,9 +49,8 @@ def test_get_attribute_property_value(
             action_timeout_s=120,
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
-            command_progress_callback=callbacks["progress_cb"],
         )
-        dish_manager_cm.try_update_memorized_attributes_from_db
+        dish_manager_cm.try_update_memorized_attributes_from_db()
         result = dish_manager_cm._get_device_attribute_property_value("ignoreSpfrx")
 
         assert result == expected_response, (

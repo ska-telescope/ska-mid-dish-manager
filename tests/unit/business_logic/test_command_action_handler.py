@@ -6,6 +6,7 @@ import time
 from threading import Event
 
 import pytest
+from ska_tango_base.executor import TaskAborted
 
 from ska_mid_dish_manager.models.command_actions import ActionHandler
 from ska_mid_dish_manager.models.fanned_out_command import FannedOutCommand
@@ -20,22 +21,9 @@ class TestActionHandler:
 
     def setup_method(self):
         self.component_state = {}
-        self.status_calls = []
-        self.result_calls = []
-
-    def my_task_callback(self, **kwargs):
-        if kwargs.get("status") is not None:
-            self.status_calls.append(kwargs["status"])
-        if kwargs.get("result") is not None:
-            self.result_calls.append(kwargs["result"])
-
-    def reset_task_callbacks(self):
-        self.status_calls = []
-        self.result_calls = []
 
     @pytest.mark.unit
     def test_action_handler_with_fanned_out_command(self):
-        self.reset_task_callbacks()
         self.component_state["attr"] = False
 
         def mock_command():
@@ -65,7 +53,7 @@ class TestActionHandler:
         )
 
         task_abort_event = Event()
-        handler.execute(self.my_task_callback, task_abort_event)
+        handler.execute(task_abort_event)
 
         assert self.component_state["attr"] is True
         expected_progress_updates = [
@@ -73,13 +61,13 @@ class TestActionHandler:
             "DeviceX.CommandX completed",
             "HandlerX completed.",
         ]
-        progress_updates = progress_callback.get_args_queue()
+        progress_updates = progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            assert (msg,) in progress_updates
+            assert msg in progress_messages
 
     @pytest.mark.unit
     def test_command_timeout_no_action_timeout(self):
-        self.reset_task_callbacks()
         self.component_state["attr"] = False
 
         progress_callback = MethodCallsStore()
@@ -109,7 +97,7 @@ class TestActionHandler:
         )
 
         task_abort_event = Event()
-        handler.execute(self.my_task_callback, task_abort_event)
+        handler.execute(task_abort_event)
 
         expected_progress_updates = [
             "Fanned out commands: DeviceX.CommandX",
@@ -119,13 +107,13 @@ class TestActionHandler:
             "Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}",
         ]
         assert self.component_state["attr"] is False
-        progress_updates = progress_callback.get_args_queue()
+        progress_updates = progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            assert (msg,) in progress_updates
+            assert msg in progress_messages
 
     @pytest.mark.unit
     def test_action_timeout_no_command_timeout(self):
-        self.reset_task_callbacks()
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
@@ -154,20 +142,19 @@ class TestActionHandler:
         )
 
         task_abort_event = Event()
-        handler.execute(self.my_task_callback, task_abort_event)
+        handler.execute(task_abort_event)
 
         assert self.component_state["attr"] is False
-        progress_callback.wait_for_args(("Awaiting attr change to True",))
-        progress_callback.wait_for_args(
-            (
-                "Action 'HandlerX' timed out. Fanned out commands: "
-                "{'DeviceX.CommandX': 'IN_PROGRESS'}",
-            )
+        progress_callback.wait_for_kwargs({"progress_info": "Awaiting attr change to True"})
+        progress_callback.wait_for_kwargs(
+            {
+                "progress_info": "Action 'HandlerX' timed out. Fanned out commands: "
+                "{'DeviceX.CommandX': 'IN_PROGRESS'}"
+            }
         )
 
     @pytest.mark.unit
     def test_command_timeout_with_action_timeout(self):
-        self.reset_task_callbacks()
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
@@ -197,17 +184,21 @@ class TestActionHandler:
         )
 
         task_abort_event = Event()
-        handler.execute(self.my_task_callback, task_abort_event)
+        handler.execute(task_abort_event)
 
         assert self.component_state["attr"] is False
-        progress_callback.wait_for_args(("Awaiting attr change to True",))
-        progress_callback.wait_for_args(
-            ("Action 'HandlerX' failed. Fanned out commands: {'DeviceX.CommandX': 'TIMED_OUT'}",)
+        progress_callback.wait_for_kwargs({"progress_info": "Awaiting attr change to True"})
+        progress_callback.wait_for_kwargs(
+            {
+                "progress_info": (
+                    "Action 'HandlerX' failed. Fanned out commands: "
+                    "{'DeviceX.CommandX': 'TIMED_OUT'}"
+                )
+            }
         )
 
     @pytest.mark.unit
     def test_action_timeout_with_command_timeout(self):
-        self.reset_task_callbacks()
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
@@ -237,20 +228,21 @@ class TestActionHandler:
         )
 
         task_abort_event = Event()
-        handler.execute(self.my_task_callback, task_abort_event)
+        handler.execute(task_abort_event)
 
         assert self.component_state["attr"] is False
-        progress_callback.wait_for_args(("Awaiting attr change to True",))
-        progress_callback.wait_for_args(
-            (
-                "Action 'HandlerX' timed out. Fanned out commands: "
-                "{'DeviceX.CommandX': 'IN_PROGRESS'}",
-            )
+        progress_callback.wait_for_kwargs({"progress_info": "Awaiting attr change to True"})
+        progress_callback.wait_for_kwargs(
+            {
+                "progress_info": (
+                    "Action 'HandlerX' timed out. Fanned out commands: "
+                    "{'DeviceX.CommandX': 'IN_PROGRESS'}"
+                )
+            }
         )
 
     @pytest.mark.unit
     def test_action_no_timeouts(self):
-        self.reset_task_callbacks()
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
@@ -284,16 +276,16 @@ class TestActionHandler:
             "HandlerX completed.",
         ]
         task_abort_event = Event()
-        handler.execute(self.my_task_callback, task_abort_event)
+        handler.execute(task_abort_event)
 
         assert self.component_state["attr"] is True  # command completed execution
-        progress_updates = progress_callback.get_args_queue()
+        progress_updates = progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            assert (msg,) in progress_updates
+            assert msg in progress_messages
 
     @pytest.mark.unit
     def test_action_abort(self):
-        self.reset_task_callbacks()
         self.component_state["attr"] = False
         progress_callback = MethodCallsStore()
 
@@ -331,8 +323,9 @@ class TestActionHandler:
         abort_thread = threading.Thread(target=trigger_abort_later, args=(5,), daemon=True)
         abort_thread.start()
 
-        handler.execute(self.my_task_callback, task_abort_event)
+        with pytest.raises(TaskAborted):
+            handler.execute(task_abort_event)
 
         assert self.component_state["attr"] is False  # command completed execution
-        progress_callback.wait_for_args(("Awaiting attr change to True",))
-        progress_callback.wait_for_args(("HandlerX aborted",))
+        progress_callback.wait_for_kwargs({"progress_info": "Awaiting attr change to True"})
+        progress_callback.wait_for_kwargs({"progress_info": "HandlerX aborted"})

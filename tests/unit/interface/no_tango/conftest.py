@@ -1,5 +1,6 @@
 import json
 import logging
+import threading
 from collections.abc import Generator
 from unittest.mock import MagicMock, patch
 
@@ -13,9 +14,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.fixture()
-def mock_command_tracker() -> MagicMock:
-    """"""
-    return MagicMock()
+def task_abort_event() -> threading.Event:
+    """Return an unset event used to request task abortion."""
+    return threading.Event()
 
 
 @pytest.fixture()
@@ -41,9 +42,7 @@ def execute_command_side_effect(command_name, command_arg=None, truncate_arg_in_
 
 
 @pytest.fixture()
-def component_manager(
-    mock_command_tracker: MagicMock, callbacks: dict[str, MagicMock]
-) -> Generator[DishManagerComponentManager]:
+def component_manager(callbacks: dict[str, MagicMock]) -> Generator[DishManagerComponentManager]:
     """Fixture that returns the component manager under test.
 
     :param callbacks: a dictionary of mocks passed as callbacks
@@ -82,7 +81,6 @@ def component_manager(
     ):
         dish_manager_cm = DishManagerComponentManager(
             LOGGER,
-            mock_command_tracker,
             callbacks["build_state_cb"],
             callbacks["quality_state_cb"],
             "device-1",
@@ -90,10 +88,9 @@ def component_manager(
             "sub-device-2",
             "sub-device-3",
             "sub-device-4",
-            action_timeout_s=120,
+            action_timeout_s=5,
             communication_state_callback=callbacks["comm_state_cb"],
             component_state_callback=callbacks["comp_state_cb"],
-            command_progress_callback=callbacks["progress_cb"],
         )
         dish_manager_cm.start_communicating()
         # since the devices are mocks, no change events
@@ -105,4 +102,3 @@ def component_manager(
 
         # cleanup resources
         dish_manager_cm.stop_communicating()
-        dish_manager_cm._task_executor.abort()

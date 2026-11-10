@@ -13,12 +13,12 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
     dm_event_store = event_store_class()
     config_band_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -32,7 +32,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
     dm_event_store.clear_queue()
     config_band_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
     result_event_store.wait_for_finished_command_result(
@@ -61,7 +61,7 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         "SetOperateMode completed",
     ]
 
-    events = status_event_store.get_queue_values()
+    events = progress_event_store.get_queue_values()
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
         assert message in events_string
@@ -97,11 +97,11 @@ def test_configure_band_b(
 
     main_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attr_cb_mapping = {
         "configuredBand": main_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -121,7 +121,9 @@ def test_configure_band_b(
         f"Awaiting configuredband change to {message_str}",
         f"{band_request} complete",
     ]
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=6
+    )
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
@@ -142,12 +144,12 @@ def test_configure_band_2_from_stow(
     dm_event_store = event_store_class()
     config_band_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -162,7 +164,7 @@ def test_configure_band_2_from_stow(
 
     dm_event_store.clear_queue()
     config_band_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
 
     # Stow the dish
     current_el = dish_manager_proxy.achievedPointing[2]
@@ -189,7 +191,7 @@ def test_configure_band_2_from_stow(
         "SPFRX.ConfigureBand2 completed",
     ]
 
-    events = status_event_store.get_queue_values(timeout=0)
+    events = progress_event_store.get_queue_values(timeout=0)
 
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
@@ -211,12 +213,12 @@ def test_configure_band_json(
     dm_event_store = event_store_class()
     config_band_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -244,7 +246,7 @@ def test_configure_band_json(
 
     dm_event_store.clear_queue()
     config_band_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
 
     json_payload_2 = """
     {
@@ -278,7 +280,7 @@ def test_configure_band_json(
         "SPFRX.ConfigureBand completed",
     ]
 
-    events = status_event_store.get_queue_values(timeout=0)
+    events = progress_event_store.get_queue_values(timeout=0)
 
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
@@ -286,7 +288,7 @@ def test_configure_band_json(
 
     # Do it again to check result
     result_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
     # Check that dish manager allows configure band when already in requested band
     # but does not set the indexer position again.
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
@@ -304,7 +306,7 @@ def test_configure_band_json(
         "SPFRX.ConfigureBand completed",
     ]
 
-    events = status_event_store.get_queue_values(timeout=0)
+    events = progress_event_store.get_queue_values(timeout=0)
 
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:
@@ -324,12 +326,12 @@ def test_configure_band_json_with_b5dc_fanout(
     dm_event_store = event_store_class()
     config_band_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     dm_attr_cb_mapping = {
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
 
@@ -411,7 +413,7 @@ def test_configure_band_json_with_b5dc_fanout(
         "B5DC rfcmfrequency changed to 11.1",
     ]
 
-    events = status_event_store.get_queue_values(timeout=0)
+    events = progress_event_store.get_queue_values(timeout=0)
 
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_status_updates:
@@ -431,12 +433,12 @@ def test_configure_band_6_from_stow(
     dm_event_store = event_store_class()
     config_band_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": dm_event_store,
         "configuredBand": config_band_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -451,7 +453,7 @@ def test_configure_band_6_from_stow(
 
     dm_event_store.clear_queue()
     config_band_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
 
     # Stow the dish
     current_el = dish_manager_proxy.achievedPointing[2]
@@ -475,7 +477,7 @@ def test_configure_band_6_from_stow(
         "DS.SetIndexPosition completed",
     ]
 
-    events = status_event_store.get_queue_values(timeout=0)
+    events = progress_event_store.get_queue_values(timeout=0)
 
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:

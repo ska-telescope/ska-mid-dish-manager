@@ -23,16 +23,6 @@ def update_task_status(task_callback: Optional[Callable[..., None]], **task_stat
         task_callback(**task_statuses)
 
 
-def report_task_progress(
-    progress_msg: str,
-    command_progress_callback: Optional[Callable[..., None]] = None,
-    user_operator: bool = False,
-) -> None:
-    """Wraps the command progress callback to update device status."""
-    if command_progress_callback:
-        command_progress_callback(progress_msg, user_operator=user_operator)
-
-
 def convert_enums_to_names(values: list[Any]) -> list[str]:
     """Convert any enums in the given list to their names."""
     enum_labels = []
@@ -45,7 +35,7 @@ def convert_enums_to_names(values: list[Any]) -> list[str]:
 
 
 def report_awaited_attributes(
-    progress_callback: Optional[Callable[[Any], Any]],
+    progress_callback: Callable[..., None],
     awaited_attributes: list[Any],
     awaited_values: list[Any],
     device: Any = None,
@@ -60,4 +50,4 @@ def report_awaited_attributes(
         else:
             msg = f"Awaiting {attributes_str} change to {values_str}"
 
-        report_task_progress(msg, progress_callback)
+        progress_callback(progress_info=msg)

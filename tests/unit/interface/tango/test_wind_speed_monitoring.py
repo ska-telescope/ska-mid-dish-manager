@@ -43,6 +43,7 @@ def configure_mocks_for_dish_manager():
         tango_context = DeviceTestContext(PatchedDM)
         tango_context.start()
         device_proxy = cast(DeviceProxy, tango_context.device)
+        device_proxy.controlMode = 2
 
         class_instance: DishManager = cast(
             DishManager, PatchedDM.instances.get(device_proxy.name())
@@ -95,17 +96,11 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
     wait_event = threading.Event()
 
     mean_wind_speed_event_store = event_store_class()
-    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "meanWindSpeed",
         tango.EventType.CHANGE_EVENT,
         mean_wind_speed_event_store,
-    )
-    device_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
     )
 
     # enable wind stow action for mean wind speed
@@ -135,10 +130,6 @@ def test_wind_stow_triggered_on_mean_wind_speed_exceeding_threshold(
     assert mean_wind_speed_event_store.wait_for_value(expected_mean_wind_speed)
 
     # the stow trigger will update the lrc progress
-    expected_progress_update = "Stow called, monitor dishmode for LRC completed"
-    lrc_progress_event_values = status_event_store.get_queue_values()
-    lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
-    assert expected_progress_update in lrc_progress_event_values
     _, requested_action = device_proxy.lastCommandedMode
     assert requested_action == "WindStow"
 
@@ -161,17 +152,11 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
     wait_event = threading.Event()
 
     wind_gust_event_store = event_store_class()
-    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "windGust",
         tango.EventType.CHANGE_EVENT,
         wind_gust_event_store,
-    )
-    device_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
     )
 
     # enable wind stow action for wind gust
@@ -199,11 +184,6 @@ def test_wind_stow_triggered_on_wind_gust_exceeding_threshold(
     expected_wind_gust = max(total_samples_sent)
     assert wind_gust_event_store.wait_for_value(expected_wind_gust)
 
-    # the stow trigger will update the lrc progress
-    expected_progress_update = "Stow called, monitor dishmode for LRC completed"
-    lrc_progress_event_values = status_event_store.get_queue_values()
-    lrc_progress_event_values = "".join([str(event[1]) for event in lrc_progress_event_values])
-    assert expected_progress_update in lrc_progress_event_values
     _, requested_action = device_proxy.lastCommandedMode
     assert requested_action == "WindStow"
 

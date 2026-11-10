@@ -30,7 +30,6 @@ def test_track_stop_cmd_fails_in_wrong_pointing_state(
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
 
     pointing_state_event_store = event_store_class()
-    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "pointingState",
@@ -38,21 +37,19 @@ def test_track_stop_cmd_fails_in_wrong_pointing_state(
         pointing_state_event_store,
     )
 
-    device_proxy.subscribe_event(
-        "lrcFinished",
-        tango.EventType.CHANGE_EVENT,
-        lrc_finished_event_store,
-    )
-
     ds_cm._update_component_state(pointingstate=current_pointing_state)
     pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
-    [[_], [unique_id]] = device_proxy.TrackStop()
-    expected_result = '[6, "Command is not allowed"]'
-
-    lrc_finished_event_store.wait_for_finished_command_result(
-        unique_id, expected_result, timeout=5
+    error_msg = (
+        "CommandNotAllowedError: TrackStop command rejected for current "
+        "dishMode and pointingState. "
+        "TrackStop command is allowed for dishMode OPERATE or pointingState SLEW/TRACK"
     )
+
+    with pytest.raises(tango.DevFailed) as excinfo:
+        device_proxy.TrackStop()
+
+    assert error_msg in str(excinfo.value)
 
 
 @pytest.mark.unit
@@ -67,7 +64,7 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
@@ -82,9 +79,9 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
         )
 
     device_proxy.subscribe_event(
-        "Status",
+        "lrcExecuting",
         tango.EventType.CHANGE_EVENT,
-        status_event_store,
+        progress_event_store,
     )
 
     # Force dishManager dishMode to go to OPERATE
@@ -126,7 +123,9 @@ def test_track_stop_cmd_succeeds_when_pointing_state_is_track(
         "TrackStop completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=20)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=20
+    )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
     for message in expected_progress_updates:

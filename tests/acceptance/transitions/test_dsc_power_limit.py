@@ -140,11 +140,11 @@ def test_fp_lp_power_limit_used(
     event_store_class: Any,
 ):
     """Test the dscPowerLimitkW value used when invoking commands (LP and FP)."""
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     ds_attribute_event_store = event_store_class()
     attr_cb_mapping = {
         "dscPowerLimitkW": ds_attribute_event_store,
-        "status": status_event_store,
+        "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(ds_device_proxy, attr_cb_mapping)
 
@@ -155,9 +155,10 @@ def test_fp_lp_power_limit_used(
     ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
     # Call command that also makes use of the SetPowerMode command
     ds_device_proxy.SetStandbyMode()
-    status_event_store.wait_for_value(
+    progress_event_store.wait_for_value(
         "_call_opc_ua_method for [Management.Commands.SetPowerMode] called with args"
-        f" [(True, {limit_value})] from [SetStandbyMode] command"
+        f" [(True, {limit_value})] from [SetStandbyMode] command",
+        timeout=6,
     )
 
     # FP transition
@@ -167,7 +168,7 @@ def test_fp_lp_power_limit_used(
     ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
     # Call command that also makes use of the SetPowerMode command
     ds_device_proxy.SetPointMode()
-    status_event_store.wait_for_value(
+    progress_event_store.wait_for_value(
         "_call_opc_ua_method for [Management.Commands.SetPowerMode] called with args"
         f" [(False, {limit_value})] from [SetPointMode] command",
         timeout=6,
@@ -183,19 +184,21 @@ def test_dsc_current_limit_used(
 ):
     """Test the dscPowerLimitkW value used when invoking Slew."""
     subscriptions = {}
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     pointing_state_events = event_store_class()
     subscriptions.update(
         setup_subscriptions(dish_manager_proxy, {"pointingState": pointing_state_events})
     )
-    subscriptions.update(setup_subscriptions(ds_device_proxy, {"status": status_event_store}))
+    subscriptions.update(
+        setup_subscriptions(ds_device_proxy, {"lrcExecuting": progress_event_store})
+    )
 
     clean_up(ds_device_proxy, dish_manager_proxy, event_store_class)
 
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     requested_az, requested_el = calculate_slew_target(current_az, current_el, 10.0, 10.0)
     ds_device_proxy.Slew([requested_az, requested_el])
-    status_event_store.wait_for_value(
+    progress_event_store.wait_for_value(
         (
             "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
             "and DSC Power Limit: 10.0kW"

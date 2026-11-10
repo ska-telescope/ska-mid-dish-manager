@@ -2,6 +2,7 @@
 
 import pytest
 import tango
+from ska_control_model import ResultCode
 
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
@@ -35,8 +36,6 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-    lrc_finished_event_store = event_store_class()
-    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -50,34 +49,20 @@ def test_set_slew_cmd_fails_when_dish_mode_is_not_operate(
         pointing_state_event_store,
     )
 
-    device_proxy.subscribe_event(
-        "lrcFinished",
-        tango.EventType.CHANGE_EVENT,
-        lrc_finished_event_store,
-    )
-
-    device_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
-
     dish_manager_cm._update_component_state(pointingstate=PointingState.READY)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=5)
 
     dish_manager_cm._update_component_state(dishmode=current_dish_mode)
     dish_mode_event_store.wait_for_value(current_dish_mode, timeout=5)
 
-    [[_], [unique_id]] = device_proxy.Slew([0.0, 50.0])
-    expected_result = '[6, "Command is not allowed"]'
+    error_msg = (
+        "CommandNotAllowedError: Slew command rejected for current dishMode. "
+        "Slew command is allowed for dishMode OPERATE"
+    )
+    with pytest.raises(tango.DevFailed) as exc_info:
+        device_proxy.Slew([0.0, 50.0])
 
-    lrc_finished_event_store.wait_for_finished_command_result(
-        unique_id, expected_result, timeout=5
-    )
-    expected_progress_updates = (
-        "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
-    )
-    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+    assert error_msg in str(exc_info.value)
 
 
 @pytest.mark.unit
@@ -99,8 +84,6 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-    lrc_finished_event_store = event_store_class()
-    status_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -114,36 +97,20 @@ def test_set_slew_cmd_fails_when_pointing_state_is_not_ready(
         pointing_state_event_store,
     )
 
-    device_proxy.subscribe_event(
-        "lrcFinished",
-        tango.EventType.CHANGE_EVENT,
-        lrc_finished_event_store,
-    )
-
-    device_proxy.subscribe_event(
-        "Status",
-        tango.EventType.CHANGE_EVENT,
-        status_event_store,
-    )
-
     dish_manager_cm._update_component_state(dishmode=DishMode.OPERATE)
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
     dish_manager_cm._update_component_state(pointingstate=current_pointing_state)
     pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
-    [[_], [unique_id]] = device_proxy.Slew([0.0, 50.0])
-    expected_result = '[6, "Command is not allowed"]'
-
-    lrc_finished_event_store.wait_for_finished_command_result(
-        unique_id, expected_result, timeout=5
-    )
-
-    expected_progress_updates = (
-        "Slew command rejected for current pointingState. "
+    error_msg = (
+        "CommandNotAllowedError: Slew command rejected for current pointingState. "
         "Slew command is allowed for pointingState READY"
     )
-    status_event_store.wait_for_progress_update(expected_progress_updates, timeout=6)
+    with pytest.raises(tango.DevFailed) as exc_info:
+        device_proxy.Slew([0.0, 50.0])
+
+    assert error_msg in str(exc_info.value)
 
 
 @pytest.mark.unit
@@ -158,7 +125,7 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
@@ -172,9 +139,9 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
         )
 
     device_proxy.subscribe_event(
-        "Status",
+        "lrcExecuting",
         tango.EventType.CHANGE_EVENT,
-        status_event_store,
+        progress_event_store,
     )
 
     ds_cm._update_component_state(
@@ -205,7 +172,9 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
         "Monitor the pointing attributes for the completion status of the task.",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=6
+    )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
@@ -218,14 +187,47 @@ def test_set_slew_cmd_succeeds_when_dish_mode_is_operate(
 @pytest.mark.forked
 def test_set_slew_cmd_rejected_invalid_inputs(
     dish_manager_resources,
+    event_store_class,
 ):
     device_proxy, dish_manager_cm = dish_manager_resources
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
-    # Because the input is invalid, the command is rejected instantly by
-    # pre-validation and never enters the LRC queue.
-    # We simply capture the direct return values.
-    [[result_code], [message]] = device_proxy.Slew([0.0, 50.0, 100.0])
+    main_event_store = event_store_class()
+    lrc_finished_event_store = event_store_class()
 
-    # 5 corresponds to ResultCode.REJECTED
-    assert result_code == 5
-    assert "Expected 2 arguments (az, el) but got 3" in message
+    attributes_to_subscribe_to = (
+        "dishMode",
+        "pointingState",
+    )
+    for attribute_name in attributes_to_subscribe_to:
+        device_proxy.subscribe_event(
+            attribute_name,
+            tango.EventType.CHANGE_EVENT,
+            main_event_store,
+        )
+
+    device_proxy.subscribe_event(
+        "lrcFinished",
+        tango.EventType.CHANGE_EVENT,
+        lrc_finished_event_store,
+    )
+
+    ds_cm._update_component_state(
+        operatingmode=DSOperatingMode.POINT,
+        powerstate=DSPowerState.FULL_POWER,
+    )
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    main_event_store.wait_for_value(DishMode.OPERATE)
+    ds_cm._update_component_state(pointingstate=PointingState.READY)
+    main_event_store.wait_for_value(PointingState.READY)
+
+    [[_], [unique_id]] = device_proxy.Slew([0.0, 50.0, 100.0])
+
+    lrc_finished_event_store.wait_for_finished_command_result(
+        unique_id,
+        '[5, "Expected 2 arguments (az, el) but got 3 arg(s)."]',
+        ResultCode.REJECTED,
+    )

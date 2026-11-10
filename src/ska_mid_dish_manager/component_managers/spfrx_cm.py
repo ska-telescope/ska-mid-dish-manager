@@ -5,7 +5,8 @@ import threading
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import AdminMode, HealthState  # ty: ignore[deprecated]
+from ska_control_model import HealthState
+from ska_control_model.future import AdminMode
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import SlowDeviceProxyManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
@@ -182,7 +183,7 @@ class SPFRxComponentManager(TangoDeviceComponentManager):
             "b4capabilitystate": SPFRxCapabilityStates,
             "b5acapabilitystate": SPFRxCapabilityStates,
             "b5bcapabilitystate": SPFRxCapabilityStates,
-            "adminmode": AdminMode,  # ty: ignore[deprecated]
+            "adminmode": AdminMode,
         }
         for attr, enum_ in enum_conversion.items():
             if attr in kwargs:

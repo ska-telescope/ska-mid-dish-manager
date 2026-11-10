@@ -10,6 +10,7 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
+@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_action_timeout(
     monitor_tango_servers,

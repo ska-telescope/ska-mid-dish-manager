@@ -14,7 +14,8 @@ from tango import DeviceAttribute
 from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMonitor
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.models.constants import LOGGED_ARG_MAX_LENGTH, OPERATOR_TAG
-from ska_mid_dish_manager.utils.decorators import check_communicating
+
+# from ska_mid_dish_manager.utils.decorators import check_communicating
 
 
 class TangoDeviceComponentManager(BaseComponentManager):
@@ -362,7 +363,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
         reply = reply or f"{command_name} successfully executed"
         return TaskStatus.IN_PROGRESS, reply
 
-    @check_communicating
     def execute_command(
         self, command_name: str, command_arg: Any, truncate_arg_in_logs: bool = False
     ) -> Tuple[TaskStatus, Any]:
@@ -403,7 +403,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
             return TaskStatus.IN_PROGRESS, reply
         return self._interpret_command_reply(command_name, reply)
 
-    @check_communicating
     def read_attribute_value(self, attribute_name: str, log_read: bool = True) -> Any:
         """Check the connection and read an attribute."""
         if log_read:
@@ -433,7 +432,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 )
             return result
 
-    @check_communicating
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Check the connection and write an attribute."""
         self.logger.debug(

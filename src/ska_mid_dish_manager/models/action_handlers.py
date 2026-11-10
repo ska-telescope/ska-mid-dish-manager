@@ -3,9 +3,10 @@
 import logging
 import time
 from abc import ABC
-from typing import Any, Callable, Optional
+from typing import Any, Callable, Optional, Tuple
 
-from ska_control_model import ResultCode, TaskStatus
+from ska_control_model import ResultCode
+from ska_tango_base.executor import TaskAborted
 
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
@@ -19,8 +20,6 @@ from ska_mid_dish_manager.models.fanned_out_command import (
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
     report_awaited_attributes,
-    report_task_progress,
-    update_task_status,
 )
 
 
@@ -44,6 +43,7 @@ class Action(ABC):
         action_on_success: Optional["Action"] = None,
         action_on_failure: Optional["Action"] = None,
         waiting_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable] = None,
     ):
         """:param logger: Logger instance.
         :type logger: logging.Logger
@@ -58,15 +58,17 @@ class Action(ABC):
         :type action_on_failure: Optional[Action]
         :param waiting_callback: Optional callback executed periodically while waiting on commands.
         :type waiting_callback: Optional[Callable]
+        :param progress_callback: Optional callback to report progress updates.
+        :type progress_callback: Optional[Callable]
         """
         self.logger = logger
         self.dish_manager_cm = dish_manager_cm
+        self.timeout_s = timeout_s
         self.action_on_success = action_on_success
         self.action_on_failure = action_on_failure
         self.waiting_callback = waiting_callback
-        self.timeout_s = timeout_s
+        self.progress_callback = progress_callback
         self._handler: Optional["ActionHandler"] = None
-        self._progress_callback = dish_manager_cm._command_progress_callback
 
     @property
     def handler(self) -> "ActionHandler":
@@ -79,19 +81,17 @@ class Action(ABC):
         return self._handler
 
     def execute(
-        self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
-    ):
+        self, task_abort_event: Any, completed_response_msg: str = ""
+    ) -> Tuple[ResultCode, str]:
         """Execute the defined action using the assigned handler.
 
-        :param task_callback: Callback function used for reporting.
-        :type task_callback: Callable
         :param task_abort_event: Event or flag used to signal that the task should be aborted.
         :type task_abort_event: Any
         :param completed_response_msg: Optional message to use upon successful completion.
         :type completed_response_msg: str
         :raises NotImplementedError: If the action has no assigned handler.
         """
-        self.handler.execute(task_callback, task_abort_event, completed_response_msg)
+        return self.handler.execute(task_abort_event, completed_response_msg)
 
 
 class ActionHandler:
@@ -108,7 +108,7 @@ class ActionHandler:
         | list[FannedOutTangoCommand]
         | list[FannedOutTangoLongRunningCommand],
         component_state: dict,
-        awaited_component_state: Optional[dict[str, Any]] = {},
+        awaited_component_state: dict[str, Any] = {},
         action_on_success: Optional[Action] = None,
         action_on_failure: Optional[Action] = None,
         waiting_callback: Optional[Callable] = None,
@@ -147,7 +147,7 @@ class ActionHandler:
         self.action_on_success: Optional[Action] = action_on_success
         self.action_on_failure: Optional[Action] = action_on_failure
         self.waiting_callback = waiting_callback
-        self.progress_callback = progress_callback
+        self.progress_callback = progress_callback or (lambda **kwargs: None)
 
         self.timeout_s = 0
         if timeout_s > 0:
@@ -165,19 +165,10 @@ class ActionHandler:
         max_timeout = max((c.timeout_s for c in self.fanned_out_commands), default=0)
         return max_timeout + 5 if max_timeout > 0 else 0
 
-    def _handle_abort(self, task_callback) -> None:
-        """Report the action as aborted.
-
-        :param task_callback: Callback function used for reporting.
-        :type task_callback: Callable
-        """
+    def _handle_abort(self) -> None:
+        """Report the action as aborted."""
         self.logger.warning(f"Action '{self.action_name}' aborted.", extra=OPERATOR_TAG)
-        report_task_progress(f"{self.action_name} aborted", self.progress_callback)
-        update_task_status(
-            task_callback,
-            status=TaskStatus.ABORTED,
-            result=(ResultCode.ABORTED, f"{self.action_name} aborted"),
-        )
+        self.progress_callback(progress_info=f"{self.action_name} aborted")
 
     def _commands_to_run(self) -> list[str]:
         """List the fanned out commands which will actually be dispatched.
@@ -207,47 +198,30 @@ class ActionHandler:
 
     def _trigger_failure(
         self,
-        task_callback,
         task_abort_event,
         message: str,
-        task_status=TaskStatus.FAILED,
-        result_code=ResultCode.FAILED,
     ) -> None:
         """Handle failure of the action and optionally trigger the on-failure action.
 
-        :param task_callback: Callback function used for reporting.
-        :type task_callback: Callable
         :param task_abort_event: Event or flag used to signal task abortion.
         :type task_abort_event: Any
         :param message: Failure message.
         :type message: str
-        :param task_status: Status to use for the task_callback (default: TaskStatus.FAILED).
-        :type task_status: TaskStatus
-        :param result_code: Result code to use for the task_callback (default: ResultCode.FAILED).
-        :type result_code: ResultCode
         """
         self.logger.error(message)
-        report_task_progress(message, self.progress_callback)
+        self.progress_callback(progress_info=message)
 
         if self.action_on_failure:
             next_action_msg = f"{self.action_name} failed. Triggering on failure action."
             self.logger.debug(next_action_msg)
-            report_task_progress(next_action_msg, self.progress_callback)
-            self.action_on_failure.execute(task_callback, task_abort_event)
-        else:
-            update_task_status(
-                task_callback,
-                status=task_status,
-                result=(result_code, f"{self.action_name} failed"),
-            )
+            self.progress_callback(progress_info=next_action_msg)
+            self.action_on_failure.execute(task_abort_event)
 
     def _trigger_success(
-        self, task_callback, task_abort_event, completed_response_msg: str = ""
-    ) -> None:
+        self, task_abort_event, completed_response_msg: str = ""
+    ) -> Tuple[ResultCode, str]:
         """Handle successful completion of the action and optionally trigger the on-success action.
 
-        :param task_callback: Callback function used for reporting.
-        :type task_callback: Callable
         :param task_abort_event: Event or flag used to signal task abortion.
         :type task_abort_event: Any
         :param completed_response_msg: Optional message describing completion; defaults to
@@ -260,23 +234,19 @@ class ActionHandler:
         if self.action_on_success:
             msg = f"{self.action_name} complete. Triggering on success action."
             self.logger.debug(msg)
-            report_task_progress(msg, self.progress_callback)
-            self.action_on_success.execute(task_callback, task_abort_event)
-        else:
-            report_task_progress(final_message, self.progress_callback)
-            update_task_status(
-                task_callback,
-                status=TaskStatus.COMPLETED,
-                result=(ResultCode.OK, final_message),
-            )
+            self.progress_callback(progress_info=msg)
+            # Pass on the chained action's result, so a failure later in the sequence
+            # (e.g. SetOperateMode after ConfigureBand) fails the whole command.
+            return self.action_on_success.execute(task_abort_event)
+
+        self.progress_callback(progress_info=final_message)
+        return ResultCode.OK, final_message
 
     def execute(
-        self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
-    ):
+        self, task_abort_event: Any, completed_response_msg: str = ""
+    ) -> Tuple[ResultCode, str]:
         """Execute all fanned-out commands associated with this action and track progress.
 
-        :param task_callback: Callback function used for reporting.
-        :type task_callback: Callable
         :param task_abort_event: Event or flag used to signal task abortion.
         :type task_abort_event: Any
         :param completed_response_msg: Optional message to use when the action completes
@@ -284,10 +254,8 @@ class ActionHandler:
         :type completed_response_msg: str
         """
         if task_abort_event.is_set():
-            self._handle_abort(task_callback)
-            return
-
-        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
+            self._handle_abort()
+            raise TaskAborted()
 
         fanned_out_commands = self._commands_to_run()
         fanned_out_commands_str = ", ".join(fanned_out_commands) if fanned_out_commands else "None"
@@ -301,21 +269,16 @@ class ActionHandler:
             cmd.execute()
             if cmd.failed:
                 self._trigger_failure(
-                    task_callback,
                     task_abort_event,
                     f"{self.action_name} failed {cmd.executed_cmd_response}",
                 )
-                return
+                return ResultCode.FAILED, f"{self.action_name} failed {cmd.executed_cmd_response}"
 
-        report_task_progress(
-            f"Fanned out commands: {fanned_out_commands_str}", self.progress_callback
-        )
+        self.progress_callback(progress_info=f"Fanned out commands: {fanned_out_commands_str}")
 
         # If we're not waiting for anything, finish up
-        # if all([c.timeout_s <= 0 for c in self.fanned_out_commands]):
         if self.timeout_s <= 0:
-            self._trigger_success(task_callback, task_abort_event, completed_response_msg)
-            return
+            return self._trigger_success(task_abort_event, completed_response_msg)
 
         # Report what we are waiting for
         if self.awaited_component_state:
@@ -327,12 +290,12 @@ class ActionHandler:
         while deadline > time.time():
             # Handle abort
             if task_abort_event.is_set():
-                self._handle_abort(task_callback)
-                return
+                self._handle_abort()
+                raise TaskAborted()
 
             # Update status of all running commands
             for cmd in self.fanned_out_commands:
-                cmd.report_progress()
+                cmd.report_progress(self.progress_callback)
 
             # Handle any failed fanned out command
             if any(cmd.failed for cmd in self.fanned_out_commands):
@@ -340,16 +303,15 @@ class ActionHandler:
                     f"Action '{self.action_name}' failed. "
                     f"Fanned out commands: {self._command_statuses()}"
                 )
-                self._trigger_failure(task_callback, task_abort_event, message)
-                return
+                self._trigger_failure(task_abort_event, message)
+                return ResultCode.FAILED, message
 
             # Check if all commands have succeeded
             if all(cmd.successful for cmd in self.fanned_out_commands):
                 if check_component_state_matches_awaited(
                     self.component_state, self.awaited_component_state
                 ):
-                    self._trigger_success(task_callback, task_abort_event, completed_response_msg)
-                    return
+                    return self._trigger_success(task_abort_event, completed_response_msg)
 
             if self.waiting_callback:
                 self.waiting_callback()
@@ -365,28 +327,25 @@ class ActionHandler:
             if check_component_state_matches_awaited(
                 self.component_state, self.awaited_component_state
             ):
-                self._trigger_success(task_callback, task_abort_event, completed_response_msg)
-                return
+                return self._trigger_success(task_abort_event, completed_response_msg)
 
         # Handle timeout
         message = (
             f"Action '{self.action_name}' timed out. "
             f"Fanned out commands: {self._command_statuses()}"
         )
-        self._trigger_failure(task_callback, task_abort_event, message)
+        self._trigger_failure(task_abort_event, message)
+        return ResultCode.FAILED, message
 
 
 class SequentialActionHandler(ActionHandler):
     """Action handler that executes the FannedOutCommands in sequence."""
 
     def execute(
-        self, task_callback: Callable, task_abort_event: Any, completed_response_msg: str = ""
-    ):
+        self, task_abort_event: Any, completed_response_msg: str = ""
+    ) -> Tuple[ResultCode, str]:
         """Execute all fanned-out commands associated with this action in order.
 
-
-        :param task_callback: Callback function used for reporting.
-        :type task_callback: Callable
         :param task_abort_event: Event or flag used to signal task abortion.
         :type task_abort_event: Any
         :param completed_response_msg: Optional message to use when the action completes
@@ -394,10 +353,8 @@ class SequentialActionHandler(ActionHandler):
         :type completed_response_msg: str
         """
         if task_abort_event.is_set():
-            self._handle_abort(task_callback)
-            return
-
-        update_task_status(task_callback, status=TaskStatus.IN_PROGRESS)
+            self._handle_abort()
+            raise TaskAborted()
 
         sequential_commands = self._commands_to_run()
         sequential_commands_str = ", ".join(sequential_commands) if sequential_commands else "None"
@@ -413,20 +370,17 @@ class SequentialActionHandler(ActionHandler):
             cmd.execute()
             if cmd.failed:
                 self._trigger_failure(
-                    task_callback,
                     task_abort_event,
                     f"{self.action_name} failed {cmd.executed_cmd_response}",
                 )
-                return
+                return ResultCode.FAILED, f"{self.action_name} failed {cmd.executed_cmd_response}"
 
-            report_task_progress(
-                f"Running {cmd.command_name} on device {cmd.device}", self.progress_callback
+            self.progress_callback(
+                progress_info=f"Running {cmd.command_name} on device {cmd.device}"
             )
 
             if cmd.timeout_s <= 0:
-                report_task_progress(
-                    f"Not waiting for: {cmd} as the timeout is 0", self.progress_callback
-                )
+                self.progress_callback(progress_info=f"Not waiting for: {cmd} as the timeout is 0")
                 continue
 
             if cmd.awaited_component_state:
@@ -440,10 +394,10 @@ class SequentialActionHandler(ActionHandler):
             while deadline > time.time():
                 # Handle abort
                 if task_abort_event.is_set():
-                    self._handle_abort(task_callback)
-                    return
+                    self._handle_abort()
+                    raise TaskAborted()
 
-                cmd.report_progress()
+                cmd.report_progress(self.progress_callback)
 
                 if cmd.failed or cmd.successful:
                     break
@@ -454,25 +408,19 @@ class SequentialActionHandler(ActionHandler):
                     f"Action '{self.action_name}' failed. "
                     f"{cmd.command_name} on device {cmd.device} failed."
                 )
-                self._trigger_failure(task_callback, task_abort_event, message)
-                return
+                self._trigger_failure(task_abort_event, message)
+                return ResultCode.FAILED, message
 
             if cmd.successful:
-                report_task_progress(
-                    f"{self.action_name}: {cmd.command_name} on device {cmd.device} completed",
-                    self.progress_callback,
+                self.progress_callback(
+                    progress_info=f"{self.action_name}: {cmd.command_name} on "
+                    f"device {cmd.device} completed"
                 )
                 continue
 
-            update_task_status(
-                task_callback,
-                status=TaskStatus.FAILED,
-                result=(
-                    ResultCode.FAILED,
-                    f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
-                ),
+            return (
+                ResultCode.FAILED,
+                f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
             )
-            return
 
-        self._trigger_success(task_callback, task_abort_event, completed_response_msg)
-        return
+        return self._trigger_success(task_abort_event, completed_response_msg)

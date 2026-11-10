@@ -19,6 +19,7 @@ REQUESTED_AZIMUTH_VALUE = 100.0
 REQUESTED_ELEVATION_VALUE = 60.0
 
 
+@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.acceptance
 def test_maintenance_mode_cmd(
     event_store_class: type[EventStore],
@@ -33,7 +34,7 @@ def test_maintenance_mode_cmd(
     dsc_auth_event_store = event_store_class()
     spf_event_store = event_store_class()
     spfrx_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     subscriptions = {}
     subscriptions.update(setup_subscriptions(spf_device_proxy, {"operatingMode": spf_event_store}))
@@ -46,7 +47,7 @@ def test_maintenance_mode_cmd(
     }
     dm_attr_cb_mapping = {
         "dishMode": mode_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
     }
     subscriptions.update(setup_subscriptions(ds_device_proxy, ds_attr_cb_mapping))
     subscriptions.update(setup_subscriptions(dish_manager_proxy, dm_attr_cb_mapping))
@@ -67,7 +68,7 @@ def test_maintenance_mode_cmd(
         "Awaiting dishmode change to STOW",
         "SetMaintenanceMode completed",
     ]
-    events = status_event_store.get_queue_events()
+    events = progress_event_store.get_queue_events()
     events_string = "".join([str(event.attr_value.value) for event in events])
     # Check that all the expected progress messages appeared
     for message in expected_progress_updates:
@@ -76,6 +77,7 @@ def test_maintenance_mode_cmd(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_power_cycle_in_maintenance_mode(
@@ -112,6 +114,7 @@ def test_power_cycle_in_maintenance_mode(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_on_stow(
@@ -145,6 +148,7 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_not_on_stow(

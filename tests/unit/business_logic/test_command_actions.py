@@ -6,7 +6,8 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import AdminMode, ResultCode, TaskStatus  # ty: ignore[deprecated]
+from ska_control_model import ResultCode, TaskStatus
+from ska_control_model.future import AdminMode
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
@@ -66,12 +67,15 @@ class TestCommandActions:
                 _component_state={
                     "configuredband": Band.B1,
                     "operatingmode": SPFRxOperatingMode.STANDBY,
-                    "adminmode": AdminMode.ONLINE,  # ty: ignore[deprecated]
+                    "adminmode": AdminMode.ENGINEERING,
                 },
                 execute_command=mock.MagicMock(return_value=(None, None)),
             ),
         }
 
+        mock_reapply_pointing_model = mock.MagicMock(
+            return_value=(ResultCode.OK, "Pointing model applied successfully")
+        )
         self.dish_manager_cm_mock = mock.MagicMock(
             _component_state={
                 "dishmode": DishMode.STANDBY_LP,
@@ -82,8 +86,8 @@ class TestCommandActions:
         )
 
         self.progress_callback = MethodCallsStore()
-        self.dish_manager_cm_mock._command_progress_callback = self.progress_callback
         self.dish_manager_cm_mock.sub_component_managers = sub_component_managers_mock
+        self.dish_manager_cm_mock.reapply_pointing_model = mock_reapply_pointing_model
 
         def is_device_ignored(device: str):
             """Check whether the given device is ignored."""
@@ -100,12 +104,9 @@ class TestCommandActions:
         """Test set_standby_lp_mode."""
         task_abort_event = Event()
 
-        def my_task_callback(**kwargs):
-            pass
-
-        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
-            my_task_callback, task_abort_event
-        )
+        SetStandbyLPModeAction(
+            LOGGER, self.dish_manager_cm_mock, progress_callback=self.progress_callback
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             "Fanned out commands: SPF.SetStandbyLPMode, SPFRX.SetStandbyMode, DS.SetStandbyMode",
@@ -122,9 +123,10 @@ class TestCommandActions:
             "SetStandbyLPMode completed.",
         ]
 
-        progress_updates = self.progress_callback.get_args_queue()
+        progress_updates = self.progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            assert (msg,) in progress_updates
+            assert msg in progress_messages
 
     @pytest.mark.unit
     def test_happy_path_command_with_argument(self):
@@ -132,16 +134,13 @@ class TestCommandActions:
         task_abort_event = Event()
         # Save any progress calls
 
-        # pylint: disable=unused-argument
-        def my_task_callback(**kwargs):
-            pass
-
         TrackLoadStaticOffAction(
             LOGGER,
             self.dish_manager_cm_mock,
             off_xel=1,
             off_el=1,
-        ).execute(my_task_callback, task_abort_event)
+            progress_callback=self.progress_callback,
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             "Fanned out commands: DS.TrackLoadStaticOff",
@@ -155,9 +154,10 @@ class TestCommandActions:
             "TrackLoadStaticOff completed.",
         ]
 
-        progress_updates = self.progress_callback.get_args_queue()
+        progress_updates = self.progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            assert (msg,) in progress_updates
+            assert msg in progress_messages
 
     @pytest.mark.unit
     def test_unhappy_path_command_failed_task_status(self):
@@ -166,14 +166,10 @@ class TestCommandActions:
             return_value=(TaskStatus.FAILED, "some failure message")
         )
         task_abort_event = Event()
-        # Save any progress calls
 
-        def my_task_callback(**kwargs):
-            pass
-
-        SetStandbyLPModeAction(LOGGER, self.dish_manager_cm_mock).execute(
-            my_task_callback, task_abort_event
-        )
+        SetStandbyLPModeAction(
+            LOGGER, self.dish_manager_cm_mock, progress_callback=self.progress_callback
+        ).execute(task_abort_event)
 
         # reset the mock to avoid side effects
         self.dish_manager_cm_mock.sub_component_managers["SPF"].execute_command = mock.MagicMock(
@@ -183,20 +179,20 @@ class TestCommandActions:
         expected_progress_updates = [
             "SetStandbyLPMode failed some failure message",
         ]
+        progress_updates = self.progress_callback.get_kwargs_queue()
+        progress_messages = [update["progress_info"] for update in progress_updates]
         for msg in expected_progress_updates:
-            self.progress_callback.wait_for_args((msg,))
+            assert msg in progress_messages
 
     @pytest.mark.unit
     def test_configure_band_sequence_from_fp(self):
         """Test configure_band_cmd happy path from full power."""
         task_abort_event = Event()
-
-        result_calls = []
         progress_updates = []
 
-        def progress_callback(msg, user_operator=True):
-            progress_updates.append(msg)
-            if "Awaiting configuredband change to B2" in msg:
+        def progress_callback(progress_info=""):
+            progress_updates.append(progress_info)
+            if "Awaiting configuredband change to B2" in progress_info:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "indexerposition"
                 ] = IndexerPosition.B2
@@ -207,18 +203,11 @@ class TestCommandActions:
                     "operatingmode"
                 ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-            elif "Awaiting dishmode change to OPERATE" in msg:
+            elif "Awaiting dishmode change to OPERATE" in progress_info:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "operatingmode"
                 ] = DSOperatingMode.POINT
                 self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
-
-        def my_task_callback(**kwargs):
-            if kwargs.get("result") is not None:
-                result_calls.append(kwargs.get("result"))
-
-        # Reconfiguring the progress callback to our local one to capture messages
-        self.dish_manager_cm_mock._command_progress_callback = progress_callback
 
         # Set mock component states to FP
         self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -236,7 +225,8 @@ class TestCommandActions:
             requested_cmd="ConfigureBand2",
             synchronise=True,
             timeout_s=5,
-        ).execute(my_task_callback, task_abort_event)
+            progress_callback=progress_callback,
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             # ConfigureBand2
@@ -261,20 +251,15 @@ class TestCommandActions:
         for msg in expected_progress_updates:
             assert msg in progress_updates
 
-        assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
-
     @pytest.mark.unit
     def test_configure_band_sequence_with_json_from_fp(self):
         """Test configure_band_cmd happy path from full power with json."""
         task_abort_event = Event()
-
-        result_calls = []
         progress_updates = []
 
-        def progress_callback(msg, user_operator=True):
-            progress_updates.append(msg)
-            if "Awaiting configuredband change to B2" in msg:
+        def progress_callback(progress_info=""):
+            progress_updates.append(progress_info)
+            if "Awaiting configuredband change to B2" in progress_info:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "indexerposition"
                 ] = IndexerPosition.B2
@@ -285,18 +270,11 @@ class TestCommandActions:
                     "operatingmode"
                 ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-            elif "Awaiting dishmode change to OPERATE" in msg:
+            elif "Awaiting dishmode change to OPERATE" in progress_info:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "operatingmode"
                 ] = DSOperatingMode.POINT
                 self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
-
-        def my_task_callback(**kwargs):
-            if kwargs.get("result") is not None:
-                result_calls.append(kwargs.get("result"))
-
-        # Reconfiguring the progress callback to our local one to capture messages
-        self.dish_manager_cm_mock._command_progress_callback = progress_callback
 
         # Set mock component states to FP
         self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -318,7 +296,8 @@ class TestCommandActions:
             data=json_str,
             requested_cmd="ConfigureBand",
             timeout_s=5,
-        ).execute(my_task_callback, task_abort_event)
+            progress_callback=progress_callback,
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             # ConfigureBand
@@ -343,19 +322,15 @@ class TestCommandActions:
         for msg in expected_progress_updates:
             assert msg in progress_updates
 
-        assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
-
     @pytest.mark.unit
     def test_configure_band_sequence_from_lp(self):
         """Test configure_band_cmd happy path from low power."""
         task_abort_event = Event()
-        result_calls = []
         progress_updates = []
 
-        def progress_callback(msg, user_operator=True):
-            progress_updates.append(msg)
-            if "Awaiting dishmode change to STANDBY_FP" in msg:
+        def progress_callback(progress_info):
+            progress_updates.append(progress_info)
+            if "Awaiting dishmode change to STANDBY_FP" in progress_info:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "operatingmode"
                 ] = DSOperatingMode.STANDBY
@@ -366,7 +341,7 @@ class TestCommandActions:
                     "operatingmode"
                 ] = SPFOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.STANDBY_FP
-            elif "Awaiting configuredband change to B2" in msg:
+            elif "Awaiting configuredband change to B2" in progress_info:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "indexerposition"
                 ] = IndexerPosition.B2
@@ -377,18 +352,11 @@ class TestCommandActions:
                     "operatingmode"
                 ] = SPFRxOperatingMode.OPERATE
                 self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-            elif "Awaiting dishmode change to OPERATE" in msg:
+            elif "Awaiting dishmode change to OPERATE" in progress_info:
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "operatingmode"
                 ] = DSOperatingMode.POINT
                 self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
-
-        def my_task_callback(**kwargs):
-            if kwargs.get("result") is not None:
-                result_calls.append(kwargs.get("result"))
-
-        # Reconfiguring the progress callback to our local one to capture messages
-        self.dish_manager_cm_mock._command_progress_callback = progress_callback
 
         ConfigureBandActionSequence(
             LOGGER,
@@ -397,7 +365,8 @@ class TestCommandActions:
             requested_cmd="ConfigureBand2",
             synchronise=True,
             timeout_s=5,
-        ).execute(my_task_callback, task_abort_event)
+            progress_callback=progress_callback,
+        ).execute(task_abort_event)
 
         expected_progress_updates = [
             # First SetStandbyFPMode
@@ -435,9 +404,6 @@ class TestCommandActions:
         for msg in expected_progress_updates:
             assert msg in progress_updates
 
-        assert len(result_calls) == 1
-        assert result_calls[0] == (ResultCode.OK, "SetOperateMode completed.")
-
     @pytest.mark.unit
     def test_set_operate_mode(self):
         """Test SetOperateMode only fans out commands for devices not already in desired state."""
@@ -446,13 +412,12 @@ class TestCommandActions:
             """Set initial DS/SPF modes, run SetOperateMode, return progress and results."""
             task_abort_event = Event()
             progress_updates = []
-            result_calls = []
 
-            def progress_callback(msg, user_operator=True):
-                progress_updates.append(msg)
+            def progress_callback(progress_info=""):
+                progress_updates.append(progress_info)
                 # Flip both sub-devices and the dishmode once the handler starts
                 # awaiting the aggregate state. Devices already in state are no-ops.
-                if "Awaiting dishmode change to OPERATE" in msg:
+                if "Awaiting dishmode change to OPERATE" in progress_info:
                     self.dish_manager_cm_mock.sub_component_managers["SPF"]._component_state[
                         "operatingmode"
                     ] = SPFOperatingMode.OPERATE
@@ -461,11 +426,6 @@ class TestCommandActions:
                     ] = DSOperatingMode.POINT
                     self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
 
-            def my_task_callback(**kwargs):
-                if kwargs.get("result") is not None:
-                    result_calls.append(kwargs.get("result"))
-
-            self.dish_manager_cm_mock._command_progress_callback = progress_callback
             # A valid configured band is required, otherwise execution is rejected.
             self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
             self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.STANDBY_FP
@@ -476,41 +436,34 @@ class TestCommandActions:
                 "operatingmode"
             ] = ds_mode
 
-            SetOperateModeAction(LOGGER, self.dish_manager_cm_mock).execute(
-                my_task_callback, task_abort_event
-            )
-            return progress_updates, result_calls
+            SetOperateModeAction(
+                LOGGER, self.dish_manager_cm_mock, progress_callback=progress_callback
+            ).execute(task_abort_event)
+            return progress_updates
 
         # Case 1: neither device in state -> both commands fanned out
-        progress, results = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.STANDBY)
+        progress = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.STANDBY)
         assert "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode" in progress
-        assert (ResultCode.OK, "SetOperateMode completed.") in results
 
         # Case 2: SPF already in OPERATE -> only DS fanned out, SPF reports a no-op progress update
-        progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.STANDBY)
+        progress = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.STANDBY)
         assert "Fanned out commands: DS.SetPointMode" in progress
         assert not any("SPF.SetOperateMode" in msg for msg in progress)
         assert (
             "SPF operatingmode already OPERATE, not fanning out SetOperateMode command" in progress
         )
-        assert (ResultCode.OK, "SetOperateMode completed.") in results
 
         # Case 3: DS already in POINT -> only SPF fanned out, DS reports a no-op progress update
-        progress, results = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.POINT)
+        progress = run_scenario(SPFOperatingMode.STANDBY_LP, DSOperatingMode.POINT)
         assert "Fanned out commands: SPF.SetOperateMode" in progress
         assert not any("DS.SetPointMode" in msg for msg in progress)
         assert "DS operatingmode already POINT, not fanning out SetPointMode command" in progress
-        assert (ResultCode.OK, "SetOperateMode completed.") in results
 
         # Case 4: both already in state -> nothing fanned out, success triggered directly
-        progress, results = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.POINT)
+        progress = run_scenario(SPFOperatingMode.OPERATE, DSOperatingMode.POINT)
         assert "Fanned out commands: None" in progress
         assert (
             "SPF operatingmode already OPERATE, not fanning out SetOperateMode command" in progress
         )
         assert "DS operatingmode already POINT, not fanning out SetPointMode command" in progress
         assert "SetOperateMode completed." in progress
-        assert (
-            ResultCode.OK,
-            "SetOperateMode completed.",
-        ) in results

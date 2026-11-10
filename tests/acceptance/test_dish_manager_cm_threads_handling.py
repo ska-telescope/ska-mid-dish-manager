@@ -26,7 +26,6 @@ def test_dish_manager_component_manager_threads_management(component_state_store
     mock_callable = MagicMock()
     cm = DishManagerComponentManager(
         LOGGER,
-        command_tracker=mock_callable,
         build_state_callback=mock_callable,
         quality_state_callback=mock_callable,
         tango_device_name=DEFAULT_DISH_MANAGER_TRL,
@@ -39,7 +38,6 @@ def test_dish_manager_component_manager_threads_management(component_state_store
         component_state_callback=component_state_store,
         wms_device_names=[],
         wind_stow_callback=mock_callable,
-        command_progress_callback=mock_callable,
         default_watchdog_timeout=DEFAULT_WATCHDOG_TIMEOUT,
         default_mean_wind_speed_threshold=MEAN_WIND_SPEED_THRESHOLD_MPS,
         default_wind_gust_threshold=WIND_GUST_THRESHOLD_MPS,

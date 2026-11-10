@@ -16,7 +16,6 @@ from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
     convert_enums_to_names,
     report_awaited_attributes,
-    report_task_progress,
 )
 
 
@@ -81,7 +80,7 @@ class FannedOutCommand:
         self.executed_cmd_message = None
         self._status = FannedOutCommandStatus.PENDING
         self._task_finish_reported = False
-        self._progress_callback = progress_callback
+        self.progress_callback = progress_callback or (lambda **kwargs: None)
         self.executed_cmd_response = ""
         self.component_state = component_state
         self.awaited_component_state = awaited_component_state
@@ -134,7 +133,7 @@ class FannedOutCommand:
             f"not fanning out {self.command_name} command"
         )
         self.logger.info(msg, extra=OPERATOR_TAG)
-        report_task_progress(msg, self._progress_callback)
+        self.progress_callback(progress_info=msg)
 
     def execute(self) -> None:
         """Execute the fanned out command."""
@@ -160,7 +159,7 @@ class FannedOutCommand:
                 awaited_attributes = list(self.awaited_component_state.keys())
                 awaited_values = list(self.awaited_component_state.values())
                 report_awaited_attributes(
-                    self._progress_callback, awaited_attributes, awaited_values, self.device
+                    self.progress_callback, awaited_attributes, awaited_values, self.device
                 )
         except RuntimeError as e:
             self.logger.error(f"FannedOutCommand '{self.command_name}' failed to execute: {e}")
@@ -204,7 +203,7 @@ class FannedOutCommand:
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
                 self._set_status(FannedOutCommandStatus.TIMED_OUT)
 
-    def report_progress(self) -> None:
+    def report_progress(self, progress_callback) -> None:
         """Report the progress of fanned out command."""
         current_comp_state = dict(self.component_state)
 
@@ -217,9 +216,8 @@ class FannedOutCommand:
                     if current_value == expected_value:
                         if isinstance(current_value, enum.IntEnum):
                             current_value = current_value.name
-                        report_task_progress(
-                            f"{self.device} {attr_name} changed to {current_value}",
-                            self._progress_callback,
+                        progress_callback(
+                            progress_info=f"{self.device} {attr_name} changed to {current_value}",
                         )
                         self.awaited_update_reports[attr_name] = True
 
@@ -240,15 +238,12 @@ class FannedOutCommand:
                 else ""
             )
             if cmd_response:
-                report_task_progress(
-                    f"{self.device}.{self.command_name} {status_name}: {cmd_response}",
-                    self._progress_callback,
+                progress_callback(
+                    progress_info=f"{self.device}.{self.command_name} "
+                    f"{status_name}: {cmd_response}"
                 )
             else:
-                report_task_progress(
-                    f"{self.device}.{self.command_name} {status_name}",
-                    self._progress_callback,
-                )
+                progress_callback(progress_info=f"{self.device}.{self.command_name} {status_name}")
             self._task_finish_reported = True
 
 

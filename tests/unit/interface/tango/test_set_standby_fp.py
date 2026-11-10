@@ -21,7 +21,7 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
 
     dish_mode_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     power_state_event_store = event_store_class()
 
     device_proxy.subscribe_event(
@@ -37,9 +37,9 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
     )
 
     device_proxy.subscribe_event(
-        "Status",
+        "lrcExecuting",
         tango.EventType.CHANGE_EVENT,
-        status_event_store,
+        progress_event_store,
     )
 
     assert device_proxy.dishMode == DishMode.STANDBY_LP
@@ -67,7 +67,9 @@ def test_standby_fp_from_standby_lp(dish_manager_resources, event_store_class):
         "SetStandbyFPMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=20)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=20
+    )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

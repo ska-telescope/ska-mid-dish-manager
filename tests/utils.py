@@ -450,14 +450,14 @@ class EventStore:
                 f" but got [{event_info}]",
             ) from err
 
-    def wait_for_progress_update(self, progress_message: str, timeout: int = 3):
-        """Wait for a long running command progress update.
+    def wait_for_progress_update(self, progress_message: str, timeout: int = 5) -> List[Any]:
+        """Wait for a long running command progress update by way of the status attribute.
 
         Wait `timeout` seconds for each fetch.
 
         :param progress_message: The progress message to wait for
         :type progress_message: str
-        :param timeout: the get timeout, defaults to 3
+        :param timeout: the get timeout, defaults to 5
         :type timeout: int, optional
         :raises RuntimeError: If none are found
         :return: The result of the long running command
@@ -470,15 +470,15 @@ class EventStore:
                 events.append(event)
                 if not event.attr_value:
                     continue
-                if not isinstance(event.attr_value.value, str):
+                if event.attr_value.name.lower() != "lrcexecuting":
                     continue
                 progress_update = str(event.attr_value.value)
-                if progress_message in progress_update and event.attr_value.name == "status":
+                if progress_message in progress_update:
                     return events
         except queue.Empty as err:
             event_info = [(event.attr_value.name, event.attr_value.value) for event in events]
             raise RuntimeError(
-                f"Never got a progress update with [{progress_message}] but got {event_info}"
+                (f"Never got a progress update with [{progress_message}], but got [{event_info}]"),
             ) from err
 
     @classmethod

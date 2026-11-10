@@ -1,6 +1,7 @@
 """Tests dish manager component manager UpdateTZData command handler."""
 
 import base64
+import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -34,14 +35,18 @@ def _get_result_message(task_callback: MagicMock) -> str:
 def test_update_tz_data_success(
     component_manager: DishManagerComponentManager,
     monkeypatch: pytest.MonkeyPatch,
+    callbacks: dict[str, MagicMock],
+    task_abort_event: threading.Event,
 ) -> None:
     """Verify UpdateTZData downloads, encodes and forwards the data to SPFRx.
 
     :param component_manager: the component manager under test
     :param monkeypatch: pytest fixture for patching the environment
+    :param callbacks: a dictionary of mocks
+    :param task_abort_event: threading event to signal task abortion
     """
     monkeypatch.setenv(TZ_DATA_URL_ENV_VAR, TZ_DATA_URL)
-    task_callback = MagicMock()
+    task_callback = callbacks["task_cb"]
 
     mock_response = MagicMock()
     mock_response.content = TZ_DATA_BYTES
@@ -53,7 +58,9 @@ def test_update_tz_data_success(
         "ska_mid_dish_manager.component_managers.dish_manager_cm.requests.get",
         return_value=mock_response,
     ) as mock_get:
-        component_manager._update_tz_data(task_callback=task_callback)
+        component_manager.update_tz_data(
+            task_callback=task_callback, task_abort_event=task_abort_event
+        )
 
     mock_get.assert_called_once()
     assert mock_get.call_args.args[0] == TZ_DATA_URL
@@ -72,16 +79,22 @@ def test_update_tz_data_success(
 def test_update_tz_data_missing_env_var(
     component_manager: DishManagerComponentManager,
     monkeypatch: pytest.MonkeyPatch,
+    callbacks: dict[str, MagicMock],
+    task_abort_event: threading.Event,
 ) -> None:
     """Verify UpdateTZData fails when the URL environment variable is not set.
 
     :param component_manager: the component manager under test
     :param monkeypatch: pytest fixture for patching the environment
+    :param callbacks: a dictionary of mocks
+    :param task_abort_event: threading event to signal task abortion
     """
     monkeypatch.delenv(TZ_DATA_URL_ENV_VAR, raising=False)
-    task_callback = MagicMock()
+    task_callback = callbacks["task_cb"]
 
-    component_manager._update_tz_data(task_callback=task_callback)
+    component_manager.update_tz_data(
+        task_callback=task_callback, task_abort_event=task_abort_event
+    )
 
     assert _get_result_code(task_callback) == ResultCode.FAILED
     assert _get_result_message(task_callback) == (
@@ -94,20 +107,26 @@ def test_update_tz_data_missing_env_var(
 def test_update_tz_data_download_failure(
     component_manager: DishManagerComponentManager,
     monkeypatch: pytest.MonkeyPatch,
+    callbacks: dict[str, MagicMock],
+    task_abort_event: threading.Event,
 ) -> None:
     """Verify UpdateTZData fails gracefully when the download fails.
 
     :param component_manager: the component manager under test
     :param monkeypatch: pytest fixture for patching the environment
+    :param callbacks: a dictionary of mocks
+    :param task_abort_event: threading event to signal task abortion
     """
     monkeypatch.setenv(TZ_DATA_URL_ENV_VAR, TZ_DATA_URL)
-    task_callback = MagicMock()
+    task_callback = callbacks["task_cb"]
 
     with patch(
         "ska_mid_dish_manager.component_managers.dish_manager_cm.requests.get",
         side_effect=requests.exceptions.ConnectionError("boom"),
     ):
-        component_manager._update_tz_data(task_callback=task_callback)
+        component_manager.update_tz_data(
+            task_callback=task_callback, task_abort_event=task_abort_event
+        )
 
     assert _get_result_code(task_callback) == ResultCode.FAILED
     assert _get_result_message(task_callback) == (
@@ -119,18 +138,24 @@ def test_update_tz_data_download_failure(
 def test_update_tz_data_rejected_when_spfrx_ignored(
     component_manager: DishManagerComponentManager,
     monkeypatch: pytest.MonkeyPatch,
+    callbacks: dict[str, MagicMock],
+    task_abort_event: threading.Event,
 ) -> None:
     """Verify UpdateTZData fails when SPFRx is ignored.
 
     :param component_manager: the component manager under test
     :param monkeypatch: pytest fixture for patching the environment
+    :param callbacks: a dictionary of mocks
+    :param task_abort_event: threading event to signal task abortion
     """
     monkeypatch.setenv(TZ_DATA_URL_ENV_VAR, TZ_DATA_URL)
     component_manager._update_component_state(ignorespfrx=True)
-    task_callback = MagicMock()
+    task_callback = callbacks["task_cb"]
 
     with patch("ska_mid_dish_manager.component_managers.dish_manager_cm.requests.get") as mock_get:
-        component_manager._update_tz_data(task_callback=task_callback)
+        component_manager.update_tz_data(
+            task_callback=task_callback, task_abort_event=task_abort_event
+        )
 
     mock_get.assert_not_called()
     assert _get_result_code(task_callback) == ResultCode.FAILED

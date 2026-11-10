@@ -8,15 +8,22 @@ import json
 import logging
 import weakref
 from datetime import datetime
-from functools import reduce
-from typing import List, Literal, Optional, Tuple
+from functools import partial, reduce
+from typing import Literal, override
 
-from ska_control_model import CommunicationStatus, ResultCode, TaskStatus
+from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
-from ska_tango_base import SKAController
-from ska_tango_base.commands import SubmittedSlowCommand
+from ska_tango_base import faults
+from ska_tango_base.future import (
+    AbortCallbackAggregator,
+    ComponentManagerMixin,
+    ControllerInterface,
+    ControlModeMixin,
+)
+from ska_tango_base.long_running_commands import LRCMixin
+from ska_tango_base.type_hints import DevVarLongStringArrayType, TaskFunctionType
 from tango import (
     AttrQuality,
     AttrWriteType,
@@ -29,18 +36,7 @@ from tango import (
 from tango.server import attribute, command, device_property, run
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
-from ska_mid_dish_manager.models.command_class import (
-    AbortCommand,
-    AbortCommandsCommand,
-    ApplyPointingModelCommand,
-    ResetComponentConnectionCommand,
-    ResetTrackTableCommand,
-    SetFrequencyCommand,
-    SetHPolAttenuationCommand,
-    SetKValueCommand,
-    SetVPolAttenuationCommand,
-    StowCommand,
-)
+from ska_mid_dish_manager.models.abort_sequence_command_handler import AbortSequenceCommandHandler
 from ska_mid_dish_manager.models.constants import (
     BAND_POINTING_MODEL_PARAMS_LENGTH,
     DEFAULT_ACTION_TIMEOUT_S,
@@ -70,12 +66,13 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackProgramMode,
     TrackTableLoadMode,
 )
+from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowedError, DishModeModel
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.decorators import (
     log_tango_attr_write,
     log_tango_command,
     record_command,
-    requires_component_manager,
+    slow_command,
     time_tango_write,
 )
 from ska_mid_dish_manager.utils.input_validation import (
@@ -84,14 +81,17 @@ from ska_mid_dish_manager.utils.input_validation import (
 )
 from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 
-DevVarLongStringArrayType = Tuple[List[ResultCode], List[Optional[str]]]
-
 # Used for input validation. Input samples to tracktable that is less that
 # TRACK_LOAD_FUTURE_THRESHOLD_SEC in the future are logged
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
 
 
-class DishManager(SKAController):
+class DishManager(
+    LRCMixin,
+    ComponentManagerMixin[DishManagerComponentManager],
+    ControlModeMixin,
+    ControllerInterface,
+):
     """The Dish Manager of the Dish LMC subsystem."""
 
     # Access instances for debugging
@@ -127,286 +127,9 @@ class DishManager(SKAController):
         default_value=DEFAULT_ACTION_TIMEOUT_S,
     )
 
-    def create_component_manager(self) -> DishManagerComponentManager:
-        """Create the component manager for DishManager.
-
-        :return: Instance of DishManagerComponentManager
-        :rtype: DishManagerComponentManager
-        """
-        self._configure_additional_user_tags_for_logging()
-        return DishManagerComponentManager(
-            self.logger,
-            self._command_tracker,
-            self._update_version_of_subdevice_on_success,
-            self._attr_quality_state_changed,
-            self.get_name(),
-            self.DSDeviceFqdn,
-            self.SPFDeviceFqdn,
-            self.SPFRxDeviceFqdn,
-            self.B5DCDeviceFqdn,
-            self.DefaultActionTimeoutSeconds,
-            communication_state_callback=self._communication_state_changed,
-            component_state_callback=self._component_state_changed,
-            wms_device_names=self.WMSDeviceNames,
-            wind_stow_callback=self._wind_stow_inform,
-            command_progress_callback=self._update_status,
-            default_watchdog_timeout=self.DefaultWatchdogTimeout,
-            default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
-            default_wind_gust_threshold=self.WindGustThreshold,
-        )
-
-    def init_command_objects(self) -> None:
-        """Initialise the command handlers."""
-        super().init_command_objects()
-
-        for command_name, method_name in [
-            ("SetStandbyLPMode", "set_standby_lp_mode"),
-            ("SetMaintenanceMode", "set_maintenance_mode"),
-            ("SetStandbyFPMode", "set_standby_fp_mode"),
-            ("Track", "track_cmd"),
-            ("TrackStop", "track_stop_cmd"),
-            ("ConfigureBand", "configure_band_with_json"),
-            ("ConfigureBand1", "configure_band_cmd"),
-            ("ConfigureBand2", "configure_band_cmd"),
-            ("ConfigureBand3", "configure_band_cmd"),
-            ("ConfigureBand4", "configure_band_cmd"),
-            ("ConfigureBand5a", "configure_band_cmd"),
-            ("ConfigureBand5b", "configure_band_cmd"),
-            ("ConfigureBand6", "configure_band_six_cmd"),
-            ("Slew", "slew"),
-            ("Scan", "scan"),
-            ("TrackLoadStaticOff", "track_load_static_off"),
-            ("EndScan", "end_scan"),
-            ("SetOperateMode", "set_operate_mode"),
-            ("InterlockAck", "interlock_acknowledge"),
-            ("UpdateTZData", "update_tz_data"),
-        ]:
-            self.register_command_object(
-                command_name,
-                SubmittedSlowCommand(
-                    command_name,
-                    self._command_tracker,  # ty: ignore[invalid-argument-type]
-                    self.component_manager,
-                    method_name,
-                    callback=None,
-                    logger=self.logger,
-                ),
-            )
-
-        # SetMaintenanceMode is a special command that is split into two parts, after the
-        # initial fan-out of commands to sub-devices, the command waits for the dish to stow
-        # then proceeds to set the dish into maintenance mode.
-        self.register_command_object(
-            "SetMaintenanceMode",
-            SubmittedSlowCommand(
-                "SetMaintenanceMode",
-                self._command_tracker,  # ty: ignore[invalid-argument-type]
-                self.component_manager,
-                "set_maintenance_mode",
-                callback=self.component_manager.stow_to_maintenance_transition_callback,
-                logger=self.logger,
-            ),
-        )
-
-        self.register_command_object(
-            "SetStowMode",
-            StowCommand(
-                "SetStowMode",
-                self._command_tracker,  # ty: ignore[invalid-argument-type]
-                self.component_manager,
-                "set_stow_mode",
-                callback=None,
-                logger=self.logger,
-            ),
-        )
-
-        # self.register_command_object(
-        #     "AbortScan",
-        #     SubmittedSlowCommand(
-        #         "AbortScan",
-        #         self._command_tracker,
-        #         self.component_manager,
-        #         "abort_scan",
-        #         callback=None,
-        #         logger=self.logger,
-        #     ),
-        # )
-
-        self.register_command_object(
-            "Abort",
-            AbortCommand(
-                self._command_tracker,
-                self.component_manager,
-                callback=None,
-                logger=self.logger,
-            ),
-        )
-        self.register_command_object(
-            "AbortCommands",
-            AbortCommandsCommand(
-                self._command_tracker,
-                self.component_manager,
-                callback=None,
-                logger=self.logger,
-            ),
-        )
-
-        self.register_command_object(
-            "SetKValue",
-            SetKValueCommand(self.component_manager, self.logger),
-        )
-        self.register_command_object(
-            "ApplyPointingModel",
-            ApplyPointingModelCommand(self.component_manager, self.logger),
-        )
-        self.register_command_object(
-            "ResetTrackTable",
-            ResetTrackTableCommand(self.component_manager, self.logger),
-        )
-        self.register_command_object(
-            "SetFrequency",
-            SetFrequencyCommand(self.component_manager, self.logger),
-        )
-        self.register_command_object(
-            "SetHPolAttenuation",
-            SetHPolAttenuationCommand(self.component_manager, self.logger),
-        )
-        self.register_command_object(
-            "SetVPolAttenuation",
-            SetVPolAttenuationCommand(self.component_manager, self.logger),
-        )
-        self.register_command_object(
-            "ResetComponentConnection",
-            ResetComponentConnectionCommand(self.component_manager, self.logger),
-        )
-
-    def delete_device(self):
-        """Override delete_device to stop communication with sub-devices before deletion."""
-        self.logger.info(
-            "DishManager device is being deleted. Stopping communication with sub-devices.",
-            extra=OPERATOR_TAG,
-        )
-        if self.component_manager:
-            self.component_manager.stop_communicating()
-
-        return super().delete_device()
-
-    # ---------
-    # Callbacks
-    # ---------
-
-    def _update_status(self, status: str, user_operator=True) -> None:
-        """Update the status of the device."""
-        self.set_status(status)
-        if user_operator:
-            self.logger.info(status, extra=OPERATOR_TAG)
-        else:
-            self.logger.debug(status)
-        self.push_change_event("status")
-
-    def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
-        """Update the version information of subdevice if connection is successful."""
-        try:
-            self._build_state = self._release_info.update_build_state(device, build_state)
-            self.logger.info(
-                "Updated build state information for %s device: %s.",
-                device.value,
-                build_state,
-                extra=OPERATOR_TAG,
-            )
-        except AttributeError:
-            self.logger.warning(
-                "Failed to update build state information for %s device.",
-                device.value,
-                extra=OPERATOR_TAG,
-            )
-
-    def _attr_quality_state_changed(
-        self, attribute_name: str, new_attribute_quality: AttrQuality
-    ) -> None:
-        attr_name = self._component_state_attr_map.get(attribute_name)
-        attr_value = self.component_manager.component_state.get(attribute_name)
-        if attr_name:
-            attribute_object = getattr(self, attr_name, None)
-            if attribute_object:
-                if attribute_object.get_quality() != new_attribute_quality:
-                    attribute_object.set_value(attr_value)
-                    attribute_object.set_quality(new_attribute_quality, True)
-
-    def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
-        wind_stow_active = self.component_manager.wind_stow_active
-        if wind_stow_active:
-            return
-
-        # gets its turn when wind condition is normal
-        alarm_status_msg = (
-            "Event channel on a sub-device is not responding anymore "
-            "or change event subscription is not complete"
-        )
-        action_map = {
-            CommunicationStatus.NOT_ESTABLISHED: (DevState.ALARM, alarm_status_msg),
-            CommunicationStatus.ESTABLISHED: (DevState.ON, None),
-            CommunicationStatus.DISABLED: (DevState.DISABLE, None),
-        }
-        dev_state, dev_status = action_map[communication_state]
-        self._update_state(dev_state, dev_status)
-
-    # pylint: disable=unused-argument
-    def _component_state_changed(self, *args, **kwargs):
-        def change_case(attr_name):
-            """Convert camel case string to snake case.
-
-            The snake case output is prefixed by an underscore to
-            match the naming convention of the attribute variables.
-
-            Example:
-            dishMode > _dish_mode
-            capture > _capture
-            b3CapabilityState > _b3_capability_state
-
-            Source: https://www.geeksforgeeks.org/
-            python-program-to-convert-camel-case-string-to-snake-case/
-
-            """
-            # pylint: disable=line-too-long
-            return (
-                f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
-            )
-
-        for comp_state_name, comp_state_value in kwargs.items():
-            if comp_state_name == "dishmode":
-                self.logger.debug("Dish mode changed to %s", comp_state_value.name)
-            attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
-            attribute_variable = change_case(attribute_name)
-            setattr(self, attribute_variable, comp_state_value)
-            self.push_change_event(attribute_name, comp_state_value)
-            self.push_archive_event(attribute_name, comp_state_value)
-            self._submit_tango_operation("push_alarm_event", attribute_name, comp_state_value)
-
-    def _wind_stow_inform(self, **computed_averages):
-        """Updates the device state and status based on wind condition.
-
-        If the dish is stowed due to high wind and the alarm has not been cleared,
-        the device enters ALARM state with a message showing the wind data.
-
-        If the dish is stowed but conditions have normalized (alarm reset allowed),
-        the device returns to ON state and the stow flag is cleared.
-        """
-        wind_stow_active = self.component_manager.wind_stow_active
-        reset_alarm = self.component_manager.reset_alarm
-
-        if wind_stow_active and not reset_alarm:
-            alarm_status_msg = f"Dish stowed due to extreme wind condition: {computed_averages}."
-            dev_state, dev_status = DevState.ALARM, alarm_status_msg
-            self._update_state(dev_state, dev_status)
-        elif wind_stow_active and reset_alarm:
-            self._update_state(DevState.ON, None)
-            # ensure this runs only once after the conditions return to normal
-            self.component_manager.wind_stow_active = False
-
+    @override
     def init_device(self):
         """Initialize the device attributes and properties."""
-        # Call parent init_device first to set up base class structures
         super().init_device()
 
         # Initialize all device attributes
@@ -441,6 +164,8 @@ class DishManager(SKAController):
         self._build_state = self._release_info.get_build_state()
         self._version_id = self._release_info.get_dish_manager_release_version()
         self._action_timeout_seconds = DEFAULT_ACTION_TIMEOUT_S
+        self._scan_id = ""
+        self._dish_mode_model = DishModeModel()
 
         self._component_state_attr_map = {
             "dishmode": "dishMode",
@@ -475,7 +200,6 @@ class DishManager(SKAController):
             "attenuationpolvy": "attenuationPolVY",
             "kvalue": "kValue",
             "trackinterpolationmode": "trackInterpolationMode",
-            "scanid": "scanID",
             "ignorespf": "ignoreSpf",
             "ignorespfrx": "ignoreSpfrx",
             "ignoreb5dc": "ignoreB5dc",
@@ -521,7 +245,7 @@ class DishManager(SKAController):
             "rfcmvattenuation": "rfcmVAttenuation",
             "clkphotodiodecurrent": "clkPhotodiodeCurrent",
             "hpolrfpowerin": "hPolRfPowerIn",
-            "vpolrfPowerin": "vPolRfPowerIn",
+            "vpolrfpowerin": "vPolRfPowerIn",
             "hpolrfpowerout": "hPolRfPowerOut",
             "vpolrfpowerout": "vPolRfPowerOut",
             "rftemperature": "rfTemperature",
@@ -573,6 +297,7 @@ class DishManager(SKAController):
             "band5aSamplerFrequency",
             "band5bSamplerFrequency",
             "capturing",
+            "scanID",
             "dshMaxShortTermPower",
             "dshPowerCurtailment",
             "noiseDiodeConfig",
@@ -592,9 +317,93 @@ class DishManager(SKAController):
 
         # Register device instance and continue initialization
         self.instances[self.get_name()] = self
+        self.init_completed()
         self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)
-        self.op_state_model.perform_action("component_on")
+
+    @override
+    def delete_device(self):
+        """Override delete_device to stop communication with sub-devices before deletion."""
+        self.logger.info(
+            "DishManager device is being deleted. Stopping communication with sub-devices.",
+            extra=OPERATOR_TAG,
+        )
+        self.component_manager.stop_communicating()
+
+        super().delete_device()
+
+    @override
+    def start_monitoring_component(self) -> None:
+        self.logger.info("Starting component monitoring.")
         self.component_manager.start_communicating()
+
+    @override
+    def stop_monitoring_component(self) -> None:
+        self.logger.info("Stopping component monitoring.")
+        self.component_manager.stop_communicating()
+
+    @override
+    def _on_unhandled_exception(self, exception: Exception) -> None:
+        """Do something when a task raises an unhandled exception.
+
+        :param exception: the unhandled exception that was caught.
+        """
+        # TODO: what more should happen here
+        self.logger.error("Unhandled exception occurred during task execution: %s", str(exception))
+
+    @override
+    def schedule_abort_task(self, task_callback):
+        """Schedule an abort task with the provided callback.
+
+        :param task_callback: The callback function to be executed for the abort task.
+        """
+        aggregator = AbortCallbackAggregator(task_callback)
+        abort_sequence_callback = aggregator.new_callback()
+
+        def commence_abort_sequence():
+            abort_sequence_handler = AbortSequenceCommandHandler(self.component_manager)
+            status, message = self.task_executor.submit(
+                abort_sequence_handler.complete_abort_sequence,
+                task_callback=abort_sequence_callback,
+            )
+            if status is TaskStatus.REJECTED:
+                raise RuntimeError(message)
+
+        # if dish is in maintenance mode cancel LRCs only
+        if self.component_manager.component_state.get("dishmode") == DishMode.MAINTENANCE:
+            self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            abort_lrc_callback = aggregator.new_callback()
+            return super().schedule_abort_task(abort_lrc_callback)
+
+        abort_lrc_callback = aggregator.new_callback(on_completed=commence_abort_sequence)
+        return super().schedule_abort_task(abort_lrc_callback)
+
+    def is_command_allowed(self, command_name: str) -> bool:
+        """Check if a command is allowed in the current dish mode.
+
+        :param command_name: Name of the Tango command to check.
+
+        :raises StateModelError: If control is disabled.
+        :raises ValueError: If the command has no rule, or the dish mode is unknown to the model.
+        :raises CommandNotAllowedError: If the command is not allowed in the current state.
+
+        :return: Whether the command is allowed in the current dish mode.
+
+        """
+        try:
+            self.check_component_controlled()
+            return self._dish_mode_model.is_command_allowed(
+                command_name, component_state=self.component_manager.component_state
+            )
+        except (faults.StateModelError, CommandNotAllowedError, ValueError):
+            # TODO send error information to last command failure attribute
+            self.logger.exception("Command %s is not allowed", command_name)
+            raise
+
+    def _clear_scan_id(self):
+        # TODO use attribute from signal approach
+        self._scan_id = ""
+        self.push_change_event("scanID", self._scan_id)
+        self.push_archive_event("scanID", self._scan_id)
 
     def _configure_additional_user_tags_for_logging(self):
         """Append user tags to log records."""
@@ -611,6 +420,171 @@ class DishManager(SKAController):
 
         self.logger.addFilter(UserTagsFilter())
 
+    @override
+    def create_component_manager(self) -> DishManagerComponentManager:
+        """Create the component manager for DishManager.
+
+        :return: Instance of DishManagerComponentManager
+        :rtype: DishManagerComponentManager
+        """
+        self._configure_additional_user_tags_for_logging()
+        return DishManagerComponentManager(
+            self.logger,
+            self._update_version_of_subdevice_on_success,
+            self._attr_quality_state_changed,
+            self.get_name(),
+            self.DSDeviceFqdn,
+            self.SPFDeviceFqdn,
+            self.SPFRxDeviceFqdn,
+            self.B5DCDeviceFqdn,
+            self.DefaultActionTimeoutSeconds,
+            communication_state_callback=self._communication_state_changed,
+            component_state_callback=self._component_state_changed,
+            wms_device_names=self.WMSDeviceNames,
+            wind_stow_callback=self._wind_stow_inform,
+            clear_scan_id_callback=self._clear_scan_id,
+            default_watchdog_timeout=self.DefaultWatchdogTimeout,
+            default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
+            default_wind_gust_threshold=self.WindGustThreshold,
+        )
+
+    # def completed_set_maintenance_mode(self) -> None:
+    #     """Finish the STOW to MAINTENANCE transition once the command completes."""
+    #     self.component_manager.stow_to_maintenance_transition_callback()
+
+    # def is_SetMaintenanceMode_allowed(
+    #     self, request_type: LRCReqType = LRCReqType.ENQUEUE_REQ
+    # ) -> bool:
+    #     """Check whether SetMaintenanceMode can be queued or executed."""
+    #     return self.is_command_allowed("SetMaintenanceMode")
+
+    # @submit_lrc_task(
+    #     cmd_name="SetMaintenanceMode",
+    #     fisallowed="is_SetMaintenanceMode_allowed",
+    #     completed_callback="completed_set_maintenance_mode",
+    # )
+    # def execute_SetMaintenanceMode(self) -> TaskFunctionType:
+    #     return self._component_manager.set_maintenance_mode
+
+    # ---------
+    # Callbacks
+    # ---------
+
+    def _update_status(self, status: str, user_operator=True) -> None:
+        """Update the status of the device."""
+        self.set_status(status)
+        if user_operator:
+            self.logger.info(status, extra=OPERATOR_TAG)
+        else:
+            self.logger.debug(status)
+
+    def _update_version_of_subdevice_on_success(self, device: DishDevice, build_state: str):
+        """Update the version information of subdevice if connection is successful."""
+        try:
+            self._build_state = self._release_info.update_build_state(device, build_state)
+            self.logger.info(
+                "Updated build state information for %s device: %s.",
+                device.value,
+                build_state,
+                extra=OPERATOR_TAG,
+            )
+        except AttributeError:
+            self.logger.warning(
+                "Failed to update build state information for %s device.",
+                device.value,
+                extra=OPERATOR_TAG,
+            )
+
+    def _attr_quality_state_changed(
+        self, attribute_name: str, new_attribute_quality: AttrQuality
+    ) -> None:
+        attr_name = self._component_state_attr_map.get(attribute_name)
+        attr_value = self.component_manager.component_state.get(attribute_name)
+        if attr_name:
+            attribute_object = getattr(self, attr_name, None)
+            if attribute_object:
+                if attribute_object.get_quality() != new_attribute_quality:
+                    attribute_object.set_value(attr_value)
+                    attribute_object.set_quality(new_attribute_quality, True)
+
+    def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
+        if self.component_manager.wind_stow_active:
+            return
+
+        # gets its turn when wind condition is normal
+        # NOTE remove dev state update if migration to use <x>EmitMixin happens
+        if communication_state == CommunicationStatus.NOT_ESTABLISHED:
+            states = self.component_manager.get_sub_device_communication_states()
+            lost = sorted(
+                name
+                for name, state in states.items()
+                if state == CommunicationStatus.NOT_ESTABLISHED
+            )
+            message = f"Connection lost to: {', '.join(lost)}"
+            self.report_health(HealthState.FAILED, [message])
+            self.set_state(DevState.ALARM)
+            self.set_status(message)
+        elif communication_state == CommunicationStatus.ESTABLISHED:
+            self.report_health(HealthState.OK, [])
+            self.set_state(DevState.ON)
+            self.set_status("Connection to all sub-devices is established")
+        elif communication_state == CommunicationStatus.DISABLED:
+            # health update is handled in write_ControlMode == NO_MONITOR_NO_CONTROL
+            self.set_state(DevState.DISABLE)
+            self.set_status("Connection to sub-devices is disabled")
+
+    def _component_state_changed(self, **component_state):
+        def change_case(attr_name):
+            """Convert camel case string to snake case.
+
+            The snake case output is prefixed by an underscore to
+            match the naming convention of the attribute variables.
+
+            Example:
+            dishMode > _dish_mode
+            capture > _capture
+            b3CapabilityState > _b3_capability_state
+
+            Source: https://www.geeksforgeeks.org/
+            python-program-to-convert-camel-case-string-to-snake-case/
+
+            """
+            # pylint: disable=line-too-long
+            return (
+                f"_{reduce(lambda x, y: x + ('_' if y.isupper() else '') + y, attr_name).lower()}"  # noqa: E501
+            )
+
+        for comp_state_name, comp_state_value in component_state.items():
+            if comp_state_name == "dishmode":
+                self.logger.debug("Dish mode changed to %s", comp_state_value.name)
+            attribute_name = self._component_state_attr_map.get(comp_state_name, comp_state_name)
+            attribute_variable = change_case(attribute_name)
+            setattr(self, attribute_variable, comp_state_value)
+            self.push_change_event(attribute_name, comp_state_value)
+            self.push_archive_event(attribute_name, comp_state_value)
+            self.push_alarm_event(attribute_name, comp_state_value)
+
+    def _wind_stow_inform(self, **computed_averages):
+        """Updates the device state and status based on wind condition.
+
+        If the dish is stowed due to high wind and the alarm has not been cleared,
+        the device enters ALARM state with a message showing the wind data.
+
+        If the dish is stowed but conditions have normalized (alarm reset allowed),
+        the device returns to ON state and the stow flag is cleared.
+        """
+        wind_stow_active = self.component_manager.wind_stow_active
+        reset_alarm = self.component_manager.reset_alarm
+
+        if wind_stow_active and not reset_alarm:
+            alarm_status_msg = f"Dish stowed due to extreme wind condition: {computed_averages}."
+            self.set_state(DevState.ALARM)
+            self.set_status(alarm_status_msg)
+        elif wind_stow_active and reset_alarm:
+            self.set_state(DevState.ON)
+            # ensure this runs only once after the conditions return to normal
+            self.component_manager.wind_stow_active = False
+
     # ----------
     # Attributes
     # ----------
@@ -626,7 +600,6 @@ class DishManager(SKAController):
         ),
     )
     @time_tango_write()
-    @requires_component_manager
     def lastCommandedMode(self) -> tuple[str, str]:
         """Return the last commanded mode."""
         return self.component_manager.component_state["lastcommandedmode"]
@@ -637,7 +610,6 @@ class DishManager(SKAController):
         access=AttrWriteType.READ,
         doc="Stores the name and timestamp (in UNIX UTC format) of the last invoked command.",
     )
-    @requires_component_manager
     def lastCommandInvoked(self) -> tuple[str, str]:
         """Return the last command invoked and its timestamp."""
         return self.component_manager.component_state["lastcommandinvoked"]
@@ -653,7 +625,6 @@ class DishManager(SKAController):
             "- Reason for failure (as returned by the command)"
         ),
     )
-    @requires_component_manager
     def lastCommandFailure(self) -> tuple[str, str, str]:
         """Return the last command failure on DM."""
         return self.component_manager.component_state["lastcommandfailure"]
@@ -671,7 +642,6 @@ class DishManager(SKAController):
             "- Reason for the error (as reported by tango)"
         ),
     )
-    @requires_component_manager
     def lastTangoEventError(self) -> tuple[str, str, str, str]:
         """Return the last tango error reported by a subservient device."""
         return self.component_manager.component_state["lasttangoeventerror"]
@@ -815,7 +785,6 @@ class DishManager(SKAController):
     @attenuation1PolHX.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def attenuation1PolHX(self, value):
         """Set the attenuation Pol H/X for attenuator 1."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
@@ -834,7 +803,6 @@ class DishManager(SKAController):
     @attenuation1PolVY.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def attenuation1PolVY(self, value):
         """Set the attenuation Pol V/Y for attenuator 1."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
@@ -853,7 +821,6 @@ class DishManager(SKAController):
     @attenuation2PolHX.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def attenuation2PolHX(self, value):
         """Set the attenuation Pol H/X for attenuator 2."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
@@ -872,7 +839,6 @@ class DishManager(SKAController):
     @attenuation2PolVY.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def attenuation2PolVY(self, value):
         """Set the attenuation Pol V/Y for attenuator 2."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
@@ -891,7 +857,6 @@ class DishManager(SKAController):
     @attenuationPolHX.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def attenuationPolHX(self, value):
         """Set the total attenuation Pol H/X."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
@@ -910,7 +875,6 @@ class DishManager(SKAController):
     @attenuationPolVY.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def attenuationPolVY(self, value):
         """Set the total attenuation Pol V/Y."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
@@ -973,7 +937,6 @@ class DishManager(SKAController):
     @band0PointingModelParams.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def band0PointingModelParams(self, value):
         """Set the band0PointingModelParams."""
         self.component_manager.update_pointing_model_params("band0PointingModelParams", value)
@@ -1000,7 +963,6 @@ class DishManager(SKAController):
     @band1PointingModelParams.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def band1PointingModelParams(self, value):
         """Set the band1PointingModelParams."""
         self.component_manager.update_pointing_model_params("band1PointingModelParams", value)
@@ -1027,7 +989,6 @@ class DishManager(SKAController):
     @band2PointingModelParams.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def band2PointingModelParams(self, value):
         """Set the band2PointingModelParams."""
         self.component_manager.update_pointing_model_params("band2PointingModelParams", value)
@@ -1054,7 +1015,6 @@ class DishManager(SKAController):
     @band3PointingModelParams.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def band3PointingModelParams(self, value):
         """Set the band3PointingModelParams."""
         self.component_manager.update_pointing_model_params("band3PointingModelParams", value)
@@ -1081,7 +1041,6 @@ class DishManager(SKAController):
     @band4PointingModelParams.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def band4PointingModelParams(self, value):
         """Set the band4PointingModelParams."""
         self.component_manager.update_pointing_model_params("band4PointingModelParams", value)
@@ -1100,7 +1059,6 @@ class DishManager(SKAController):
     @band5aPointingModelParams.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def band5aPointingModelParams(self, value):
         """Set the band5aPointingModelParams."""
         self.component_manager.update_pointing_model_params("band5aPointingModelParams", value)
@@ -1119,7 +1077,6 @@ class DishManager(SKAController):
     @band5bPointingModelParams.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def band5bPointingModelParams(self, value):
         """Set the band5bPointingModelParams."""
         self.component_manager.update_pointing_model_params("band5bPointingModelParams", value)
@@ -1609,20 +1566,12 @@ class DishManager(SKAController):
 
     @attribute(
         dtype=str,
-        access=AttrWriteType.READ_WRITE,
+        access=AttrWriteType.READ,
         doc="Report the scanID for Scan",
     )
     def scanID(self):
         """Returns the scanID."""
-        return self.component_manager.component_state.get("scanid", "")
-
-    @scanID.write
-    @time_tango_write()
-    @log_tango_attr_write()
-    @requires_component_manager
-    def scanID(self, scanid):
-        """Sets the scanID."""
-        self.component_manager._update_component_state(scanid=scanid)
+        return self._scan_id
 
     @attribute(
         dtype=bool,
@@ -1639,7 +1588,6 @@ class DishManager(SKAController):
     @ignoreSpf.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def ignoreSpf(self, value):
         """Sets ignoreSpf."""
         self.component_manager.set_spf_device_ignored(value)
@@ -1659,7 +1607,6 @@ class DishManager(SKAController):
     @ignoreSpfrx.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def ignoreSpfrx(self, value):
         """Sets ignoreSpfrx."""
         self.component_manager.set_spfrx_device_ignored(value)
@@ -1679,7 +1626,6 @@ class DishManager(SKAController):
     @ignoreB5dc.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def ignoreB5dc(self, value):
         """Sets ignoreB5dc."""
         self.component_manager.set_b5dc_device_ignored(value)
@@ -1703,7 +1649,6 @@ class DishManager(SKAController):
     @noiseDiodeMode.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def noiseDiodeMode(self, mode: NoiseDiodeMode):
         """Set the device noise diode mode."""
         self.component_manager.set_noise_diode_mode(mode)
@@ -1728,7 +1673,6 @@ class DishManager(SKAController):
     @periodicNoiseDiodePars.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def periodicNoiseDiodePars(self, values):
         """Set the device periodic noise diode pars."""
         self.component_manager.set_periodic_noise_diode_pars(values)
@@ -1753,7 +1697,6 @@ class DishManager(SKAController):
     @pseudoRandomNoiseDiodePars.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def pseudoRandomNoiseDiodePars(self, values):
         """Set the device pseudo random noise diode pars."""
         self.component_manager.set_pseudo_random_noise_diode_pars(values)
@@ -1793,7 +1736,6 @@ class DishManager(SKAController):
     @spectralInversion.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def spectralInversion(self, value):
         """Set the status of the SPFRx spectralInversion attribute."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
@@ -1832,7 +1774,6 @@ class DishManager(SKAController):
     @dscPowerLimitKw.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def dscPowerLimitKw(self, value):
         """Sets the DSC Power Limit (Kw)."""
         # pylint: disable=attribute-defined-outside-init
@@ -1862,7 +1803,6 @@ class DishManager(SKAController):
         "The watchdog timer can be reset by calling the `ResetWatchdog()` command. "
         "The watchdog can be disabled by writing a value less than or equal to 0.",
     )
-    @requires_component_manager
     def watchdogTimeout(self):
         """Returns watchdogTimeout."""
         return self.component_manager.component_state["watchdogtimeout"]
@@ -1870,7 +1810,6 @@ class DishManager(SKAController):
     @watchdogTimeout.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def watchdogTimeout(self, value):
         """Writes watchdogTimeout."""
         self.component_manager._update_component_state(watchdogtimeout=value)
@@ -1920,7 +1859,6 @@ class DishManager(SKAController):
     @autoWindStowEnabled.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def autoWindStowEnabled(self, enabled: bool):
         """Flag to toggle the auto wind stow on or off."""
         self.component_manager._update_component_state(autowindstowenabled=enabled)
@@ -1959,7 +1897,6 @@ class DishManager(SKAController):
     @actionTimeoutSeconds.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def actionTimeoutSeconds(self, value):
         """Sets actionTimeoutSeconds."""
         self.component_manager.set_action_timeout(value)
@@ -1976,7 +1913,6 @@ class DishManager(SKAController):
     @b1LnaHPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b1LnaHPowerState(self, value: bool):
         """Sets b1LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -1995,7 +1931,6 @@ class DishManager(SKAController):
     @b2LnaHPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b2LnaHPowerState(self, value: bool):
         """Sets b2LnaHPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -2014,7 +1949,6 @@ class DishManager(SKAController):
     @b1LnaVPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b1LnaVPowerState(self, value: bool):
         """Sets b1LnaVPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -2033,7 +1967,6 @@ class DishManager(SKAController):
     @b2LnaVPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b2LnaVPowerState(self, value: bool):
         """Sets b2LnaVPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -2052,7 +1985,6 @@ class DishManager(SKAController):
     @b3LnaPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b3LnaPowerState(self, value: bool):
         """Sets b3LnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -2071,7 +2003,6 @@ class DishManager(SKAController):
     @b4LnaPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b4LnaPowerState(self, value: bool):
         """Sets b4LnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -2090,7 +2021,6 @@ class DishManager(SKAController):
     @b5aLnaPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b5aLnaPowerState(self, value: bool):
         """Sets b5aLnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -2109,7 +2039,6 @@ class DishManager(SKAController):
     @b5bLnaPowerState.write
     @time_tango_write()
     @log_tango_attr_write()
-    @requires_component_manager
     def b5bLnaPowerState(self, value: bool):
         """Sets b5bLnaPowerState."""
         spf_com_man = self.component_manager.sub_component_managers["SPF"]
@@ -2323,54 +2252,34 @@ class DishManager(SKAController):
     # --------
     # Commands
     # --------
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
-        doc_in="Abort currently executing long running command on "
+        doc_in="Abort currently executing long running command(s) on "
         "DishManager including stopping dish movement and transitioning "
         "dishMode to StandbyFP. For details consult DishManager documentation",
+        doc_out="[ResultCode.STARTED][Command ID]",
         display_level=DispLevel.OPERATOR,
         dtype_out="DevVarLongStringArray",
+        fisallowed="_AbstractLRCMixin__is_Abort_allowed",
     )
     def Abort(self) -> DevVarLongStringArrayType:
-        """Empty out long running commands in queue.
+        """Abort any executing long running command(s), empty the queue and start abort sequence.
 
-        :return: A tuple containing a return code and a string
-            message indicating status. The message is for
-            information purpose only.
+        Abort is itself a long running command that is executed immediately.
+
+        Subclasses should override :meth:`~.AbstractLRCMixin.execute_Abort` to change
+        the behaviour of this command.
+
+        :return: A tuple containing ResultCode.STARTED and the unique ID of the command
         """
-        handler = self.get_command_object("Abort")
-        (return_code, message) = handler()
-        return ([return_code], [message])
+        return self.execute_Abort()
 
-    # @record_command(False)
-    # @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    # @log_tango_command()
-    # @command(
-    #     doc_in="Abort dish movement and clear out the scan id.",
-    #     display_level=DispLevel.OPERATOR,
-    #     dtype_out="DevVarLongStringArray",
-    # )
-    # def AbortScan(self) -> DevVarLongStringArrayType:
-    #     """Stop activities related to a scan.
-
-    #     - Stop dish movement
-    #     - Reset the track table
-    #     - Clear out the scan ID
-
-    #     :return: A tuple containing a return code and a string
-    #         message indicating status. The message is for
-    #         information purpose only.
-    #     """
-    #     handler = self.get_command_object("AbortScan")
-    #     (return_code, message) = handler()
-    #     return ([return_code], [message])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in="DevString",
         doc_in="""The command accepts a JSON string containing data to configure the SPFRx.
         The JSON structure is as follows:
@@ -2409,7 +2318,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand(self, json_string) -> DevVarLongStringArrayType:
+    def ConfigureBand(self, json_string) -> TaskFunctionType:
         """Configure band according to JSON string supplied.
 
                 This command triggers the Dish to transition to the CONFIG Dish
@@ -2420,15 +2329,12 @@ class DishManager(SKAController):
                 :return: A tuple containing a return code and a string
                     message indicating status.
         """
-        handler = self.get_command_object("ConfigureBand")
+        return partial(self.component_manager.configure_band_with_json, json_string)
 
-        result_code, unique_id = handler(json_string)
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
@@ -2436,7 +2342,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand1(self, synchronise) -> DevVarLongStringArrayType:
+    def ConfigureBand1(self, synchronise) -> TaskFunctionType:
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, re-applies the associated band<n>pointingmodelparams,
         and returns to the caller. To configure the Dish to
@@ -2448,15 +2354,12 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("ConfigureBand1")
+        return partial(self.component_manager.configure_band_cmd, Band.B1, synchronise)
 
-        result_code, unique_id = handler(Band.B1, synchronise)
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
@@ -2464,7 +2367,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand2(self, synchronise) -> DevVarLongStringArrayType:
+    def ConfigureBand2(self, synchronise) -> TaskFunctionType:
         """Implemented as a Long Running Command.
 
         This command triggers the Dish to transition to the CONFIG Dish
@@ -2478,15 +2381,12 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("ConfigureBand2")
+        return partial(self.component_manager.configure_band_cmd, Band.B2, synchronise)
 
-        result_code, unique_id = handler(Band.B2, synchronise)
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
@@ -2494,7 +2394,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand3(self, synchronise):  # pylint: disable=unused-argument
+    def ConfigureBand3(self, synchronise) -> TaskFunctionType:
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, re-applies the associated band<n>pointingmodelparams,
         and returns to the caller. To configure the Dish to
@@ -2503,15 +2403,12 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        handler = self.get_command_object("ConfigureBand3")
+        return partial(self.component_manager.configure_band_cmd, Band.B3, synchronise)
 
-        result_code, unique_id = handler(Band.B3, synchronise)
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
@@ -2519,7 +2416,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand4(self, synchronise):  # pylint: disable=unused-argument
+    def ConfigureBand4(self, synchronise) -> TaskFunctionType:
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, re-applies the associated band<n>pointingmodelparams,
         and returns to the caller. To configure the Dish to
@@ -2528,15 +2425,12 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        handler = self.get_command_object("ConfigureBand4")
+        return partial(self.component_manager.configure_band_cmd, Band.B4, synchronise)
 
-        result_code, unique_id = handler(Band.B4, synchronise)
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
@@ -2544,7 +2438,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand5a(self, synchronise):  # pylint: disable=unused-argument
+    def ConfigureBand5a(self, synchronise) -> TaskFunctionType:
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, re-applies the associated band<n>pointingmodelparams,
         and returns to the caller. To configure the Dish to
@@ -2553,15 +2447,12 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        handler = self.get_command_object("ConfigureBand5a")
+        return partial(self.component_manager.configure_band_cmd, Band.B5a, synchronise)
 
-        result_code, unique_id = handler(Band.B5a, synchronise)
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=bool,
         doc_in="If the synchronise argument is True, the SPFRx FPGA is instructed to synchronise "
         "its internal flywheel 1PPS to the SAT-1PPS for the ADC that is applicable to the band "
@@ -2569,7 +2460,7 @@ class DishManager(SKAController):
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand5b(self, synchronise):  # pylint: disable=unused-argument
+    def ConfigureBand5b(self, synchronise) -> TaskFunctionType:
         """This command triggers the Dish to transition to the CONFIG Dish
         Element Mode, re-applies the associated band<n>pointingmodelparams,
         and returns to the caller. To configure the Dish to
@@ -2578,35 +2469,29 @@ class DishManager(SKAController):
         configuration, Dish will automatically transition to Dish
         mode OPERATE.
         """
-        handler = self.get_command_object("ConfigureBand5b")
-        result_code, unique_id = handler(Band.B5b, synchronise)
+        return partial(self.component_manager.configure_band_cmd, Band.B5b, synchronise)
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=None,
         doc_in="Used by DVS for their KU band, sets IndexerPosition.B6 (7) on the DSC.",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def ConfigureBand6(self):  # pylint: disable=unused-argument
+    def ConfigureBand6(self) -> TaskFunctionType:
         """This command triggers the dish structure controller to transition to band 6."""
-        handler = self.get_command_object("ConfigureBand6")
-        result_code, unique_id = handler()
+        return self.component_manager.configure_band_six_cmd
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @log_tango_command()
     @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def FlushCommandQueue(self):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -2620,12 +2505,12 @@ class DishManager(SKAController):
 
         :param args: the scanID in string format
         """
-        handler = self.get_command_object("Scan")
-        result_code, unique_id = handler(scanid)
+        self._scan_id = scanid
+        self.push_change_event("scanID", self._scan_id)
+        self.push_archive_event("scanID", self._scan_id)
+        return ([ResultCode.OK], [f"Scan ID set to {self._scan_id}"])
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -2636,15 +2521,14 @@ class DishManager(SKAController):
     )
     def EndScan(self) -> DevVarLongStringArrayType:
         """This command clears out the scan_id."""
-        handler = self.get_command_object("EndScan")
-        result_code, unique_id = handler()
+        self._clear_scan_id()
+        return ([ResultCode.OK], ["Scan ID cleared"])
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
+        check_allowed=False,
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2653,52 +2537,46 @@ class DishManager(SKAController):
             "TZ_DATA_URL environment variable and uploads it to SPFRx."
         ),
     )
-    def UpdateTZData(self) -> DevVarLongStringArrayType:
+    def UpdateTZData(self) -> TaskFunctionType:
         """Download the latest TZ data file and upload it to SPFRx.
 
         The URL of the file to download is read from the ``TZ_DATA_URL`` environment
         variable. The downloaded file is base64 encoded and forwarded to SPFRx
         via its ``UpdateTZData`` command.
         """
-        handler = self.get_command_object("UpdateTZData")
-        result_code, unique_id = handler()
+        return self._component_manager.update_tz_data
 
-        return ([result_code], [unique_id])
+    # @record_command(record_mode=True)
+    # @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    # @log_tango_command()
+    # @command(
+    #     dtype_in=None,
+    #     dtype_out="DevVarLongStringArray",
+    #     display_level=DispLevel.OPERATOR,
+    #     doc_in="This command triggers the Dish to transition to the MAINTENANCE Dishmode.",
+    # )
+    # def SetMaintenanceMode(self) -> DevVarLongStringArrayType:
+    #     """This command triggers the Dish to transition to the MAINTENANCE
+    #     Dish Element Mode, and returns to the caller. To go into a state
+    #     that is safe to approach the Dish by a maintainer, and to enable the
+    #     Engineering interface to allow direct access to low level control and
+    #     monitoring by engineers and maintainers. This mode will also enable
+    #     engineers and maintainers to upgrade SW and FW. Dish also enters this
+    #     mode when an emergency stop button is pressed.
+    #     """
+    #     return self.execute_SetMaintenanceMode()
 
-    @record_command(True)
+    @record_command(record_mode=True)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
-        dtype_in=None,
-        dtype_out="DevVarLongStringArray",
-        display_level=DispLevel.OPERATOR,
-        doc_in="This command triggers the Dish to transition to the MAINTENANCE Dishmode.",
-    )
-    def SetMaintenanceMode(self) -> DevVarLongStringArrayType:
-        """This command triggers the Dish to transition to the MAINTENANCE
-        Dish Element Mode, and returns to the caller. To go into a state
-        that is safe to approach the Dish by a maintainer, and to enable the
-        Engineering interface to allow direct access to low level control and
-        monitoring by engineers and maintainers. This mode will also enable
-        engineers and maintainers to upgrade SW and FW. Dish also enters this
-        mode when an emergency stop button is pressed.
-        """
-        handler = self.get_command_object("SetMaintenanceMode")
-        result_code, unique_id = handler()
-
-        return ([result_code], [unique_id])
-
-    @record_command(True)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=None,
         doc_in="SetOperateMode is a deprecated command, it is recommended to use ConfigureBand "
         "or ConfigureBand<N> command instead to trigger the transition to OPERATE dish mode. ",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def SetOperateMode(self) -> DevVarLongStringArrayType:
+    def SetOperateMode(self) -> TaskFunctionType:
         """Deprecated command.
 
         This command initiates the transition to OPERATE dish mode. This command will trigger
@@ -2708,24 +2586,21 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("SetOperateMode")
+        return self._component_manager.set_operate_mode
 
-        result_code, unique_id = handler()
-        return ([result_code], [unique_id])
-
-    @record_command(True)
+    @record_command(record_mode=True)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=None,
+        doc_in="This command triggers the Dish to transition to the STANDBY‐LP Dishmode.",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
-        doc_in="This command triggers the Dish to transition to the STANDBY‐LP Dishmode.",
     )
-    def SetStandbyLPMode(self) -> DevVarLongStringArrayType:
+    def SetStandbyLPMode(self) -> TaskFunctionType:
         """Implemented as a Long Running Command.
 
-        This command triggers the Dish to transition to the STANDBY‐LP Dish
+        This command triggers the Dish to transition to the STANDBY-LP Dish
         Element Mode, and returns to the caller. Standby_LP is the default
         mode when the Dish is configured for low power consumption, and is
         the mode wherein Dish ends after a start-up procedure.
@@ -2736,26 +2611,23 @@ class DishManager(SKAController):
         able to turn the drives on, stow the dish and turn the drives off
         again. The purpose of this mode is to enable the observatory to
         perform power management (load curtailment), and also to conserve
-        energy for non‐operating dishes.
+        energy for non-operating dishes.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("SetStandbyLPMode")
-        result_code, unique_id = handler()
+        return self.component_manager.set_standby_lp_mode
 
-        return ([result_code], [unique_id])
-
-    @record_command(True)
+    @record_command(record_mode=True)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
         doc_in="This command triggers the Dish to transition to the STANDBY‐FP Dishmode.",
     )
-    def SetStandbyFPMode(self) -> DevVarLongStringArrayType:
+    def SetStandbyFPMode(self) -> TaskFunctionType:
         """Implemented as a Long Running Command.
 
         This command triggers the Dish to transition to the STANDBY‐FP Dish
@@ -2766,12 +2638,9 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("SetStandbyFPMode")
-        result_code, unique_id = handler()
+        return self.component_manager.set_standby_fp_mode
 
-        return ([result_code], [unique_id])
-
-    @record_command(True)
+    @record_command(record_mode=True)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -2780,15 +2649,13 @@ class DishManager(SKAController):
         display_level=DispLevel.OPERATOR,
         doc_in="This command triggers the Dish to transition to STOW.",
     )
-    @requires_component_manager
     def SetStowMode(self) -> DevVarLongStringArrayType:
-        """Implemented as a Long Running Command.
+        """Implemented as a Fast Command.
 
         This command immediately triggers the Dish to transition to STOW Dish Element
-        Mode. It subsequently aborts all queued LRC tasks and then returns to the caller.
-        It points the dish in a direction that minimises the wind loads on the structure,
-        for survival in strong wind conditions. The Dish is able to observe in the STOW
-        position, for the purpose of transient detection.
+        Mode. It points the dish in a direction that minimises the wind loads on the
+        structure, for survival in strong wind conditions. The Dish is able to observe
+        in the STOW position, for the purpose of transient detection.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -2797,21 +2664,19 @@ class DishManager(SKAController):
         if self.component_manager.component_state["dishmode"] == DishMode.MAINTENANCE:
             self.component_manager.handle_exit_maintenance_mode_transition()
 
-        handler = self.get_command_object("SetStowMode")
-        result_code, unique_id = handler()
+        result_code, message = self.component_manager.set_stow_mode()
+        return ([result_code], [message])
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in="DevVarFloatArray",
         doc_in="Slew to Az/EL: [0]: Azimuth\n[1]: Elevation",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
     )
-    def Slew(self, values):  # pylint: disable=unused-argument
+    def Slew(self, values) -> TaskFunctionType:
         """Trigger the Dish to start moving to the commanded (Az,El) position.
 
         :param argin: the az, el for the pointing in stringified json format
@@ -2819,12 +2684,9 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("Slew")
-        result_code, unique_id = handler(values)
+        return partial(self.component_manager.slew, values)
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @log_tango_command()
     @command(
         dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR, doc_in="Not Implemented."
@@ -2835,16 +2697,16 @@ class DishManager(SKAController):
         """
         raise NotImplementedError
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
         doc_in="Executes TrackStart on the DSC.",
     )
-    def Track(self) -> DevVarLongStringArrayType:
+    def Track(self) -> TaskFunctionType:
         """Implemented as a Long Running Command.
 
         When the Track command is received the Dish will start tracking the
@@ -2866,21 +2728,18 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("Track")
-        result_code, unique_id = handler()
+        return self.component_manager.track_cmd
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
         doc_in="Executes TrackStop on the DSC.",
     )
-    def TrackStop(self) -> DevVarLongStringArrayType:
+    def TrackStop(self) -> TaskFunctionType:
         """Implemented as a Long Running Command.
 
         When the TrackStop command is received the Dish will stop moving
@@ -2889,15 +2748,13 @@ class DishManager(SKAController):
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("TrackStop")
-        result_code, unique_id = handler()
+        return self.component_manager.track_stop_cmd
 
-        return ([result_code], [unique_id])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @slow_command(
+        check_allowed=False,
         dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
         doc_in="""
@@ -2915,17 +2772,15 @@ class DishManager(SKAController):
             [0] Off_Xel, [1] Off_El
         """,
     )
-    def TrackLoadStaticOff(self, values) -> DevVarLongStringArrayType:
+    def TrackLoadStaticOff(self, values) -> TaskFunctionType:
         """Loads the given static pointing model offsets.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("TrackLoadStaticOff")
-        result_code, unique_id = handler(values)
-        return ([result_code], [unique_id])
+        return partial(self.component_manager.track_load_static_off, values)
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -2939,11 +2794,10 @@ class DishManager(SKAController):
         Note that it will only take effect after
         SPFRx has been restarted.
         """
-        handler = self.get_command_object("SetKValue")
-        return_code, message = handler(value)
-        return ([return_code], [message])
+        result_code, msg = self.component_manager.set_kvalue(value)
+        return ([result_code], [msg])
 
-    @record_command(True)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -2959,11 +2813,10 @@ class DishManager(SKAController):
         self, value: Literal["DS", "SPF", "SPFRX", "B5DC"]
     ) -> DevVarLongStringArrayType:
         """This command Reset the connections to sub devices."""
-        handler = self.get_command_object("ResetComponentConnection")
-        return_code, message = handler(value)
+        return_code, message = self.component_manager.reset_subservient_dev_connections(value)
         return ([return_code], [message])
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @command(
         dtype_in=int,
@@ -2977,11 +2830,9 @@ class DishManager(SKAController):
     )
     def SetFrequency(self, value) -> DevVarLongStringArrayType:
         """Set the frequency on the band 5 down converter."""
-        handler = self.get_command_object("SetFrequency")
-        return_code, message = handler(value)
-        return ([return_code], [message])
+        return self.component_manager.set_frequency(value)
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -2995,11 +2846,9 @@ class DishManager(SKAController):
     )
     def SetVPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the vertical polarization attenuation on the band 5 down converter."""
-        handler = self.get_command_object("SetVPolAttenuation")
-        return_code, message = handler(value)
-        return ([return_code], [message])
+        return self.component_manager.set_v_pol_attenuation(value)
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -3013,13 +2862,13 @@ class DishManager(SKAController):
     )
     def SetHPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the horizontal polarization attenuation on the band 5 down converter."""
-        handler = self.get_command_object("SetHPolAttenuation")
-        return_code, message = handler(value)
-        return ([return_code], [message])
+        return self.component_manager.set_h_pol_attenuation(value)
 
     @log_tango_command()
     @command(
         dtype_in="DevString",
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
         doc_in="""The command accepts a JSON input (value) containing data to update a particular
         band's (b1-b5b). The following 18 coefficients need to be within the JSON object:
             [0] IA, [1] CA, [2] NPAE, [3] AN, [4] AN0, [5] AW, [6] AW0, [7] ACEC, [8] ACES,
@@ -3043,8 +2892,6 @@ class DishManager(SKAController):
                 "sky_rms": {...}
             }
         }""",
-        dtype_out="DevVarLongStringArray",
-        display_level=DispLevel.OPERATOR,
     )
     def ApplyPointingModel(self, value) -> DevVarLongStringArrayType:
         """Updates a band's coefficient parameters with a given JSON input.
@@ -3053,44 +2900,16 @@ class DishManager(SKAController):
         should be in range. Each time the command is called all parameters will get
         updated not just the ones that have been modified.
         """
-        last_commanded_pointing_params = value
-        self._last_commanded_pointing_params = last_commanded_pointing_params
-        # Push change and archive events with the recorded value
-        self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
-        self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
-        handler = self.get_command_object("ApplyPointingModel")
-        return_code, message = handler(value)
-        return ([return_code], [message])
+        # TODO send the updates to using the signal bus
+        # last_commanded_pointing_params = value
+        # self._last_commanded_pointing_params = last_commanded_pointing_params
+        # # Push change and archive events with the recorded value
+        # self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        # self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        result_code, msg = self.component_manager.apply_pointing_model(value)
+        return ([result_code], [msg])
 
-    @record_command(False)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @log_tango_command()
-    @command(
-        dtype_in=None,
-        doc_in="Stops communication with subdevices and stops the watchdog timer, "
-        "if it is active.",
-        dtype_out=None,
-        display_level=DispLevel.OPERATOR,
-    )
-    def StopCommunication(self):
-        """Stop communicating with monitored devices."""
-        self.component_manager.stop_communicating()
-
-    @record_command(False)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @log_tango_command()
-    @command(
-        dtype_in=None,
-        doc_in="Starts communication with subdevices and starts the watchdog timer, "
-        "if it is configured via `watchdogTimeout` attribute.",
-        dtype_out=None,
-        display_level=DispLevel.OPERATOR,
-    )
-    def StartCommunication(self):
-        """Start communicating with monitored devices."""
-        self.component_manager.start_communicating()
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -3113,7 +2932,7 @@ class DishManager(SKAController):
         component_states["DM"] = self.component_manager._component_state
         return json.dumps(str(component_states))
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -3124,14 +2943,13 @@ class DishManager(SKAController):
             "Sync each subservient device componentstate with the dish manager component state."
         ),
     )
-    def SyncComponentStates(self) -> None:
+    def SyncComponentStates(self) -> TaskFunctionType:
         """Sync each subservient device component state with its tango device
         to refresh the dish manager component state.
         """
-        if hasattr(self, "component_manager"):
-            self.component_manager.sync_component_states()
+        return self.component_manager.sync_component_states
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
@@ -3143,7 +2961,6 @@ class DishManager(SKAController):
         "`watchdogTimeout` attribute to a value greater than 0.",
         doc_out="Returns a DevVarLongStringArray with the return code and message.",
     )
-    @requires_component_manager
     def ResetWatchdogTimer(self) -> DevVarLongStringArrayType:
         """This command resets the watchdog timer."""
         value = datetime.now().timestamp()
@@ -3166,7 +2983,7 @@ class DishManager(SKAController):
             [f"Watchdog timer reset at {value}s"],
         )
 
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=False, show_kwargs=False, show_ret=True)
     @log_tango_command()
     @command(
@@ -3180,68 +2997,33 @@ class DishManager(SKAController):
 
         Track table is cleared on the controller in RESET load mode
         """
-        handler = self.get_command_object("ResetTrackTable")
-        result_code, message = handler()
-        if result_code == ResultCode.FAILED:
-            raise RuntimeError(f"{message}")
-        assert isinstance(message, list), f"Expected a table from the handler but got: {message}"
+        result_code, message = self.component_manager.reset_track_table()
+        if result_code == ResultCode.OK:
+            self._program_track_table = message
+            self.push_change_event("programTrackTable", message)
+            self.push_archive_event("programTrackTable", message)
+            return ([ResultCode.OK], ["programTrackTable successfully reset"])
+        return ([result_code], [message])
 
-        self._program_track_table = message
-        self.push_change_event("programTrackTable", message)
-        self.push_archive_event("programTrackTable", message)
-        return ([result_code], ["programTrackTable successfully reset"])
-
-    @record_command(False)
+    @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
-    def On(self) -> DevVarLongStringArrayType:
-        """The On command inherited from base classes."""
-        raise NotImplementedError("DishManager does not implement the On command.")
-
-    @record_command(False)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @log_tango_command()
-    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
-    def Off(self) -> DevVarLongStringArrayType:
-        """The Off command inherited from base classes."""
-        raise NotImplementedError("DishManager does not implement the Off command.")
-
-    @record_command(False)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @log_tango_command()
-    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
-    def Standby(self) -> DevVarLongStringArrayType:
-        """The Standby command inherited from base classes."""
-        raise NotImplementedError("DishManager does not implement the Standby command.")
-
-    @record_command(False)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @log_tango_command()
-    @command(dtype_out="DevVarLongStringArray", doc_in="Not implemented.")
-    def Reset(self) -> DevVarLongStringArrayType:
-        """The Reset command inherited from base classes."""
-        raise NotImplementedError("DishManager does not implement the Reset command.")
-
-    @record_command(False)
-    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @log_tango_command()
-    @command(
+    @slow_command(
+        dtype_in=None,
+        check_allowed=False,
         dtype_out="DevVarLongStringArray",
         doc_in=(
             "Clear the interlock status once interlocks or E-Stops have been"
             " cleared on the dish structure controller"
         ),
     )
-    def InterlockAck(self: "DishManager") -> DevVarLongStringArrayType:
+    def InterlockAck(self) -> TaskFunctionType:
         """Clear the interlock status once interlocks or E-Stops have been cleared on the DSC.
 
         :return: A tuple containing a return code and a string
             message indicating status.
         """
-        handler = self.get_command_object("InterlockAck")
-        result_code, unique_id = handler()
-        return ([result_code], [unique_id])
+        return self.component_manager.interlock_acknowledge
 
 
 def main(args=None, **kwargs):

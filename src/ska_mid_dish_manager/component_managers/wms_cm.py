@@ -8,7 +8,8 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, List, Optional
 
 import tango
-from ska_control_model import AdminMode, CommunicationStatus  # ty: ignore[deprecated]
+from ska_control_model import CommunicationStatus
+from ska_control_model.future import AdminMode
 from ska_tango_base.base import BaseComponentManager
 
 GROUP_REQUEST_TIMEOUT_MS = 3000
@@ -128,7 +129,7 @@ class WMSComponentManager(BaseComponentManager):
         """Start WMS Tango device monitoring of the weather station servers."""
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
-                self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)  # ty: ignore[deprecated]
+                self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
                 break
             except tango.DevFailed:
                 self.logger.error(
@@ -147,11 +148,11 @@ class WMSComponentManager(BaseComponentManager):
         self._wind_gust_buffer.clear()
 
         try:
-            self.write_wms_group_attribute_value("adminMode", AdminMode.OFFLINE)  # ty: ignore[deprecated]
+            self.write_wms_group_attribute_value("adminMode", AdminMode.ENGINEERING)
             self._wms_device_group.remove_all()  # ty: ignore[unresolved-attribute]
         except tango.DevFailed:
             self.logger.error(
-                "Failed to set WMS device(s) adminMode to OFFLINE. "
+                "Failed to set WMS device(s) adminMode to ENGINEERING. "
                 "One or more WMS device(s) may be unavailable"
             )
         self._update_communication_state(CommunicationStatus.DISABLED)

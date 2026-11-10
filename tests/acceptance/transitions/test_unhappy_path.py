@@ -20,7 +20,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     spfrx_device_proxy,
 ):
     """Test DishManager handles errors in SPFC and SPFRx."""
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     result_event_store = event_store_class()
     band_event_store = event_store_class()
     dish_mode_event_store = event_store_class()
@@ -28,7 +28,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
         "dishMode": dish_mode_event_store,
         "configuredBand": band_event_store,
         "lrcFinished": result_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -48,12 +48,12 @@ def test_dish_handles_unhappy_path_in_command_execution(
     spf_device_proxy.raiseCmdException = True
     spfrx_device_proxy.raiseCmdException = True
     result_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
 
     [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
 
     progress_msg = "SetStandbyLPMode failed Exception:"
-    status_event_store.wait_for_progress_update(progress_msg, timeout=5)
+    progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
     expected_result = '[3, "SetStandbyLPMode failed"]'
     result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)

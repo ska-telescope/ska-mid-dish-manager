@@ -18,11 +18,11 @@ def test_set_operate(
     """Test transition to OPERATE."""
     main_event_store = event_store_class()
     band_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredBand": band_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -40,7 +40,9 @@ def test_set_operate(
         "SetOperateMode completed",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=6
+    )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 
@@ -59,12 +61,10 @@ def test_set_operate_from_standbyfp(
     """Test explicit transition to OPERATE from STANDBY_FP."""
     main_event_store = event_store_class()
     band_event_store = event_store_class()
-    status_event_store = event_store_class()
     result_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "configuredBand": band_event_store,
-        "Status": status_event_store,
         "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)

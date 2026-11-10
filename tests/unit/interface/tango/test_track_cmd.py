@@ -60,7 +60,6 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -74,24 +73,21 @@ def test_set_track_cmd_fails_when_dish_mode_is_not_operate(
         pointing_state_event_store,
     )
 
-    device_proxy.subscribe_event(
-        "lrcFinished",
-        tango.EventType.CHANGE_EVENT,
-        lrc_finished_event_store,
-    )
-
     dish_manager_cm._update_component_state(pointingstate=PointingState.READY)
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=5)
 
     dish_manager_cm._update_component_state(dishmode=current_dish_mode)
     dish_mode_event_store.wait_for_value(current_dish_mode, timeout=5)
 
-    [[_], [unique_id]] = device_proxy.Track()
-
-    expected_result = '[6, "Command is not allowed"]'
-    lrc_finished_event_store.wait_for_finished_command_result(
-        unique_id, expected_result, timeout=5
+    error_msg = (
+        "CommandNotAllowedError: Track command rejected for current dishMode. "
+        "Track command is allowed for dishMode OPERATE"
     )
+
+    with pytest.raises(tango.DevFailed) as excinfo:
+        device_proxy.Track()
+
+    assert error_msg in str(excinfo.value)
 
 
 @pytest.mark.unit
@@ -114,7 +110,6 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
     device_proxy, dish_manager_cm = dish_manager_resources
     dish_mode_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
-    lrc_finished_event_store = event_store_class()
 
     device_proxy.subscribe_event(
         "dishMode",
@@ -128,24 +123,21 @@ def test_set_track_cmd_fails_when_pointing_state_is_not_ready(
         pointing_state_event_store,
     )
 
-    device_proxy.subscribe_event(
-        "lrcFinished",
-        tango.EventType.CHANGE_EVENT,
-        lrc_finished_event_store,
-    )
-
     dish_manager_cm._update_component_state(dishmode=DishMode.OPERATE)
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=5)
 
     dish_manager_cm._update_component_state(pointingstate=current_pointing_state)
     pointing_state_event_store.wait_for_value(current_pointing_state, timeout=5)
 
-    [[_], [unique_id]] = device_proxy.Track()
-
-    expected_result = '[6, "Command is not allowed"]'
-    lrc_finished_event_store.wait_for_finished_command_result(
-        unique_id, expected_result, timeout=5
+    error_msg = (
+        "CommandNotAllowedError: Track command rejected for current pointingState. "
+        "Track command is allowed for pointingState READY"
     )
+
+    with pytest.raises(tango.DevFailed) as excinfo:
+        device_proxy.Track()
+
+    assert error_msg in str(excinfo.value)
 
 
 @pytest.mark.unit
@@ -160,7 +152,7 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     main_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attributes_to_subscribe_to = (
         "dishMode",
@@ -174,9 +166,9 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
         )
 
     device_proxy.subscribe_event(
-        "Status",
+        "lrcExecuting",
         tango.EventType.CHANGE_EVENT,
-        status_event_store,
+        progress_event_store,
     )
 
     # Force dishManager dishMode to go to OPERATE
@@ -208,7 +200,9 @@ def test_set_track_cmd_succeeds_when_dish_mode_is_operate(
         "Monitor the achievedTargetLock attribute to determine when the dish is on source.",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=6
+    )
 
     events_string = "".join([str(event.attr_value.value) for event in events])
 

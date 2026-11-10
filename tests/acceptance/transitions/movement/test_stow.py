@@ -18,15 +18,15 @@ def test_stow_transition(
 ):
     """Test transition to STOW."""
     main_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     lrc_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": lrc_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    expected_progress_update = "Stow called, monitor dishmode for LRC completed"
+    expected_progress_update = "Stow called, monitor achievedPointing and dishmode"
 
     if dish_manager_proxy.dishMode == DishMode.STOW:
         dish_manager_proxy.setstandbylpmode()
@@ -49,7 +49,7 @@ def test_stow_transition(
 
     main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 60)
 
-    events = status_event_store.wait_for_progress_update(expected_progress_update, timeout=10)
+    events = progress_event_store.wait_for_progress_update(expected_progress_update, timeout=10)
     assert events
 
     remove_subscriptions(subscriptions)

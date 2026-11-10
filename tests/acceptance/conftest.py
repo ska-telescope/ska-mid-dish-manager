@@ -57,6 +57,8 @@ def dish_manager_proxy(dish_manager_device_fqdn):
     dev_proxy = tango.DeviceProxy(dish_manager_device_fqdn)
     # increase client request timeout to 5 seconds
     dev_proxy.set_timeout_millis(5000)
+    # set this in helm chart
+    dev_proxy.controlMode = 2
     return dev_proxy
 
 

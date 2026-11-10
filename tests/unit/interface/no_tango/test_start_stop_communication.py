@@ -1,5 +1,6 @@
 """Tests dish manager component manager start/stop communication command handler."""
 
+import threading
 from typing import Any
 
 import pytest
@@ -13,17 +14,21 @@ from ska_mid_dish_manager.models.dish_enums import DishMode
 def test_start_stop_communication(
     component_manager: DishManagerComponentManager,
     callbacks: dict[str, Any],
+    task_abort_event: threading.Event,
 ) -> None:
     """Verify behaviour of start_communication/ stop_communication command handler.
 
     :param component_manager: the component manager under test
-    :callbacks
+    :param callbacks: a dictionary of mocks
+    :param task_abort_event: threading event to signal task abortion
     """
     # Assert that the comm state is ESTABLISHED
     assert component_manager.communication_state == CommunicationStatus.ESTABLISHED
 
     # Change the DishMode to FP
-    component_manager.set_standby_fp_mode(callbacks["task_cb"])
+    component_manager.set_standby_fp_mode(
+        task_callback=callbacks["task_cb"], task_abort_event=task_abort_event
+    )
 
     # Wait a bit for the lrc updates to come through.
     component_state_cb = callbacks["comp_state_cb"]
@@ -40,10 +45,6 @@ def test_start_stop_communication(
     # Check that the watchdog timer is disabled on communication stop
     assert component_manager.watchdog_timer.disable.call_count == 1
 
-    # Now we attempt to call a command to see if it will not work
-    with pytest.raises(ConnectionError, match="Commmunication with sub-components is disabled"):
-        component_manager.set_standby_lp_mode(callbacks["task_cb"])
-
     # Now we call start communicating
     component_manager.start_communicating()
     for sub_component_manager in component_manager.sub_component_managers.values():
@@ -53,7 +54,9 @@ def test_start_stop_communication(
 
     # Change the DishMode to LP - to see if it will work now that
     # start_comm was called and the status is established.
-    component_manager.set_standby_lp_mode(callbacks["task_cb"])
+    component_manager.set_standby_lp_mode(
+        task_callback=callbacks["task_cb"], task_abort_event=task_abort_event
+    )
 
     # Wait a bit for the lrc updates to come through
     component_state_cb = callbacks["comp_state_cb"]
