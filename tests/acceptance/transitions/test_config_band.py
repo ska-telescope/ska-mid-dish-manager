@@ -77,14 +77,15 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
         "Awaiting SPFRX operatingmode change to CONFIGURE",
         "Awaiting SPFRX configuredband change to B2",
         "Awaiting DS indexerposition change to B2",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX configuredband changed to B2",
-        "SPFRX.ConfigureBand2 completed",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand2: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand2 complete",
         "ConfigureBand2 complete. Triggering on success action.",
-        # Then SetOperateMode
+        # # Then SetOperateMode
         "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
         "DS operatingmode already POINT, not fanning out SetPointMode command",
-        "SetOperateMode completed",
+        "SetOperateMode completed.",
     ]
 
     events = status_event_store.get_queue_values()
@@ -141,13 +142,18 @@ def test_configure_band_b(
     spfrx_config_band_cmd = f"SPFRX.{band_request}"
     if expected_band == Band.B5b:
         spfrx_config_band_cmd = "SPFRX.ConfigureBand1"
+        message_str = "B1"
 
     expected_progress_updates = [
-        f"Fanned out commands: DS.SetIndexPosition, {spfrx_config_band_cmd}",
-        f"Awaiting configuredband change to {message_str}",
-        f"{band_request} complete",
+        f"{spfrx_config_band_cmd} started",
+        "Running SetIndexPosition on device DS",
+        f"Running {spfrx_config_band_cmd.replace('SPFRX.', '')} on device SPFRX",
+        f"Awaiting SPFRX configuredband change to {message_str}",
     ]
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    if expected_band == Band.B5b:
+        events = status_event_store.wait_for_progress_update("ConfigureBand5b complete", timeout=6)
+    else:
+        events = status_event_store.wait_for_progress_update(f"{band_request} complete", timeout=6)
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
