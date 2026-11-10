@@ -58,10 +58,17 @@ def test_configureband_handler(
         assert kwargs == expected_call_kwargs[count]
 
     msgs = [
-        "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+        "SPFRX.ConfigureBand2 started",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Awaiting SPFRX configuredband change to B2",
+        (
+            "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2, SPFRX.Wait"
+            " for operatingMode.CONFIGURE, SPFRX.Wait for operatingMode.OPERATE, SPFRX.Wait"
+            " for configuredband 2"
+        ),
         "Awaiting configuredband change to B2",
+        "SPFRX.ConfigureBand2 completed",
     ]
     progress_cb = callbacks["progress_cb"]
     for msg in msgs:
@@ -73,7 +80,13 @@ def test_configureband_handler(
         operatingmode=SPFOperatingMode.OPERATE,
     )
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B2, operatingmode=SPFRxOperatingMode.OPERATE
+        operatingmode=SPFRxOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.CONFIGURE
+    )
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B2
     )
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B2, operatingmode=DSOperatingMode.POINT
