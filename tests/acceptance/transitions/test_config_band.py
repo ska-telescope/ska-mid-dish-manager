@@ -134,7 +134,7 @@ def test_configure_band_b(
     res = dish_manager_proxy.command_inout(band_request, True)
     assert res
     assert len(res) == 2
-    main_event_store.wait_for_value(expected_band, timeout=60)
+    main_event_store.wait_for_value(expected_band, timeout=15)
     assert dish_manager_proxy.configuredBand == expected_band
 
     spfrx_config_band_cmd = f"SPFRX.{band_request}"
@@ -146,7 +146,7 @@ def test_configure_band_b(
         f"Awaiting configuredband change to {message_str}",
         f"{band_request} complete",
     ]
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=60)
+    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared

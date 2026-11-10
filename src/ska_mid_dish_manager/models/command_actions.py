@@ -17,7 +17,6 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
     OPERATOR_TAG,
-    SPFRX_CONFIGURE_COMPLETION_DELAY_S,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -597,10 +596,6 @@ class ConfigureBandAction(Action):
                     "configuredband": spfrx_awaited_band,
                     "operatingmode": SPFRxOperatingMode.OPERATE,
                 },
-                # SPFRx only moves to CONFIGURE a moment after accepting the command. Without
-                # this the awaited state is sometimes matched against the OPERATE it was already
-                # in when the command was fanned out, completing before SPFRx has configured.
-                completion_delay_s=SPFRX_CONFIGURE_COMPLETION_DELAY_S,
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
@@ -620,14 +615,7 @@ class ConfigureBandAction(Action):
                 command_name=spfrx_requested_cmd,
                 device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
                 command_argument=self.synchronise,
-                awaited_component_state={
-                    "configuredband": spfrx_awaited_band,
-                    "operatingmode": SPFRxOperatingMode.OPERATE,
-                },
-                # SPFRx only moves to CONFIGURE a moment after accepting the command. Without
-                # this the awaited state is sometimes matched against the OPERATE it was already
-                # in when the command was fanned out, completing before SPFRx has configured.
-                completion_delay_s=SPFRX_CONFIGURE_COMPLETION_DELAY_S,
+                awaited_component_state={},
                 progress_callback=self._progress_callback,
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
