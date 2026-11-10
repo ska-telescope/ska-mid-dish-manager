@@ -33,6 +33,7 @@ from ska_mid_dish_manager.models.fanned_out_command import (
     DishManagerCMMethodResultCode,
     FannedOutTangoCommand,
     FannedOutTangoLongRunningCommand,
+    FannedOutWaitForState,
 )
 from ska_mid_dish_manager.utils.action_helpers import update_task_status
 
@@ -620,7 +621,48 @@ class ConfigureBandAction(Action):
                 is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             )
 
-        fanned_out_commands: list[FannedOutTangoCommand] = [spfrx_configure_band_command]
+        spfrx_wait_for_config_action = FannedOutWaitForState(
+            logger=self.logger,
+            device="SPFRX",
+            device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+            awaited_component_state={"operatingmode": SPFRxOperatingMode.CONFIGURE},
+            timeout_s=14,
+            continue_on_timeout=True,
+            progress_callback=self._progress_callback,
+            wait_name="Wait for operatingMode.CONFIGURE",
+        )
+        spfrx_wait_for_operate_action = FannedOutWaitForState(
+            logger=self.logger,
+            device="SPFRX",
+            device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+            awaited_component_state={
+                "operatingmode": SPFRxOperatingMode.OPERATE,
+            },
+            timeout_s=14,
+            continue_on_timeout=True,
+            progress_callback=self._progress_callback,
+            wait_name="Wait for operatingMode.OPERATE",
+        )
+
+        spfrx_wait_for_band_action = FannedOutWaitForState(
+            logger=self.logger,
+            device="SPFRX",
+            device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
+            awaited_component_state={
+                "configuredband": spfrx_awaited_band,
+            },
+            timeout_s=14,
+            continue_on_timeout=False,
+            progress_callback=self._progress_callback,
+            wait_name=f"Wait for configuredband {spfrx_awaited_band}",
+        )
+
+        fanned_out_commands: list[FannedOutTangoCommand | FannedOutWaitForState] = [
+            spfrx_configure_band_command,
+            spfrx_wait_for_config_action,
+            spfrx_wait_for_operate_action,
+            spfrx_wait_for_band_action,
+        ]
         # Only fan out the DS SetIndexPosition command if the band is changing
         if self.dish_manager_cm._component_state["configuredband"] != self.band:
             ds_set_index_position_command = FannedOutTangoLongRunningCommand(
@@ -637,12 +679,12 @@ class ConfigureBandAction(Action):
         if b5dc_set_frequency_command:
             fanned_out_commands.append(b5dc_set_frequency_command)
 
-        self._handler = ActionHandler(
+        self._handler = SequentialActionHandler(
             logger=self.logger,
             action_name=self.requested_cmd,
             fanned_out_commands=fanned_out_commands,
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"configuredband": self.band},
+            awaited_component_state={},
             action_on_success=action_on_success,
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
