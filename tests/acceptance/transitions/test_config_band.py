@@ -71,12 +71,13 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
     expected_progress_updates = [
         # ConfigureBand2
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+        "Running SetIndexPosition on device DS",
+        "SPFRX.ConfigureBand2 started",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-        "Awaiting configuredband change to B2",
-        "DS indexerposition changed to B2",
-        "DS.SetIndexPosition completed",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting DS indexerposition change to B2",
+        "SetIndexPosition on DS timeout is 0",
         "SPFRX configuredband changed to B2",
         "SPFRX.ConfigureBand2 completed",
         "ConfigureBand2 complete. Triggering on success action.",
