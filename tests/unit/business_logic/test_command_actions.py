@@ -195,22 +195,34 @@ class TestCommandActions:
         progress_updates = []
 
         def progress_callback(msg, user_operator=True):
+            print("TTTTTT", msg)
             progress_updates.append(msg)
-            if "Awaiting configuredband change to B2" in msg:
+            if msg == "Awaiting DS indexerposition change to B2":
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "indexerposition"
                 ] = IndexerPosition.B2
+
+            if msg == "Awaiting SPFRX operatingmode change to CONFIGURE":
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
-                    "configuredband"
-                ] = Band.B2
+                    "operatingmode"
+                ] = SPFRxOperatingMode.CONFIGURE
+
+            if msg == "Awaiting SPFRX operatingmode change to OPERATE":
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "operatingmode"
                 ] = SPFRxOperatingMode.OPERATE
-                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
-            elif "Awaiting dishmode change to OPERATE" in msg:
+
+            if msg == "Awaiting SPFRX configuredband change to B2":
+                self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
+                    "configuredband"
+                ] = Band.B2
+
+            if msg == "Awaiting DS operatingmode change to POINT":
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
                     "operatingmode"
                 ] = DSOperatingMode.POINT
+
+            if msg == "Awaiting dishmode change to OPERATE":
                 self.dish_manager_cm_mock._component_state["dishmode"] = DishMode.OPERATE
 
         def my_task_callback(**kwargs):
@@ -240,18 +252,38 @@ class TestCommandActions:
 
         expected_progress_updates = [
             # ConfigureBand2
-            "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+            "ConfigureBand2 started",
+            "DS.SetIndexPosition started",
             "Awaiting DS indexerposition change to B2",
-            "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-            "Awaiting configuredband change to B2",
-            "DS indexerposition changed to B2",
-            "DS.SetIndexPosition completed",
+            "Running SetIndexPosition on device DS",
+            "SetIndexPosition on DS timeout is 0",
+            "SPFRX.ConfigureBand2 started",
+            "Running ConfigureBand2 on device SPFRX",
+            "ConfigureBand2 on SPFRX timeout is 0",
+            "Awaiting SPFRX operatingmode change to CONFIGURE",
+            "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+            "Awaiting SPFRX operatingmode change to CONFIGURE",
+            "SPFRX operatingmode changed to CONFIGURE",
+            "SPFRX.Wait for operatingMode.CONFIGURE completed",
+            "ConfigureBand2: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+            "Awaiting SPFRX operatingmode change to OPERATE",
+            "Running Wait for operatingMode.OPERATE on device SPFRX",
+            "Awaiting SPFRX operatingmode change to OPERATE",
+            "SPFRX operatingmode changed to OPERATE",
+            "SPFRX.Wait for operatingMode.OPERATE completed",
+            "ConfigureBand2: Wait for operatingMode.OPERATE on device SPFRX completed",
+            "Awaiting SPFRX configuredband change to B2",
+            "Running Wait for configuredband 2 on device SPFRX",
+            "Awaiting SPFRX configuredband change to B2",
             "SPFRX configuredband changed to B2",
-            "SPFRX.ConfigureBand2 completed",
+            "SPFRX.Wait for configuredband 2 completed",
+            "ConfigureBand2: Wait for configuredband 2 on device SPFRX completed",
             "ConfigureBand2 complete. Triggering on success action.",
             # Then SetOperateMode
-            "Fanned out commands: DS.SetPointMode",
+            "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+            "DS.SetPointMode started",
             "Awaiting DS operatingmode change to POINT",
+            "Fanned out commands: DS.SetPointMode",
             "Awaiting dishmode change to OPERATE",
             "DS operatingmode changed to POINT",
             "DS.SetPointMode completed",
