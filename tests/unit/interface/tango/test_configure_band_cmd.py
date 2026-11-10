@@ -129,9 +129,6 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=40)
 
-    for i in [str(event.attr_value.value) for event in events]:
-        print("AAAAA", i)
-
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
