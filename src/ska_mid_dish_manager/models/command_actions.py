@@ -687,7 +687,7 @@ class ConfigureBandAction(Action):
             action_name=self.requested_cmd,
             fanned_out_commands=fanned_out_commands,
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={},
+            awaited_component_state={"configuredband": self.band},
             action_on_success=action_on_success,
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
