@@ -58,7 +58,9 @@ def test_last_command_invoked(
     last_command_invoked_event_store.wait_for_n_events(0)
     # Call SetKValue (non-mode change)
     device_proxy.SetKValue(15)
-    kvalue_command_invoked_time, commanded_name = device_proxy.lastCommandInvoked
+    # lastCommandInvoked is updated asynchronously, wait for the event
+    evts = last_command_invoked_event_store.wait_for_n_events(1)
+    kvalue_command_invoked_time, commanded_name = evts[0].attr_value.value
     # Make sure time has advanced (Indirectly greater than 0.0)
     assert kvalue_command_invoked_time > mode_invoked_time
     assert commanded_name == "SetKValue"

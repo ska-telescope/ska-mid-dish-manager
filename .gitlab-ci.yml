@@ -5,6 +5,11 @@ variables:
   CHARTS_TO_PUBLISH: ska-mid-dish-manager
   GIT_SUBMODULE_STRATEGY: recursive
   POETRY_DOCS_INSTALL_GROUPS: main,docs
+  RELEASE_CHART: 'ska-mid-dish-manager'
+  CONSUMER_CHART: 'charts/ska-mid-dish-manager/Chart.yaml'
+  HELM_PROPAGATION_DRY_RUN: 'true'
+  HELM_TRIGGER_CONSUMER_PIPELINE: 'false'
+  HELM_ENFORCE_TAG_MATCH: 'false'
 
 stages:
   - lint
@@ -44,6 +49,13 @@ include:
   # Create a release
   - project: 'ska-telescope/templates-repository'
     file: 'gitlab-ci/includes/release.gitlab-ci.yml'
+  
+  # Propagate changes to dependent charts
+  - project: 'ska-telescope/mid-dish/ska-dish-lmc'
+    ref: 'kar-2530-manual-chart-propagation'
+    file:
+      - 'gitlab-ci/includes/helm-chart-propagate.yml'
+      - 'gitlab-ci/includes/helm-cascade-validate.yml'
 
 python-test-forked:
   extends: python-uv-test
@@ -145,3 +157,12 @@ python-uv-test:
       coverage_report:
         coverage_format: cobertura
         path: build/reports/code-coverage.xml
+
+mid-dish-cascade-validate:
+  extends: .mid-dish-cascade-validate-template
+
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "pipeline" && $RELEASE_TAG && $RELEASED_CHART && $RELEASED_VERSION'
+      when: on_success
+
+    - when: never

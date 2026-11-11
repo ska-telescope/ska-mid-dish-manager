@@ -71,6 +71,31 @@
                 }
             }
         },
+        "MeerkatWeatherDevice": {
+            "1": {
+                "MeerkatWeatherDevice": {
+                    "ska-mid/mk-weather-monitoring/s1": {
+                        "properties": {
+                            "Host": [
+                                "katcp-weather-station"
+                            ],
+                            "Port": [
+                                "7147"
+                            ],
+                            "LoggingLevelDefault": [
+                                "5"
+                            ],
+                            "LoggingTargetsDefault": [
+                                "tango::logger"
+                            ],
+                            "SkaLevel": [
+                                "1"
+                            ]
+                        }
+                    }
+                }
+            }
+        },
         "DishManager": {
             "SKA001": {
                 "DishManager": {
