@@ -8,6 +8,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Fixed bug that raised exception on setting ignoreSpf and ignoreSpfrx which prevented persistence in tango database. 
+- Updated docker-compose to include Meerkat LMC weather related work.
 
 Version 11.1.0
 **************
