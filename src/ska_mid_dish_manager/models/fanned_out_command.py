@@ -574,6 +574,7 @@ class FannedOutWaitForState(FannedOutCommand):
         progress_callback: Optional[Callable[..., None]] = None,
         wait_name: str = "WaitForState",
         continue_on_timeout: bool = False,
+        is_device_ignored: bool = False,
     ):
         """:param logger: Logger instance
         :type logger: Logger
@@ -595,9 +596,13 @@ class FannedOutWaitForState(FannedOutCommand):
         :param continue_on_timeout: When True, timing out is treated as success so that the
             action carries on instead of failing. The status is still reported as TIMED_OUT.
         :type continue_on_timeout: bool
+        :param is_device_ignored: Toggle to skip the wait if the device is ignored. The wait is
+            then marked IGNORED (successful) without waiting on any component state.
+        :type is_device_ignored: bool
         """
         self.device_component_manager = device_component_manager
         self.continue_on_timeout = continue_on_timeout
+        self.is_device_ignored = is_device_ignored
         super().__init__(
             logger=logger,
             device=device,
@@ -614,7 +619,19 @@ class FannedOutWaitForState(FannedOutCommand):
 
     @typing.override
     def execute(self) -> None:
-        """Start waiting for the awaited component state."""
+        """Start waiting for the awaited component state.
+
+        If the device is ignored, the wait is skipped and marked IGNORED. The finish is reported
+        on the next `report_progress`, in line with ignored tango commands.
+        """
+        if self.is_device_ignored:
+            self.logger.debug(
+                f"{self.device} device is disabled. {self.command_name} wait ignored"
+            )
+            self._set_status(FannedOutCommandStatus.IGNORED)
+            self.awaited_update_reports = {attr: True for attr in self.awaited_update_reports}
+            return
+
         self.logger.debug(
             f"{self.device}.{self.command_name} waiting for {self.awaited_component_state}"
         )

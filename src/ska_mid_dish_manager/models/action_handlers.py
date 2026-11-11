@@ -11,6 +11,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     OPERATOR_TAG,
 )
+from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
 from ska_mid_dish_manager.models.fanned_out_command import (
     FannedOutCommand,
     FannedOutTangoCommand,
@@ -309,6 +310,10 @@ class ActionHandler:
                 )
                 return
 
+            if cmd.status == FannedOutCommandStatus.IGNORED:
+                cmd.report_progress(task_abort_event)
+                continue
+
         report_task_progress(
             f"Fanned out commands: {fanned_out_commands_str}", self.progress_callback
         )
@@ -414,6 +419,13 @@ class SequentialActionHandler(ActionHandler):
 
         for cmd in self.fanned_out_commands:
             cmd.execute()
+
+            if cmd.status == FannedOutCommandStatus.IGNORED:
+                report_task_progress(
+                    f"{cmd.device}.{cmd.command_name} ignored", self.progress_callback
+                )
+                continue
+
             if cmd.failed:
                 self._trigger_failure(
                     task_callback,

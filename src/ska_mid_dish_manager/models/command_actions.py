@@ -629,6 +629,7 @@ class ConfigureBandAction(Action):
             timeout_s=14,
             continue_on_timeout=True,
             progress_callback=self._progress_callback,
+            is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             wait_name="Wait for operatingMode.CONFIGURE",
         )
         spfrx_wait_for_operate_action = FannedOutWaitForState(
@@ -641,6 +642,7 @@ class ConfigureBandAction(Action):
             timeout_s=14,
             continue_on_timeout=True,
             progress_callback=self._progress_callback,
+            is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             wait_name="Wait for operatingMode.OPERATE",
         )
 
@@ -654,6 +656,7 @@ class ConfigureBandAction(Action):
             timeout_s=14,
             continue_on_timeout=False,
             progress_callback=self._progress_callback,
+            is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             wait_name=f"Wait for configuredband {spfrx_awaited_band}",
         )
 

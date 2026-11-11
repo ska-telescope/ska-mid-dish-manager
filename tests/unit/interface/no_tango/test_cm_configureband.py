@@ -498,10 +498,15 @@ def test_configureband_5b_with_subband(
         "DS operatingmode already POINT, not fanning out SetPointMode command",
         "Fanned out commands: None",
         "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
     ]
 
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
         operatingmode=SPFRxOperatingMode.CONFIGURE
+    )
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B1
     )
 
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
@@ -511,13 +516,20 @@ def test_configureband_5b_with_subband(
     component_manager.sub_component_managers["SPF"]._update_component_state(
         operatingmode=SPFOperatingMode.OPERATE
     )
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        bandinfocus=SPFBandInFocus.B5b
+    )
+
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B5b
+    )
+
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        operatingmode=DSOperatingMode.POINT
+    )
 
     component_manager.sub_component_managers["B5DC"]._update_component_state(
         rfcmfrequency=sub_band_frequency
-    )
-
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B1
     )
 
     progress_cb = callbacks["progress_cb"]
@@ -525,11 +537,12 @@ def test_configureband_5b_with_subband(
         progress_cb.wait_for_args((msg,), timeout=30)
 
     # wait a bit for the lrc updates to come through
-    component_state_cb.wait_for_value("dishmode", DishMode.UNKNOWN)
-    component_state_cb.wait_for_value("rfcmfrequency", sub_band_frequency)
+    component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
     component_state_cb.wait_for_value("configuredband", Band.UNKNOWN)
-    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
+    component_state_cb.wait_for_value("dishmode", DishMode.UNKNOWN)
     component_state_cb.wait_for_value("configuredband", Band.B5b)
+    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
+    component_state_cb.wait_for_value("rfcmfrequency", sub_band_frequency)
 
     component_state_cb.get_queue_values()
     # check that the updates for the final SetOperate call in the sequence come through
@@ -538,7 +551,6 @@ def test_configureband_5b_with_subband(
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
 @pytest.mark.unit
@@ -596,15 +608,71 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         _, kwargs = mock_call
         assert kwargs == expected_call_kwargs[count]
     msgs = [
+        "ConfigureBand started",
+        "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B5b",
+        "Running SetIndexPosition on device DS",
+        "SetIndexPosition on DS timeout is 0",
+        "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B1, OPERATE",
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
-        "Awaiting configuredband change to B5b",
+        "Running ConfigureBand on device SPFRX",
+        "ConfigureBand on SPFRX timeout is 0",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "Awaiting SPFRX configuredband change to B1",
+        "SPFRX configuredband changed to B1",
+        "SPFRX.Wait for configuredband 1 completed",
+        "ConfigureBand: Wait for configuredband 1 on device SPFRX completed",
+        "Awaiting B5DC rfcmfrequency change to 11.1",
         "B5DC.SetFrequency ignored",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
     ]
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.CONFIGURE
+    )
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B1
+    )
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.OPERATE
+    )
+
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        bandinfocus=SPFBandInFocus.B5b
+    )
+
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B5b
+    )
+
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        operatingmode=DSOperatingMode.POINT
+    )
+
     progress_cb = callbacks["progress_cb"]
     for msg in msgs:
-        progress_cb.wait_for_args((msg,))
+        progress_cb.wait_for_args((msg,), timeout=20)
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(
@@ -626,7 +694,6 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         status=TaskStatus.COMPLETED,
         result=(ResultCode.OK, "SetOperateMode completed."),
     )
-    progress_cb.wait_for_args(("SetOperateMode completed.",))
 
 
 @pytest.mark.unit
