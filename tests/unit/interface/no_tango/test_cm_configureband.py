@@ -865,3 +865,170 @@ def test_apply_pointing_model_behavior(caplog, pointing_values, should_skip):
             band_param_name, pointing_values
         )
         assert any("applied successfully" in msg for msg in info_msgs)
+
+
+@pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
+    Mock(return_value=True),
+)
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
+def test_spfrx_config_timed_out(
+    mock_apply_pointing_model,
+    component_manager: DishManagerComponentManager,
+    callbacks: dict[str, MagicMock],
+) -> None:
+    """Test CONFIG timeout.
+
+    When running configureband and the SPFRx does not change to CONFIG, but:
+        - the requested band is as expected
+        - the operatingmode is OPERATE
+    then the command should still succeed.
+
+    :param component_manager: the component manager under test
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    """
+    component_state_cb = callbacks["comp_state_cb"]
+    progress_cb = callbacks["progress_cb"]
+    mock_apply_pointing_model.return_value = None
+
+    # SPFRx is already configured for the requested band and in OPERATE, so it never
+    # reports CONFIGURE when ConfigureBand is fanned out to it
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B2, operatingmode=SPFRxOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE, bandinfocus=SPFBandInFocus.B2
+    )
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B2, operatingmode=DSOperatingMode.POINT
+    )
+    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
+
+    configure_json = """
+    {
+        "dish": {
+            "receiver_band": "2",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    status, response = component_manager.configure_band_with_json(
+        configure_json, callbacks["task_cb"]
+    )
+    assert status == TaskStatus.QUEUED
+    assert "Task queued" in response
+
+    msgs = [
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
+        "Running ConfigureBand on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "SPFRX.Wait for operatingMode.CONFIGURE timed out waiting for operatingmode CONFIGURE,"
+        " continuing",
+        "SPFRX.Wait for operatingMode.CONFIGURE timed out",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SetOperateMode completed.",
+    ]
+    for msg in msgs:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    component_state_cb.get_queue_values()
+    task_cb = callbacks["task_cb"]
+    task_cb.assert_called_with(
+        status=TaskStatus.COMPLETED,
+        result=(ResultCode.OK, "SetOperateMode completed."),
+    )
+
+
+@pytest.mark.unit
+@patch(
+    "ska_mid_dish_manager.models.dish_mode_model.DishModeModel.is_command_allowed",
+    Mock(return_value=True),
+)
+@patch("ska_mid_dish_manager.models.command_actions.apply_pointing_model")
+def test_spfrx_operate_timed_out(
+    mock_apply_pointing_model,
+    component_manager: DishManagerComponentManager,
+    callbacks: dict[str, MagicMock],
+) -> None:
+    """Test OPERATE timeout.
+
+    When running configureband and the SPFRx does not change to OPERATE from CONFIG
+    then the command should fail.
+
+    NOTE: The wait for SPFRx OPERATE has a 20s timeout, so this test takes ~20s.
+
+    :param component_manager: the component manager under test
+    :param callbacks: a dictionary of mocks, passed as callbacks to
+        the command tracker under test
+    """
+    component_state_cb = callbacks["comp_state_cb"]
+    progress_cb = callbacks["progress_cb"]
+    mock_apply_pointing_model.return_value = None
+
+    # SPFRx is in CONFIGURE before the command runs, so the CONFIGURE wait completes straight
+    # away, and it stays there so the OPERATE wait times out
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.CONFIGURE
+    )
+    component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
+
+    configure_json = """
+    {
+        "dish": {
+            "receiver_band": "2",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    status, response = component_manager.configure_band_with_json(
+        configure_json, callbacks["task_cb"]
+    )
+    assert status == TaskStatus.QUEUED
+    assert "Task queued" in response
+
+    msgs = [
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
+        "Running ConfigureBand on device SPFRX",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "SPFRX.Wait for operatingMode.OPERATE timed out",
+        "Action 'ConfigureBand' failed. Wait for operatingMode.OPERATE on device SPFRX failed.",
+    ]
+    for msg in msgs:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    component_state_cb.get_queue_values()
+    task_cb = callbacks["task_cb"]
+    task_cb.assert_called_with(
+        status=TaskStatus.FAILED,
+        result=(ResultCode.FAILED, "ConfigureBand failed"),
+    )
+
+    # The sequence stops at the failed wait, so the band wait and SetOperateMode never run
+    progress_msgs = [args[0] for args in progress_cb.get_args_queue(timeout=1) if args]
+    assert "Running Wait for configuredband 2 on device SPFRX" not in progress_msgs
+    assert "SetOperateMode started" not in progress_msgs

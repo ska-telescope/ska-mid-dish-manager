@@ -465,6 +465,12 @@ class SequentialActionHandler(ActionHandler):
                     break
                 task_abort_event.wait(timeout=1)
 
+            # The deadline can pass between checks before the command has evaluated its own
+            # timeout, so give it a final update to settle on its status, e.g. a wait that
+            # continues on timeout.
+            if not cmd.finished:
+                cmd.report_progress(task_abort_event)
+
             if cmd.failed:
                 message = (
                     f"Action '{self.action_name}' failed. "

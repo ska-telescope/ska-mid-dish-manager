@@ -639,8 +639,8 @@ class ConfigureBandAction(Action):
             awaited_component_state={
                 "operatingmode": SPFRxOperatingMode.OPERATE,
             },
-            timeout_s=14,
-            continue_on_timeout=True,
+            timeout_s=20,
+            continue_on_timeout=False,
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
             wait_name="Wait for operatingMode.OPERATE",

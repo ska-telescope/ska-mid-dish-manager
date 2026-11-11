@@ -666,11 +666,15 @@ class FannedOutWaitForState(FannedOutCommand):
         """Update the status, logging a warning if the wait timed out and the action carries on."""
         super()._update_status()
         if self._timed_out_and_continuing and not self._task_finish_reported:
+            attrs = list(self.awaited_component_state.keys())
+            values = convert_enums_to_names(list(self.awaited_component_state.values()))
+            awaited_str = ", ".join(f"{attr} {value}" for attr, value in zip(attrs, values))
             msg = (
                 f"{self.device}.{self.command_name} timed out waiting for "
-                f"{self.awaited_component_state}, continuing"
+                f"{awaited_str}, continuing"
             )
             self.logger.warning(msg)
+            report_task_progress(msg, self._progress_callback)
 
 
 class DishManagerCMMethod(FannedOutCommand):
