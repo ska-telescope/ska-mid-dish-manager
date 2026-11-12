@@ -5,11 +5,11 @@ variables:
   CHARTS_TO_PUBLISH: ska-mid-dish-manager
   GIT_SUBMODULE_STRATEGY: recursive
   POETRY_DOCS_INSTALL_GROUPS: main,docs
+  # Helm release propagation
   HELM_RELEASE_CHART: 'ska-mid-dish-manager'
-  HELM_CONSUMER_CHART: 'charts/ska-mid-dish-manager/Chart.yaml'
   HELM_PROPAGATION_DRY_RUN: 'true'
-  HELM_TRIGGER_CONSUMER_PIPELINE: 'false'
-  HELM_ENFORCE_TAG_MATCH: 'false'
+  HELM_WAIT_FOR_CONSUMER_PIPELINE: 'false'
+  HELM_CONSUMER_CHART: 'charts/ska-mid-dish-manager/Chart.yaml'
 
 stages:
   - lint
@@ -162,7 +162,7 @@ mid-dish-cascade-validate:
   extends: .mid-dish-cascade-validate-template
   variables:
     HELM_RELEASE_CHART: 'ska-mid-dish-manager'
-    JELM_CONSUMER_CHART: 'charts/ska-mid-dish-manager/Chart.yaml'
+    HELM_CONSUMER_CHART: 'charts/ska-mid-dish-manager/Chart.yaml'
   rules:
     - if: '$CI_PIPELINE_SOURCE == "pipeline" && $RELEASE_TAG && $RELEASED_CHART && $RELEASED_VERSION'
       when: on_success
