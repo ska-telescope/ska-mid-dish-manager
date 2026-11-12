@@ -300,9 +300,13 @@ def reset_dish_to_standby(
 
     try:
         if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
-            ds_device_proxy.TakeAuthority()
-            # wait 10s for the horn to go off
-            dish_mode_events.get_queue_values(timeout=10)
+            # TODO: Remove temporary workaround once AP Manager inplements TakeAuthority cmd stub
+            # The snippet skips the TakeAuth step if the dish structure instance is the AP Manager
+            if "meerkat-ap-manager" not in ds_device_proxy.name():
+                ds_device_proxy.TakeAuthority()
+                # wait 10s for the horn to go off
+                dish_mode_events.get_queue_values(timeout=10)
+
             dish_manager_proxy.SetStowMode()
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=120)
             update_messages.append("Got dishmode out of MAINTENANCE into STOW")

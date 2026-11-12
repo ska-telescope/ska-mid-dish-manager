@@ -55,10 +55,13 @@ def read_file_contents(
 
 @pytest.fixture(scope="module", autouse=True)
 def take_auth(ds_device_proxy):
-    ds_device_proxy.TakeAuthority()
-    # wait for the horn to go off
-    event_store = EventStore()
-    event_store.get_queue_values(timeout=10)
+    # TODO: Remove temporary workaround once AP Manager inplements TakeAuthority cmd stub
+    # The snippet skips the TakeAuth step if the dish structure instance is the AP Manager
+    if "meerkat-ap-manager" not in ds_device_proxy.name():
+        ds_device_proxy.TakeAuthority()
+        # wait for the horn to go off
+        event_store = EventStore()
+        event_store.get_queue_values(timeout=10)
     yield
 
 

@@ -14,6 +14,7 @@ from ska_mid_dish_manager.models.constants import DEFAULT_DS_MANAGER_TRL
 DISH_MAN_CM_DS_FQDN_IDX = 5
 
 
+@pytest.mark.unit
 def test_create_component_manager_uses_default_ds_when_fqdns_are_not_configured():
     """Test default DS TRL used when neither DS Manager nor AP TRLs are configured."""
     device = DishManager.__new__(DishManager)
@@ -57,6 +58,7 @@ def test_create_component_manager_uses_default_ds_when_fqdns_are_not_configured(
     assert isinstance(dish_manager_cm.sub_component_managers["DS"], DSComponentManager)
 
 
+@pytest.mark.unit
 def test_create_component_manager_creates_ap_sub_component_manager_when_ap_fqdn_configured():
     """Test AP subcomponent manager is instatiated when APFqdn property is set."""
     device = DishManager.__new__(DishManager)
@@ -99,6 +101,7 @@ def test_create_component_manager_creates_ap_sub_component_manager_when_ap_fqdn_
     assert isinstance(dish_manager_cm.sub_component_managers["DS"], APComponentManager)
 
 
+@pytest.mark.unit
 def test_ds_fqdn_and_ap_fqdn_conflict_fails_dish_manager_cm_creation():
     """Test configuring both dish structure FQDNs raises a Tango error."""
     device = DishManager.__new__(DishManager)
