@@ -72,7 +72,7 @@
             }
         },
         "MeerkatWeatherDevice": {
-            "1": {
+            "s1": {
                 "MeerkatWeatherDevice": {
                     "ska-mid/mk-weather-monitoring/s1": {
                         "properties": {
