@@ -7,7 +7,6 @@ from threading import Event, Lock, Thread
 from typing import Callable, Dict, Optional, Tuple
 
 import tango
-from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 
@@ -210,15 +209,6 @@ class TangoDeviceMonitor:
                 )
                 continue
             if dev_proxy:
-                # enable control and monitoring if the sub device has a controlMode attribute
-                try:
-                    dev_proxy.write_attribute("controlMode", ControlMode.MONITOR_AND_CONTROL)
-                except Exception as e:
-                    self._logger.warning(
-                        "Failed to set controlMode on device %s: %s",
-                        self._tango_fqdn,
-                        e,
-                    )
                 on_verified_callback(exit_thread_event)
                 return
 
