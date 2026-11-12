@@ -57,6 +57,9 @@ Deploy DishManager with no DB
 
 This can be run in an isolated environment (virtual environment, docker container, ...)
 
+The following instructions detail how you can configure your Dish Manager Tango device instances
+to control a simulated SKA Mid dish structure
+
 .. tabs::
 
    .. tab:: dish manager (no simulators/ds-manager)
@@ -86,6 +89,37 @@ This can be run in an isolated environment (virtual environment, docker containe
    .. code-block:: rst
 
      $ docker run -p 45450:45450 -it <image-name:tag>  /usr/bin/python3 /app/src/ska_mid_dish_manager/devices/DishManagerDS.py SKA001 -v4 -nodb -port 45450 -dlist mid-dish/dish-manager/SKA001
+
+
+The following instructions detail the process of configuring your Dish Manager Tango device instance
+to control a simulated MeerKAT dish, whose control and monitoring is enabled by the AP Manager Tango device.
+
+
+  .. code-block:: rst
+
+    `deploy all simulators in ska-mid-dish-simulators/src/ska_mid_dish_simulators/devices/`
+    $ python -m SPF SKA001 -v4 -nodb -host 0.0.0.0 -port 34567 -dlist mid-dish/simulator-spfc/SKA001
+    $ python -m SPFRX SKA001 -v4 -nodb -host 0.0.0.0 -port 56789 -dlist mid-dish/simulator-spfrx/SKA001
+
+    `deploy the APManager Tango device in ska-mid-meerkat-lmc/src/ska-mid-meerkat-lmc/tango_devices/`
+    $ python -m MeerkatAPManager test -v4 -nodb -ORBendPoint giop:tcp::12345 -dlist a/meerkat-ap-manager/c
+
+    `deploy the AP simulator in ska-mid-meerkat-lmc/src/ska-mid-meerkat-lmc/katcp_simulators/`
+    $ python -m ap_simulator --port 4022
+
+    `deploy Dish Manager, configuring the SPF and SPFRx properties to connect to the running simulators,`
+    `the APManagerDeviceFqdn property to point to your running AP Manager Tango device instance, and`
+    `leaving the DSDeviceFqdn property unconfigured to disable its control and monitoring.`
+    $ python -m tango.test_context DishManagerDS.DishManager \
+      --host 127.0.0.1 \
+      --port 23458 \
+      --debug 4 \
+      --prop '{
+        "APManagerDeviceFqdn": "tango://127.0.0.1:12345/a/meerkat-ap-manager/c#dbase=no",
+        "SPFRxDeviceFqdn": "tango://0.0.0.0:56789/mid-dish/simulator-spfrx/SKA001#dbase=no",
+        "SPFDeviceFqdn": "tango://0.0.0.0:34567/mid-dish/simulator-spfc/SKA001#dbase=no"
+      }'
+
 
 Deploy DishManager with DB
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

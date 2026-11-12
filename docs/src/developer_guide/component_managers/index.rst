@@ -23,6 +23,26 @@ have been baked into the model to inform what the final transition will be anyti
 there is a fresh update from the subservient devices or the DishManager requests 
 a command.
 
+Dish Structure component manager variants
+-----------------------------------------
+
+The dish manager Tango device can be deployed as part of a Dish LMC deployment to control and
+monitor an SKA Mid dish or as part of a MeerKAT LMC deployment to control and monitor a MeerKAT
+dish.
+
+To enable control and monitoring of the desired dish type, the Dish Manager repository includes
+2 separate variants of dish structure component manager, namely;
+
+* ``DSComponentManager``: Used to control and monitor SKA Mid dishes as part of a Dish LMC deployment
+* ``APComponentManager``: Used to control and monitor MeerKAT dishes as part of a MeerKAT LMC deployment
+
+The Dish Manager Tango device must be initialized with only one of these dish structure subcomponent 
+manager variant enabled, with the instruction to select the desired subcomponent manager type linked 
+here (TODO: ADD DEPLOYMENT INSTRUCTION LINKS ONCE AVAILABLE)
+
+Weather Monitoring Station component manager
+--------------------------------------------
+
 The specialised component manager for the WMS device(s) presents the consolidated 
 weather data from all monitored weather station devices, providing both the average
 wind speed and wind gust reading. This data is then reflected by the DishManager
