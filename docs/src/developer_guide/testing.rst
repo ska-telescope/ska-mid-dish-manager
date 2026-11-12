@@ -120,6 +120,9 @@ to control a simulated MeerKAT dish, whose control and monitoring is enabled by 
         "SPFDeviceFqdn": "tango://0.0.0.0:34567/mid-dish/simulator-spfc/SKA001#dbase=no"
       }'
 
+    `You can them use itango to connect to the Dish Manager instance at the following TRL`
+    dish_manager = DeviceProxy("tango://127.0.0.1:23458/test/nodb/dishmanager#dbase=no")
+
 
 Deploy DishManager with DB
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -5,8 +5,57 @@ This page will guide you through the steps to deploying DishManager
 along with the simulators locally. It is assumed here that you have cloned the
 ``ska-mid-dish-manager`` repository, and have `set up your development environment`_. 
 
-Deploy DishManager with Simulators
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Prerequisite: Selecting the dish structure type for Dish Manager to control and monitor
+---------------------------------------------------------------------------------------
+
+In all cases where Dish Manager is to be deployed, the dish manager Tango device is 
+required to be configured with a dish structure (DS) to control and monitor, regardless 
+of whether control and monitoring is setup up for the SPF and SPFRx components or not.
+
+The Dish Manager Tango device is capable of monitoring 2 dish structure variants;
+
+.. list-table:: Dish structure types
+   :widths: 33 33 33 33
+   :header-rows: 1
+
+   * - Local Monitoring and Control (LMC) deployment type
+     - DS controller variant 
+     - DS Tango device implementation
+     - DS Tango device repository
+   * - Dish LMC
+     - SKA MID dish structure controller
+     - ``DSManager``
+     - https://gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
+   * - MeerKAT LMC
+     - MeerKAT antenna positioner (AP)
+     - ``APManager``
+     - https://gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc 
+
+The dish structure variant selected to be controlled and monitored is driven by the
+configuration of the Dish Manager Tango device properties;
+
+* DSDeviceFqdn
+* APManagerDeviceFqdn
+
+where only one dish structure type can be monitored by a given Dish Manager instance.
+
+Control and monitoring is setup up for the dish structure variant whose FQDN property is
+configured with a valid Tango resource locator (TRL). To disable control and monitoring 
+for the other dish structure type, set its respective property to an empty string.
+
+.. note:: Only one of the above-mentioned properties can be configured at a time,
+   configuring TRLs for both properties presents a conflict that will cause the initialization
+   of the Dish Manager Tango device to fail.
+
+If neither property is explicitly configured by the user, the Dish Manager device will default
+to setting up control and monitoring for a DS Manager Tango device instance at the default TRL
+``mid-dish/ds-manager/SKA001``.
+
+
+
+Deploy DishManager to monitor an SKA MID Dish with Simulators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1. Deploy ska-tango-operator to manage the pods and their configuration.
 
@@ -118,6 +167,139 @@ the ``deviceserver`` namespace by inspecting the ``Config`` value on the
 
 .. image:: ../images/dev_name_k9s.png
    :width: 100%
+
+
+Deploy DishManager to monitor a MeerKAT Antenna with Simulators
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Deploy ska-tango-operator to manage the pods and their configuration.
+
+.. tabs::
+
+   .. tab:: ska-tango-operator chart deployment
+
+      .. code-block:: console
+
+        $ git clone git@gitlab.com:ska-telescope/ska-tango-operator.git
+        $ cd ska-tango-operator
+        $ make k8s-install-chart
+
+
+2. Deploy ska-mid-dish-manager from the chart
+
+.. tabs::
+
+   .. tab:: ska-mid-dish-manager chart deployment
+
+      .. code-block:: console
+        
+        $ cd ska-mid-dish-manager
+        $ # An example custom Helm values file is provided inside the Dish Manager repository  
+        $ # showing how control and monitoring is setup for an APManager Tango device instance
+        $ helm upgrade --install test charts/ska-mid-dish-manager -n dish-manager -f charts/ska-mid-dish-manager/deployment_with_mk_ap_manager.yaml
+
+1. Advanced: Deploy ska-mid-dish-manager (with an APManager and AP simulator) from your repository
+
+.. tabs::
+
+   .. tab:: ska-mid-dish-manager as a chart dependency
+
+      Assumption: `templates repository`_ is used to manage your deployment.
+
+      The ska-mid-dish-manager chart can be added as a chart dependency in your own repository
+      to include it as part of your own deployment process. This will also require setting some
+      additional configuration in your values file.
+
+      .. code-block:: rst
+         
+         # in chart.yaml
+         ...
+         - name: ska-mid-dish-manager
+         version: x.x.x
+         repository: https://artefact.skao.int/repository/helm-internal
+
+         - name: ska-mid-dish-simulators
+         version: x.x.x
+         repository: https://artefact.skao.int/repository/helm-internal
+         condition: ska-mid-dish-simulators.enabled
+
+         - name: ska-mid-meerkat-ap-manager
+         version: x.x.x
+         repository: https://artefact.skao.int/repository/helm-internal
+         condition: ska-mid-meerkat-ap-manager.enabled
+
+         - name: ska-mid-meerkat-ap-simulator
+         version: x.x.x
+         repository: https://artefact.skao.int/repository/helm-internal
+         condition: ska-mid-meerkat-ap-simulator.enabled
+
+
+      .. code-block:: rst
+         
+         # in your custom values.yaml
+         ...    
+         ska-mid-dish-simulators:
+            enabled: true
+            deviceServers:
+               spfdevice:
+                  enabled: true
+               spfrxdevice:
+                  enabled: true
+            dsOpcuaSimulator:
+               enabled: false
+
+         ska-mid-dish-ds-manager:
+            enabled: false
+
+         # -----------------------------------------------------------------------------
+         # Dish Manager config - Configure the DS TRL to point to an AP Manager instance
+         # -----------------------------------------------------------------------------
+         dishmanager:
+            b5dcproxy:
+               monitoring: false
+            ds:
+               fqdn: ""
+               domain_name: ""
+               family_name: ""
+            ap_manager:
+               fqdn: "mid-dish/meerkat-ap-manager/SKA001"
+               # Configure the full TRL above OR configure the AP Manager TRL domain and family 
+               domain_name: "" 
+               family_name: ""
+
+         # -------------------------------------------------
+         # MeerKAT AP Manager and AP Simulator configuration
+         # -------------------------------------------------
+         ska-mid-meerkat-ap-manager:
+            enabled: true
+
+            meerkatapmanager:
+               enabled: true
+      
+               # Configure MK AP server instance to connect to
+               deviceproperties:
+                  katcp_hosts: ["katcp-ap-sim-001-svc"]
+                  katcp_ports: [4022]
+                  sampling_strategies: []
+                  sensors_to_ignore: []
+
+            deviceServers:
+               meerkatapmanager:
+                  enabled: true
+
+         ska-mid-meerkat-ap-simulator:
+            enabled: true
+            apSimulator:
+               name: katcp-ap-sim
+               enabled: true
+
+The deployment will constitute pods for:
+
+* Tango DB
+* DishManager
+* APManager
+* Simulators: SPF, SPFRx & AP simulator server
+
 
 Manage your Deployment
 ^^^^^^^^^^^^^^^^^^^^^^
