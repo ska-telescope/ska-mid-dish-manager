@@ -480,7 +480,6 @@ class DishManager(SKAController):
             "spfcontrolmode": "spfControlMode",
             "spfrxcontrolmode": "spfrxControlMode",
             "b5dccontrolmode": "b5dcControlMode",
-            # "ignoreb5dc": "ignoreB5dc",
             "spfconnectionstate": "spfConnectionState",
             "spfrxconnectionstate": "spfrxConnectionState",
             "dsconnectionstate": "dsConnectionState",

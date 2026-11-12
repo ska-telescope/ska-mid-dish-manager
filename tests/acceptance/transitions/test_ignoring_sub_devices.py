@@ -1,51 +1,69 @@
 """Test ignoring subservient devices."""
 
 import pytest
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.models.dish_enums import Band
 from tests.utils import remove_subscriptions, set_ignored_devices, setup_subscriptions
 
 
 @pytest.fixture
-def toggle_ignore_spfrx(dish_manager_proxy):
+def toggle_spfrx_control_mode(dish_manager_proxy):
     """Ignore SPFRx."""
     set_ignored_devices(
-        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=True, ignore_b5dc=False
+        device_proxy=dish_manager_proxy,
+        spf_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        spfrx_control_mode=ControlMode.NO_MONITOR_NO_CONTROL,
+        b5dc_control_mode=ControlMode.NO_MONITOR_NO_CONTROL,
     )
     yield
     set_ignored_devices(
-        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False, ignore_b5dc=False
+        device_proxy=dish_manager_proxy,
+        spf_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        spfrx_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        b5dc_control_mode=ControlMode.MONITOR_AND_CONTROL,
     )
 
 
 @pytest.fixture
-def toggle_ignore_spf(dish_manager_proxy):
+def toggle_spf_control_mode(dish_manager_proxy):
     """Ignore SPF."""
     set_ignored_devices(
-        device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=False, ignore_b5dc=False
+        device_proxy=dish_manager_proxy,
+        spf_control_mode=ControlMode.NO_MONITOR_NO_CONTROL,
+        spfrx_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        b5dc_control_mode=ControlMode.MONITOR_AND_CONTROL,
     )
     yield
     set_ignored_devices(
-        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False, ignore_b5dc=False
+        device_proxy=dish_manager_proxy,
+        spf_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        spfrx_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        b5dc_control_mode=ControlMode.MONITOR_AND_CONTROL,
     )
 
 
 @pytest.fixture
-def toggle_ignore_spf_and_spfrx_b5dc(dish_manager_proxy):
+def toggle_spf_control_mode_and_spfrx_b5dc(dish_manager_proxy):
     """Ignore SPF, SPFRx and B5DC."""
     set_ignored_devices(
-        device_proxy=dish_manager_proxy, ignore_spf=True, ignore_spfrx=True, ignore_b5dc=True
+        device_proxy=dish_manager_proxy,
+        spf_control_mode=ControlMode.NO_MONITOR_NO_CONTROL,
+        spfrx_control_mode=ControlMode.NO_MONITOR_NO_CONTROL,
+        b5dc_control_mode=ControlMode.NO_MONITOR_NO_CONTROL,
     )
     yield
     set_ignored_devices(
-        device_proxy=dish_manager_proxy, ignore_spf=False, ignore_spfrx=False, ignore_b5dc=False
+        device_proxy=dish_manager_proxy,
+        spf_control_mode=False,
+        spfrx_control_mode=False,
+        b5dc_control_mode=False,
     )
 
 
-@pytest.mark.skip(reason="test is flaky, probably due to db operation")
 @pytest.mark.acceptance
 def test_ignoring_spf(
-    monitor_tango_servers, toggle_ignore_spf, event_store_class, dish_manager_proxy
+    monitor_tango_servers, toggle_spf_control_mode, event_store_class, dish_manager_proxy
 ):
     """Test ignoring SPF device."""
     result_event_store = event_store_class()
@@ -84,10 +102,9 @@ def test_ignoring_spf(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="test is flaky, probably due to db operation")
 @pytest.mark.acceptance
 def test_ignoring_spfrx(
-    monitor_tango_servers, toggle_ignore_spfrx, event_store_class, dish_manager_proxy
+    monitor_tango_servers, toggle_spfrx_control_mode, event_store_class, dish_manager_proxy
 ):
     """Test ignoring SPFRX device."""
     result_event_store = event_store_class()
@@ -125,10 +142,12 @@ def test_ignoring_spfrx(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="test is flaky, probably due to db operation")
 @pytest.mark.acceptance
 def test_ignoring_all(
-    monitor_tango_servers, toggle_ignore_spf_and_spfrx_b5dc, event_store_class, dish_manager_proxy
+    monitor_tango_servers,
+    toggle_spf_control_mode_and_spfrx_b5dc,
+    event_store_class,
+    dish_manager_proxy,
 ):
     """Test ignoring both SPF and SPFRx devices."""
     result_event_store = event_store_class()

@@ -685,7 +685,7 @@ def set_ignored_devices(
         "spfrxConnectionState",
         spfrx_control_mode,
     )
-    _set_control_mode(device_proxy, "b5dcControlMode", "b5dcConnectionState")
+    _set_control_mode(device_proxy, "b5dcControlMode", "b5dcConnectionState", b5dc_control_mode)
 
 
 def _set_control_mode(
