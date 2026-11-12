@@ -48,10 +48,48 @@ for the other dish structure type, set its respective property to an empty strin
    configuring TRLs for both properties presents a conflict that will cause the initialization
    of the Dish Manager Tango device to fail.
 
-If neither property is explicitly configured by the user, the Dish Manager device will default
-to setting up control and monitoring for a DS Manager Tango device instance at the default TRL
-``mid-dish/ds-manager/SKA001``.
+If neither property is explicitly configured by the user, the Dish Manager device will 
+default to setting up control and monitoring for a DS Manager Tango device instance at 
+the default TRL ``mid-dish/ds-manager/SKA001``.
 
+
+Dish Manager control differences when changing dish structure types
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Interchangability of the 2 dish structure manager variants is enabled by the fact that 
+both the ``DSManager`` and ``APManager`` Tango devices expose the same core set of 
+attributes and commands, with each manager device implementing its own internal logic
+to ensure parity is maintained between the 2 interfaces.
+
+By moving the logical complexity of handling 2 different dish controller types to their
+respective manager devices, clients to the Dish Manager Tango device are able to interface
+with Dish Manager without having make significant accommodations for each dish type, however,
+some minor differences need to be accounted for;
+
+1: **Configuration differences**
+
+Differences in helm deployment configuration are highlighted in detail in the following subsections
+
+2: **TrackTable Azimuth/Elevation (AZ/EL) differences**
+
+The Antenna control unit (ACU) imposes the following AZ/EL limits which differ from those of the SKA
+MID DISH
+
+.. list-table:: ACU AZ/EL Limits
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Parameter
+     - Limit (in degrees)
+   * - Maximum Elevation 
+     - 92.0
+   * - Minimum Elevation 
+     - 14.5
+   * - Maximum Azimuth 
+     - 275.0
+   * - Minimum Elevation 
+     - -185.0
+ 
 
 
 Deploy DishManager to monitor an SKA MID Dish with Simulators
@@ -300,6 +338,12 @@ The deployment will constitute pods for:
 * APManager
 * Simulators: SPF, SPFRx & AP simulator server
 
+
+.. note:: Only one dish structure variant can be configured for control and monitoring at a time.
+   If a values.yaml configuration is provided that configures the both dish structure
+   varients simultaneously the helm deployment will fail as a result of the configuration
+   conflict.
+   
 
 Manage your Deployment
 ^^^^^^^^^^^^^^^^^^^^^^
