@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Added GitLab CI support for cascading Dish Manager Helm chart releases to downstream Mid Dish repositories.
 
 Version 12.0.0
 **************
