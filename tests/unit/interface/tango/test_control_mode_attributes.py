@@ -430,7 +430,6 @@ def test_b5dc_control_mode_syncs_component_states(
     """Verify B5DC synchronization does not modify other ControlModes."""
     _, component_manager = dish_manager_resources_with_b5dc_monitoring
 
-    # Capture SPF and SPFRx modes before changing B5DC.
     original_spf_mode = component_manager.check_device_control_mode("SPF")
     original_spfrx_mode = component_manager.check_device_control_mode("SPFRX")
 
@@ -446,10 +445,8 @@ def test_b5dc_control_mode_syncs_component_states(
 
     mock_sync.assert_called_once()
 
-    # Verify B5DC changed to the requested ControlMode.
     assert component_manager.check_device_control_mode("B5DC") == ControlMode.NO_MONITOR_NO_CONTROL
 
-    # Independence: SPF and SPFRx must remain unchanged.
     assert component_manager.check_device_control_mode("SPF") == original_spf_mode
 
     assert component_manager.check_device_control_mode("SPFRX") == original_spfrx_mode

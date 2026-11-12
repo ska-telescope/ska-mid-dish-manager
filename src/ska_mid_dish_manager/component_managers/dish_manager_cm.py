@@ -152,21 +152,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         configured_wms_devices: list[str] = [
             instance for instance in configured_wms_devices if instance
         ]
-        # Resolve initial control modes, preserving legacy exclusions.
-        initial_spf_control_mode = self._get_initial_control_mode(
-            "spfControlMode",
-            "ignoreSpf",
-        )
-
-        initial_spfrx_control_mode = self._get_initial_control_mode(
-            "spfrxControlMode",
-            "ignoreSpfrx",
-        )
-
-        initial_b5dc_control_mode = self._get_initial_control_mode(
-            "b5dcControlMode",
-            "ignoreB5dc",
-        )
 
         super().__init__(
             logger,
@@ -194,9 +179,9 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             band4pointingmodelparams=[],
             band5apointingmodelparams=[],
             band5bpointingmodelparams=[],
-            spfcontrolmode=initial_spf_control_mode,
-            spfrxcontrolmode=initial_spfrx_control_mode,
-            b5dccontrolmode=initial_b5dc_control_mode,
+            spfcontrolmode=ControlMode.MONITOR_AND_CONTROL,
+            spfrxcontrolmode=ControlMode.MONITOR_AND_CONTROL,
+            b5dccontrolmode=ControlMode.MONITOR_AND_CONTROL,
             noisediodemode=NoiseDiodeMode.OFF,
             periodicnoisediodepars=[0, 0, 0],
             pseudorandomnoisediodepars=[0, 0, 0],
@@ -1030,30 +1015,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
 
         new_health_info = self.generate_healthinfo()
         self._update_component_state(healthinfo=new_health_info)
-
-    def _get_initial_control_mode(
-        self,
-        control_mode_attribute: str,
-        legacy_ignore_attribute: str,
-    ) -> ControlMode:
-        """Resolve control mode, supporting legacy memorized ignore attributes.
-
-        Resolved a saved control mode with a legacy fallback.
-        """
-        # Prefer an explicitly saved new control-mode value.
-        saved_control_mode = self._get_device_attribute_property_value(control_mode_attribute)
-
-        if saved_control_mode is not None:
-            return self._parse_control_mode_value(saved_control_mode)
-
-        # Fall back to the legacy ignore attribute.
-        saved_ignore = self._get_device_attribute_property_value(legacy_ignore_attribute)
-
-        if saved_ignore is not None:
-            return self._parse_legacy_ignore_value(saved_ignore)
-
-        # Neither value exists.
-        return ControlMode.MONITOR_AND_CONTROL
 
     # ---------
     # Callbacks
