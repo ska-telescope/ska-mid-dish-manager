@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Callable, List, Optional
 
 import tango
-from ska_control_model import CommunicationStatus  # ty: ignore[deprecated]
+from ska_control_model import CommunicationStatus
 from ska_tango_base.base import BaseComponentManager
 
 GROUP_REQUEST_TIMEOUT_MS = 3000

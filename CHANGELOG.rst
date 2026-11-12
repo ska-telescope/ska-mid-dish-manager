@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- DishManager automatically sets the controlMode to MONITOR_AND_CONTROL for sub-devices with a controlMode attribute.
 
 Version 12.0.0
 **************
