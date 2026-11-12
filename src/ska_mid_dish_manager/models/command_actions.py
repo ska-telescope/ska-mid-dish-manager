@@ -17,6 +17,9 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
     OPERATOR_TAG,
+    SPFRX_BAND_WAIT_TIME,
+    SPFRX_CONFIG_WAIT_TIME,
+    SPFRX_OPERATE_WAIT_TIME,
 )
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
@@ -626,7 +629,7 @@ class ConfigureBandAction(Action):
             device="SPFRX",
             device_component_manager=self.dish_manager_cm.sub_component_managers["SPFRX"],
             awaited_component_state={"operatingmode": SPFRxOperatingMode.CONFIGURE},
-            timeout_s=14,
+            timeout_s=SPFRX_CONFIG_WAIT_TIME,
             continue_on_timeout=True,
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
@@ -639,7 +642,7 @@ class ConfigureBandAction(Action):
             awaited_component_state={
                 "operatingmode": SPFRxOperatingMode.OPERATE,
             },
-            timeout_s=20,
+            timeout_s=SPFRX_OPERATE_WAIT_TIME,
             continue_on_timeout=False,
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
@@ -653,7 +656,7 @@ class ConfigureBandAction(Action):
             awaited_component_state={
                 "configuredband": spfrx_awaited_band,
             },
-            timeout_s=14,
+            timeout_s=SPFRX_BAND_WAIT_TIME,
             continue_on_timeout=False,
             progress_callback=self._progress_callback,
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
