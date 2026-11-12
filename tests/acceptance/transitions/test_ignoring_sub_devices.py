@@ -55,9 +55,9 @@ def toggle_spf_control_mode_and_spfrx_b5dc(dish_manager_proxy):
     yield
     set_ignored_devices(
         device_proxy=dish_manager_proxy,
-        spf_control_mode=False,
-        spfrx_control_mode=False,
-        b5dc_control_mode=False,
+        spf_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        spfrx_control_mode=ControlMode.MONITOR_AND_CONTROL,
+        b5dc_control_mode=ControlMode.MONITOR_AND_CONTROL,
     )
 
 
