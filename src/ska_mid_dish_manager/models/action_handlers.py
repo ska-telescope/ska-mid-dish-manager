@@ -233,7 +233,6 @@ class ActionHandler:
 
         if self.action_on_success:
             msg = f"{self.action_name} complete. Triggering on success action."
-            self.logger.debug(msg)
             self.progress_callback(progress_info=msg)
             # Pass on the chained action's result, so a failure later in the sequence
             # (e.g. SetOperateMode after ConfigureBand) fails the whole command.

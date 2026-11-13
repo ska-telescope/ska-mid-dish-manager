@@ -385,11 +385,15 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
     @typing.override
     def _execute_tango_command(self) -> tuple[TaskStatus | None, str | None]:
         """Fan out the respective command to the device and handle task status response."""
-        task_status, msg = super()._execute_tango_command()
+        try:
+            task_status, msg = super()._execute_tango_command()
+        except RuntimeError as err:
+            self.is_lrc_finished = True
+            return TaskStatus.FAILED, str(err)
 
         # If the command completed immediately then it won't appear in the LRC attributes. Mark
         # the lrc as complete, the component state check will be used to complete the command.
-        if task_status in [TaskStatus.COMPLETED, TaskStatus.REJECTED, TaskStatus.ABORTED]:
+        if task_status == TaskStatus.COMPLETED:
             self.is_lrc_finished = True
 
         return task_status, msg

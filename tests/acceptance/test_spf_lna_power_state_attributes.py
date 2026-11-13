@@ -143,7 +143,6 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
         remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "attribute_name",

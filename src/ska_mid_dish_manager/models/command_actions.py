@@ -22,6 +22,8 @@ from ska_mid_dish_manager.models.constants import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
+    DscCmdAuthType,
+    DscCtrlState,
     DSOperatingMode,
     DSPowerState,
     IndexerPosition,
@@ -61,7 +63,7 @@ class SetStandbyLPModeAction(Action):
             progress_callback,
         )
 
-        self.spf_command = FannedOutTangoCommand(
+        spf_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetStandbyLPMode",
@@ -72,7 +74,7 @@ class SetStandbyLPModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
 
-        self.spfrx_command = FannedOutTangoCommand(
+        spfrx_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPFRX",
             command_name="SetStandbyMode",
@@ -83,7 +85,7 @@ class SetStandbyLPModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPFRX"),
         )
 
-        self.ds_command = FannedOutTangoLongRunningCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="SetStandbyMode",
@@ -99,7 +101,7 @@ class SetStandbyLPModeAction(Action):
         self._handler = ActionHandler(
             self.logger,
             "SetStandbyLPMode",
-            [self.spf_command, self.spfrx_command, self.ds_command],
+            [spf_command, spfrx_command, ds_command],
             # use _dish_manager_cm._component_state to pass the dict by reference
             # _dish_manager_cm.component_state will use the tango base property which will do a
             # deep copy
@@ -228,7 +230,7 @@ class SetOperateModeAction(Action):
             progress_callback,
         )
 
-        self.spf_command = FannedOutTangoCommand(
+        spf_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPF",
             command_name="SetOperateMode",
@@ -238,7 +240,7 @@ class SetOperateModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
             skip_if_already_satisfied=True,
         )
-        self.ds_command = FannedOutTangoLongRunningCommand(
+        ds_command = FannedOutTangoLongRunningCommand(
             logger=self.logger,
             device="DS",
             command_name="SetPointMode",
@@ -251,7 +253,7 @@ class SetOperateModeAction(Action):
         self._handler = ActionHandler(
             self.logger,
             "SetOperateMode",
-            [self.spf_command, self.ds_command],
+            [spf_command, ds_command],
             # use _dish_manager_cm._component_state to pass the dict by reference
             # _dish_manager_cm.component_state will use the tango base property which will do a
             # deep copy
@@ -275,6 +277,67 @@ class SetOperateModeAction(Action):
             return ResultCode.FAILED, "No configured band: SetOperateMode execution not allowed"
 
         return super().execute(task_abort_event, completed_response_msg)
+
+
+class MaintenanceModeCallback(Action):
+    """Callback action for handling the transition to MAINTENANCE mode."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        dish_manager_cm,
+        timeout_s: float = DEFAULT_ACTION_TIMEOUT_S,
+        action_on_success: Optional["Action"] = None,
+        action_on_failure: Optional["Action"] = None,
+        waiting_callback: Optional[Callable] = None,
+        progress_callback: Optional[Callable] = None,
+    ):
+        super().__init__(
+            logger,
+            dish_manager_cm,
+            timeout_s,
+            action_on_success,
+            action_on_failure,
+            waiting_callback,
+            progress_callback,
+        )
+
+        ds_command = FannedOutTangoCommand(
+            logger=self.logger,
+            device="DS",
+            command_name="ReleaseAuth",
+            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
+            awaited_component_state={
+                "dsccmdauth": DscCmdAuthType.NO_AUTHORITY,
+                "dscctrlstate": DscCtrlState.NO_AUTHORITY,
+            },
+            progress_callback=self.progress_callback,
+        )
+
+        self._handler = ActionHandler(
+            self.logger,
+            "ReleaseAuth",
+            [ds_command],
+            component_state=self.dish_manager_cm._component_state,
+            awaited_component_state={
+                "dsccmdauth": DscCmdAuthType.NO_AUTHORITY,
+                "dscctrlstate": DscCtrlState.NO_AUTHORITY,
+            },
+            progress_callback=self.progress_callback,
+            timeout_s=self.timeout_s,
+        )
+        # override the default success handler to complete the maintenance mode transition.
+        self._handler._trigger_success = self.complete_maintenance_mode
+
+    def complete_maintenance_mode(self, *args, **kwargs) -> Tuple[ResultCode, str]:
+        self.logger.info("ReleaseAuth completed.")
+        self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
+        component_manager = self.dish_manager_cm
+        component_manager._set_maintenance_mode_active()
+        component_manager._update_component_state(dishmode=DishMode.MAINTENANCE)
+        final_message = "SetMaintenanceMode completed."
+        self.logger.info(final_message)
+        return ResultCode.OK, final_message
 
 
 class SetMaintenanceModeAction(Action):
@@ -341,7 +404,7 @@ class SetMaintenanceModeAction(Action):
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self.progress_callback,
-            timeout_s=timeout_s,
+            timeout_s=self.timeout_s,
         )
 
     def execute(
@@ -351,6 +414,9 @@ class SetMaintenanceModeAction(Action):
             # TODO: Wait for the SPFRx to implement maintenance mode
             self.logger.debug("Nothing done on SPFRx, awaiting implementation on it.")
 
+        completed_response_msg = (
+            completed_response_msg or "SetMaintenanceMode: initial actions completed."
+        )
         return super().execute(task_abort_event, completed_response_msg)
 
 
@@ -463,7 +529,7 @@ class TrackStopAction(Action):
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self.progress_callback,
-            timeout_s=timeout_s,
+            timeout_s=self.timeout_s,
         )
 
 
@@ -630,7 +696,7 @@ class ConfigureBandAction(Action):
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self.progress_callback,
-            timeout_s=timeout_s,
+            timeout_s=self.timeout_s,
         )
 
     def execute(
@@ -805,7 +871,7 @@ class ConfigureBand6Action(Action):
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self.progress_callback,
-            timeout_s=timeout_s,
+            timeout_s=self.timeout_s,
         )
 
     def execute(
@@ -935,7 +1001,7 @@ class TrackLoadStaticOffAction(Action):
             action_on_failure=action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self.progress_callback,
-            timeout_s=timeout_s,
+            timeout_s=self.timeout_s,
         )
 
 
@@ -983,5 +1049,5 @@ class InterlockAckAction(Action):
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self.progress_callback,
-            timeout_s=timeout_s,
+            timeout_s=self.timeout_s,
         )

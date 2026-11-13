@@ -19,7 +19,6 @@ REQUESTED_AZIMUTH_VALUE = 100.0
 REQUESTED_ELEVATION_VALUE = 60.0
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.acceptance
 def test_maintenance_mode_cmd(
     event_store_class: type[EventStore],
@@ -77,7 +76,6 @@ def test_maintenance_mode_cmd(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_power_cycle_in_maintenance_mode(
@@ -114,7 +112,6 @@ def test_power_cycle_in_maintenance_mode(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_on_stow(
@@ -148,7 +145,6 @@ def test_exiting_maintenance_mode_when_ds_on_stow(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.movement
 @pytest.mark.acceptance
 def test_exiting_maintenance_mode_when_ds_not_on_stow(

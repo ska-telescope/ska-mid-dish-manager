@@ -10,7 +10,6 @@ from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SP
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_happy_case(dish_manager_resources, event_store_class):
@@ -50,7 +49,6 @@ def test_happy_case(dish_manager_resources, event_store_class):
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_dish_does_not_stow(dish_manager_resources, event_store_class):
@@ -69,7 +67,6 @@ def test_dish_does_not_stow(dish_manager_resources, event_store_class):
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until maintenance mode implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_exception_on_callback(dish_manager_resources, event_store_class):
@@ -88,7 +85,7 @@ def test_exception_on_callback(dish_manager_resources, event_store_class):
 
     [[_], [unique_id]] = device_proxy.SetMaintenanceMode()
 
-    expected_result = '[3, "SetMaintenanceMode failed"]'
+    expected_result = "[3, 'SetMaintenanceMode failed Simulated failure']"
 
     result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
 

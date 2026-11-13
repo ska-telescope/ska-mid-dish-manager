@@ -448,24 +448,6 @@ class DishManager(
             default_wind_gust_threshold=self.WindGustThreshold,
         )
 
-    # def completed_set_maintenance_mode(self) -> None:
-    #     """Finish the STOW to MAINTENANCE transition once the command completes."""
-    #     self.component_manager.stow_to_maintenance_transition_callback()
-
-    # def is_SetMaintenanceMode_allowed(
-    #     self, request_type: LRCReqType = LRCReqType.ENQUEUE_REQ
-    # ) -> bool:
-    #     """Check whether SetMaintenanceMode can be queued or executed."""
-    #     return self.is_command_allowed("SetMaintenanceMode")
-
-    # @submit_lrc_task(
-    #     cmd_name="SetMaintenanceMode",
-    #     fisallowed="is_SetMaintenanceMode_allowed",
-    #     completed_callback="completed_set_maintenance_mode",
-    # )
-    # def execute_SetMaintenanceMode(self) -> TaskFunctionType:
-    #     return self._component_manager.set_maintenance_mode
-
     # ---------
     # Callbacks
     # ---------
@@ -1559,19 +1541,28 @@ class DishManager(
         doc="Report the device b5bCapabilityState",
     )
     def b5bCapabilityState(self):
-        """Returns the b5aCapabilityState."""
+        """Returns the b5bCapabilityState."""
         return self.component_manager.component_state.get(
             "b5bcapabilitystate", CapabilityStates.UNKNOWN
         )
 
     @attribute(
         dtype=str,
-        access=AttrWriteType.READ,
+        access=AttrWriteType.READ_WRITE,
         doc="Report the scanID for Scan",
     )
     def scanID(self):
         """Returns the scanID."""
         return self._scan_id
+
+    @scanID.write
+    @time_tango_write()
+    @log_tango_attr_write()
+    def scanID(self, value):
+        """Sets the scanID."""
+        self._scan_id = value
+        self.push_change_event("scanID", self._scan_id)
+        self.push_archive_event("scanID", self._scan_id)
 
     @attribute(
         dtype=bool,
@@ -2546,25 +2537,25 @@ class DishManager(
         """
         return self._component_manager.update_tz_data
 
-    # @record_command(record_mode=True)
-    # @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    # @log_tango_command()
-    # @command(
-    #     dtype_in=None,
-    #     dtype_out="DevVarLongStringArray",
-    #     display_level=DispLevel.OPERATOR,
-    #     doc_in="This command triggers the Dish to transition to the MAINTENANCE Dishmode.",
-    # )
-    # def SetMaintenanceMode(self) -> DevVarLongStringArrayType:
-    #     """This command triggers the Dish to transition to the MAINTENANCE
-    #     Dish Element Mode, and returns to the caller. To go into a state
-    #     that is safe to approach the Dish by a maintainer, and to enable the
-    #     Engineering interface to allow direct access to low level control and
-    #     monitoring by engineers and maintainers. This mode will also enable
-    #     engineers and maintainers to upgrade SW and FW. Dish also enters this
-    #     mode when an emergency stop button is pressed.
-    #     """
-    #     return self.execute_SetMaintenanceMode()
+    @record_command(record_mode=True)
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
+    @slow_command(
+        dtype_in=None,
+        dtype_out="DevVarLongStringArray",
+        display_level=DispLevel.OPERATOR,
+        doc_in="This command triggers the Dish to transition to the MAINTENANCE Dishmode.",
+    )
+    def SetMaintenanceMode(self) -> TaskFunctionType:
+        """This command triggers the Dish to transition to the MAINTENANCE
+        Dish Element Mode, and returns to the caller. To go into a state
+        that is safe to approach the Dish by a maintainer, and to enable the
+        Engineering interface to allow direct access to low level control and
+        monitoring by engineers and maintainers. This mode will also enable
+        engineers and maintainers to upgrade SW and FW. Dish also enters this
+        mode when an emergency stop button is pressed.
+        """
+        return self._component_manager.set_maintenance_mode
 
     @record_command(record_mode=True)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -2652,10 +2643,10 @@ class DishManager(
     def SetStowMode(self) -> DevVarLongStringArrayType:
         """Implemented as a Fast Command.
 
-        This command immediately triggers the Dish to transition to STOW Dish Element
-        Mode. It points the dish in a direction that minimises the wind loads on the
-        structure, for survival in strong wind conditions. The Dish is able to observe
-        in the STOW position, for the purpose of transient detection.
+        This command immediately triggers the Dish to transition to STOW dish mode.
+        It subsequently aborts all queued LRC tasks. It points the dish in a  direction
+        that minimises the wind loads on the structure, for survival in strong wind conditions.
+        The Dish is able to observe in the STOW position, for the purpose of transient detection.
 
         :return: A tuple containing a return code and a string
             message indicating status.
@@ -2665,6 +2656,11 @@ class DishManager(
             self.component_manager.handle_exit_maintenance_mode_transition()
 
         result_code, message = self.component_manager.set_stow_mode()
+
+        # cancel any LRCs
+        _, task_callback = self.allocate_lrc("stow.cancel_lrcs")
+        self.task_executor.abort(task_callback)
+
         return ([result_code], [message])
 
     @record_command
@@ -2830,7 +2826,8 @@ class DishManager(
     )
     def SetFrequency(self, value) -> DevVarLongStringArrayType:
         """Set the frequency on the band 5 down converter."""
-        return self.component_manager.set_frequency(value)
+        result_code, message = self.component_manager.set_frequency(value)
+        return ([result_code], [message])
 
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -2846,7 +2843,8 @@ class DishManager(
     )
     def SetVPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the vertical polarization attenuation on the band 5 down converter."""
-        return self.component_manager.set_v_pol_attenuation(value)
+        result_code, message = self.component_manager.set_v_pol_attenuation(value)
+        return ([result_code], [message])
 
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -2862,8 +2860,11 @@ class DishManager(
     )
     def SetHPolAttenuation(self, value) -> DevVarLongStringArrayType:
         """Set the horizontal polarization attenuation on the band 5 down converter."""
-        return self.component_manager.set_h_pol_attenuation(value)
+        result_code, message = self.component_manager.set_h_pol_attenuation(value)
+        return ([result_code], [message])
 
+    @record_command
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
         dtype_in="DevString",
