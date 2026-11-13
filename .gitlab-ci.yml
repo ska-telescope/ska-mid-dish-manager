@@ -68,6 +68,25 @@ k8s-test-runner:
      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
      VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
+# Trigger Dish LMC integration tests using the Dish Manager.
+trigger-dish-lmc-integration:
+  stage: publish
+
+  variables:
+    CUSTOM_DISHMANAGER_VERSION_TAG: "$CI_COMMIT_SHORT_SHA"
+
+  trigger:
+    project: 'ska-telescope/mid-dish/ska-dish-lmc'
+    branch: 'kar-2531-set-b5dc-proxy-version'
+    strategy: mirror
+
+  rules:
+    # Test this mechanism only on our feature branch.
+    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "kar-2531-enable-multi-project-trigger-pipeline"'
+      when: on_success
+
+    - when: never
+
 k8s-test-runner-incl-b5dc:
   extends: k8s-test-runner
   allow_failure: true
