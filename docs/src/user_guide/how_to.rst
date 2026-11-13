@@ -99,15 +99,15 @@ which differ from those of the SKA MID dish tabulated below;
    :header-rows: 1
 
    * - Parameter
-      - Limit (in degrees)
+     - Limit (in degrees)
    * - Maximum Science Elevation 
-      - 85.0
+     - 85.0
    * - Minimum Science Elevation 
-      - 15.0
+     - 15.0
    * - Maximum Azimuth 
-      - 270.0
+     - 270.0
    * - Minimum Elevation 
-      - - 270.0
+     - - 270.0
 
 
 Deploy DishManager to monitor an SKA MID Dish with Simulators
