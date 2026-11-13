@@ -88,7 +88,7 @@ The Antenna control unit (ACU) imposes the following AZ/EL limits;
      - 14.5
    * - Maximum Azimuth 
      - 275.0
-   * - Minimum Elevation 
+   * - Minimum Azimuth 
      - -185.0
  
 
@@ -106,7 +106,7 @@ which differ from those of the SKA MID dish tabulated below;
      - 15.0
    * - Maximum Azimuth 
      - 270.0
-   * - Minimum Elevation 
+   * - Minimum Azimuth 
      - -270.0
 
 
