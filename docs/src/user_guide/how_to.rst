@@ -74,8 +74,7 @@ Differences in helm deployment configuration are highlighted in detail in the fo
 
 2: **TrackTable Azimuth/Elevation (AZ/EL) differences**
 
-The Antenna control unit (ACU) imposes the following AZ/EL limits which differ from those of the SKA
-MID DISH
+The Antenna control unit (ACU) imposes the following AZ/EL limits;
 
 .. list-table:: ACU AZ/EL Limits
    :widths: 50 50
@@ -92,6 +91,9 @@ MID DISH
    * - Minimum Elevation 
      - -185.0
  
+
+which differ from those of the SKA MID dish tabulated below;
+
 .. list-table:: SKA MID Dish structure controller AZ/EL Limits
    :widths: 50 50
    :header-rows: 1
