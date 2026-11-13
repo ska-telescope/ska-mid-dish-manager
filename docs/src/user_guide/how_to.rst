@@ -74,7 +74,7 @@ Differences in helm deployment configuration are highlighted in detail in the fo
 
 2: **TrackTable Azimuth/Elevation (AZ/EL) differences**
 
-The Antenna control unit (ACU) imposes the following AZ/EL limits;
+The Antenna Control Unit (ACU) imposes the following AZ/EL limits;
 
 .. list-table:: ACU AZ/EL Limits
    :widths: 50 50
@@ -360,7 +360,7 @@ The deployment will constitute pods for:
 .. note:: 
    
    Only one dish structure variant can be configured for control and monitoring at a time.
-   If a values.yaml configuration is provided that configures the both dish structure
+   If a values.yaml configuration is provided that configures both dish structure
    varients simultaneously the helm deployment will fail as a result of the configuration
    conflict.
    
