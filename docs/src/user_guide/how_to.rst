@@ -107,7 +107,7 @@ which differ from those of the SKA MID dish tabulated below;
    * - Maximum Azimuth 
      - 270.0
    * - Minimum Elevation 
-     - - 270.0
+     - -270.0
 
 
 Deploy DishManager to monitor an SKA MID Dish with Simulators
