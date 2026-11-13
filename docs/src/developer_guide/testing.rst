@@ -57,8 +57,8 @@ Deploy DishManager with no DB
 
 This can be run in an isolated environment (virtual environment, docker container, ...)
 
-The following instructions detail how you can configure your Dish Manager Tango device instances
-to control a simulated SKA Mid dish structure
+The following instructions detail the process of configuring your Dish Manager Tango device instance
+to control a simulated SKA MID dish structure.
 
 .. tabs::
 
@@ -92,7 +92,7 @@ to control a simulated SKA Mid dish structure
 
 
 The following instructions detail the process of configuring your Dish Manager Tango device instance
-to control a simulated MeerKAT dish, whose control and monitoring is enabled by the AP Manager Tango device.
+to control a simulated MeerKAT antenna, whose control and monitoring is enabled by the MeerKAT AP Manager Tango device.
 
 
   .. code-block:: rst

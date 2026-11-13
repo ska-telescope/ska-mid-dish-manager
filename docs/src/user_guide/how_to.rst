@@ -20,23 +20,23 @@ The Dish Manager Tango device is capable of monitoring 2 dish structure variants
    :header-rows: 1
 
    * - Local Monitoring and Control (LMC) deployment type
-     - DS controller variant 
-     - DS Tango device implementation
-     - DS Tango device repository
+     - Dish structure controller variant 
+     - Dish structure Tango device implementation
+     - Dish structure Tango device repository
    * - Dish LMC
      - SKA MID dish structure controller
      - ``DSManager``
      - https://gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
    * - MeerKAT LMC
      - MeerKAT antenna positioner (AP)
-     - ``APManager``
+     - ``MeerKAT AP Manager``
      - https://gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc 
 
 The dish structure variant selected to be controlled and monitored is driven by the
 configuration of the Dish Manager Tango device properties;
 
-* DSDeviceFqdn
-* APManagerDeviceFqdn
+* ``DSDeviceFqdn``
+* ``APManagerDeviceFqdn``
 
 where only one dish structure type can be monitored by a given Dish Manager instance.
 
@@ -44,20 +44,22 @@ Control and monitoring is setup up for the dish structure variant whose FQDN pro
 configured with a valid Tango resource locator (TRL). To disable control and monitoring 
 for the other dish structure type, set its respective property to an empty string.
 
-.. note:: Only one of the above-mentioned properties can be configured at a time,
-   configuring TRLs for both properties presents a conflict that will cause the initialization
-   of the Dish Manager Tango device to fail.
+.. note::
+
+   Only one of the above-mentioned properties can be configured at a time.
+   Configuring TRLs for both properties presents a conflict that will cause
+   the initialization of the Dish Manager Tango device to fail.
 
 If neither property is explicitly configured by the user, the Dish Manager device will 
 default to setting up control and monitoring for a DS Manager Tango device instance at 
-the default TRL ``mid-dish/ds-manager/SKA001``.
+the TRL ``mid-dish/ds-manager/SKA001``.
 
 
 Dish Manager control differences when changing dish structure types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Interchangability of the 2 dish structure manager variants is enabled by the fact that 
-both the ``DSManager`` and ``APManager`` Tango devices expose the same core set of 
+both the ``DSManager`` and ``MeerKATAPManager`` Tango devices expose the same core set of 
 attributes and commands, with each manager device implementing its own internal logic
 to ensure parity is maintained between the 2 interfaces.
 
@@ -90,6 +92,20 @@ MID DISH
    * - Minimum Elevation 
      - -185.0
  
+.. list-table:: SKA MID Dish structure controller AZ/EL Limits
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Parameter
+      - Limit (in degrees)
+   * - Maximum Science Elevation 
+      - 85.0
+   * - Minimum Science Elevation 
+      - 15.0
+   * - Maximum Azimuth 
+      - 270.0
+   * - Minimum Elevation 
+      - - 270.0
 
 
 Deploy DishManager to monitor an SKA MID Dish with Simulators
@@ -339,7 +355,9 @@ The deployment will constitute pods for:
 * Simulators: SPF, SPFRx & AP simulator server
 
 
-.. note:: Only one dish structure variant can be configured for control and monitoring at a time.
+.. note:: 
+   
+   Only one dish structure variant can be configured for control and monitoring at a time.
    If a values.yaml configuration is provided that configures the both dish structure
    varients simultaneously the helm deployment will fail as a result of the configuration
    conflict.
