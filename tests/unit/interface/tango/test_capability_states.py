@@ -135,7 +135,7 @@ def test_b4capabilitystate_change(
 
     # Mimic capabilitystatechanges on sub devices
     dish_manager_cm._update_component_state(dishmode=DishMode.CONFIG)
-    ds_cm._update_component_state(indexerposition=IndexerPosition.UNKNOWN, feedIndexerMoving=True)
+    ds_cm._update_component_state(indexerposition=IndexerPosition.UNKNOWN, feedindexermoving=True)
     spf_cm._update_component_state(b4capabilitystate=SPFCapabilityStates.OPERATE_DEGRADED)
     spfrx_cm._update_component_state(b4capabilitystate=SPFRxCapabilityStates.CONFIGURE)
 

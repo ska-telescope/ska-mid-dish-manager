@@ -30,7 +30,7 @@ CAPABILITY_STATE_RULES_ALL_DEVICES = {
         "  DM.dishmode == 'DishMode.STOW'"
         "  and "
         # Added line below otherwise matches OPERATE_DEGRADED
-        "  DS.feedIndexerMoving == False "
+        "  DS.feedindexermoving == 'False' "
         ") "
         " and "
         "SPF.capabilitystate == 'SPFCapabilityStates.STANDBY'"
@@ -69,7 +69,7 @@ CAPABILITY_STATE_RULES_ALL_DEVICES = {
     ),
     "OPERATE_DEGRADED": rule_engine.Rule(
         "( "
-        "   DS.feedIndexerMoving == False "
+        "   DS.feedindexermoving == 'False' "
         "   and  "
         "   DS.operatingmode in "
         "       ['DSOperatingMode.STOW', "
@@ -103,7 +103,7 @@ CAPABILITY_STATE_RULES_SPF_IGNORED = {
         "  DM.dishmode == 'DishMode.STOW'"
         "  and "
         # Added line below otherwise matches OPERATE_DEGRADED
-        "  DS.feedIndexerMoving == False "
+        "  DS.feedindexermoving == 'False' "
         ") "
         " and "
         "SPFRX.capabilitystate in "
@@ -129,7 +129,7 @@ CAPABILITY_STATE_RULES_SPF_IGNORED = {
     ),
     "OPERATE_DEGRADED": rule_engine.Rule(
         "( "
-        "   DS.feedIndexerMoving == False "
+        "   DS.feedindexermoving == 'False' "
         "   and  "
         "   DS.operatingmode in "
         "       ['DSOperatingMode.STOW', "
@@ -162,7 +162,7 @@ CAPABILITY_STATE_RULES_SPFRX_IGNORED = {
         "  DM.dishmode == 'DishMode.STOW'"
         "  and "
         # Added line below otherwise matches OPERATE_DEGRADED
-        "  DS.feedIndexerMoving == False "
+        "  DS.feedindexermoving == 'False' "
         ") "
         " and "
         "SPF.capabilitystate == 'SPFCapabilityStates.STANDBY'"
@@ -189,7 +189,7 @@ CAPABILITY_STATE_RULES_SPFRX_IGNORED = {
     ),
     "OPERATE_DEGRADED": rule_engine.Rule(
         "( "
-        "   DS.feedIndexerMoving == False "
+        "   DS.feedindexermoving == 'False' "
         "   and  "
         "   DS.operatingmode in "
         "       ['DSOperatingMode.STOW', "
@@ -211,7 +211,7 @@ CAPABILITY_STATE_RULES_DS_ONLY = {
         "  DM.dishmode == 'DishMode.STOW'"
         "  and "
         # Added line below otherwise matches OPERATE_DEGRADED
-        "  DS.feedIndexerMoving == False "
+        "  DS.feedindexermoving == 'False' "
         ")"
     ),
     "STANDBY_3": rule_engine.Rule("DM.dishmode == 'DishMode.MAINTENANCE'"),
@@ -219,7 +219,7 @@ CAPABILITY_STATE_RULES_DS_ONLY = {
     "CONFIGURING": rule_engine.Rule("DM.dishmode == 'DishMode.CONFIG' "),
     "OPERATE_DEGRADED": rule_engine.Rule(
         "( "
-        "   DS.feedIndexerMoving == False "
+        "   DS.feedindexermoving == 'False' "
         "   and  "
         "   DS.operatingmode in "
         "       ['DSOperatingMode.STOW', "

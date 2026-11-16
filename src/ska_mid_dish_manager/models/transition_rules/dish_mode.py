@@ -12,7 +12,7 @@ DISH_MODE_RULES_ALL_DEVICES = {
     ),
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' or DS.feedIndexerMoving == True "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' or DS.feedindexermoving == 'True' "
     ),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "
@@ -37,7 +37,7 @@ DISH_MODE_RULES_SPF_IGNORED = {
     ),
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
     "CONFIG": rule_engine.Rule(
-        "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' or DS.feedIndexerMoving == True "
+        "SPFRX.operatingmode  == 'SPFRxOperatingMode.CONFIGURE' or DS.feedindexermoving == 'True' "
     ),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "
@@ -59,7 +59,7 @@ DISH_MODE_RULES_SPFRX_IGNORED = {
         "SPF.operatingmode  == 'SPFOperatingMode.STARTUP'"
     ),
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
-    "CONFIG": rule_engine.Rule("DS.feedIndexerMoving == True "),
+    "CONFIG": rule_engine.Rule("DS.feedindexermoving == 'True' "),
     "OPERATE": rule_engine.Rule(
         "DS.operatingmode  == 'DSOperatingMode.POINT' and "
         "SPF.operatingmode  == 'SPFOperatingMode.OPERATE'"
@@ -78,7 +78,7 @@ DISH_MODE_RULES_SPFRX_IGNORED = {
 DISH_MODE_RULES_DS_ONLY = {
     "STARTUP": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STARTUP'"),
     "STOW": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.STOW'"),
-    "CONFIG": rule_engine.Rule("DS.feedIndexerMoving == True "),
+    "CONFIG": rule_engine.Rule("DS.feedindexermoving == 'True' "),
     "OPERATE": rule_engine.Rule("DS.operatingmode  == 'DSOperatingMode.POINT'"),
     "STANDBY_LP": rule_engine.Rule(
         "DS.operatingmode == 'DSOperatingMode.STANDBY' and "
