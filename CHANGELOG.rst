@@ -10,6 +10,13 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - DishManager automatically sets the controlMode to MONITOR_AND_CONTROL for sub-devices with a controlMode attribute.
 - Upgraded ska-mid-dish-b5dc-proxy chart to v1.0.1
 
+    - communicationState is renamed to connectionState
+
+- Updated state transition rules to use `feedIndexerMoving` attribute from DSManager to determine if the feed indexer is moving.
+- Upgraded ska-mid-dish-ds-manager chart to v9.4.1
+
+  - FeedIndexerMoving attribute added to DSManager component manager to reflect the state of the feed indexer.
+
 Version 12.0.0
 **************
 - Fixed bug that raised exception on setting ignoreSpf and ignoreSpfrx which prevented persistence in tango database.

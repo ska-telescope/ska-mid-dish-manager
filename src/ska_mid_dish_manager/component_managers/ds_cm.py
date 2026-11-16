@@ -36,6 +36,7 @@ class DSComponentManager(TangoDeviceComponentManager):
             "healthInfo",
             "pointingState",
             "indexerPosition",
+            "feedIndexerMoving",
             "desiredPointingAz",
             "desiredPointingEl",
             "achievedPointing",
