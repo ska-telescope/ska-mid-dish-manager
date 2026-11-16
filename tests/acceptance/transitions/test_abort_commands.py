@@ -38,10 +38,11 @@ def test_abort_commands(
         "lrcQueue": cmds_in_queue_store,
         "Status": status_event_store,
     }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping, reset_queue=False)
 
     # Attempt to configure which will take SPF to Operate mode,
     # this wont happen because skipAttributeUpdates was set to True
+    assert spf_device_proxy.skipAttributeUpdates
     dish_manager_proxy.ConfigureBand1(True)
 
     # Check that Dish Manager is waiting to transition
