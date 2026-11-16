@@ -313,6 +313,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
                 configuretargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
+                feedindexermoving=False,
                 powerstate=DSPowerState.UNKNOWN,
                 desiredpointingaz=[0.0, 0.0],
                 desiredpointingel=[0.0, 0.0],
@@ -1060,12 +1061,16 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._build_state_callback(device, kwargs["buildstate"])
 
         current_dish_mode = self.component_state["dishmode"]
-        # Update dishMode if there are operatingmode, indexerposition or adminmode changes
-        if (
-            "operatingmode" in kwargs
-            or "indexerposition" in kwargs
-            or "adminmode" in kwargs
-            or "powerstate" in kwargs
+        # Update dishMode if there are subcomponent driving changes
+        if any(
+            k in kwargs
+            for k in (
+                "operatingmode",
+                "feedindexermoving",
+                "indexerposition",
+                "adminmode",
+                "powerstate",
+            )
         ):
             # Do not compute dish mode if the dish is in MAINTENANCE mode
             if current_dish_mode != DishMode.MAINTENANCE:
@@ -1202,14 +1207,15 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             self._update_component_state(capturing=data_fiber_check)
 
         # CapabilityStates
-        # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
-        if (
-            "indexerposition" in kwargs
-            or "operatingmode" in kwargs
-            # Added in `powerstate` and `adminmode` so that if the dishmode changes earlier then
-            # the capability states are recalculated as well
-            or "powerstate" in kwargs
-            or "adminmode" in kwargs
+        if any(
+            k in kwargs
+            for k in (
+                "operatingmode",
+                "feedindexermoving",
+                "indexerposition",
+                "adminmode",
+                "powerstate",
+            )
         ):
             cap_state_updates = {}
             for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:

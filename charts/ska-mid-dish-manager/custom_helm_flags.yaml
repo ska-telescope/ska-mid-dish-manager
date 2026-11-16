@@ -9,6 +9,12 @@ ska-tango-base:
 
 ska-mid-dish-ds-manager:
   enabled: true
+  dishstructuremanager:
+    image:
+      registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-ds-manager
+      image: ska-mid-dish-ds-manager
+      tag: 9.4.0-dev.ca8faeb22
+      pullPolicy: IfNotPresent
 
 ska-mid-dish-simulators:
   enabled: true

@@ -44,7 +44,8 @@ def state_transition():
         ),
         (
             dict(
-                indexerposition=IndexerPosition.MOVING,
+                feedIndexerMoving=True,
+                indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.LOW_POWER,
                 operatingmode=DSOperatingMode.STANDBY,
             ),
@@ -61,7 +62,8 @@ def state_transition():
         (
             dict(
                 operatingmode=DSOperatingMode.STANDBY,
-                indexerposition=IndexerPosition.MOVING,
+                feedIndexerMoving=True,
+                indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
@@ -152,7 +154,8 @@ def test_compute_dish_mode(
         (
             dict(
                 operatingmode=DSOperatingMode.STANDBY,
-                indexerposition=IndexerPosition.MOVING,
+                feedIndexerMoving=True,
+                indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.LOW_POWER,
             ),
             None,
@@ -242,7 +245,8 @@ def test_compute_dish_mode_ignoring_spf(
         (
             dict(
                 operatingmode=DSOperatingMode.STANDBY,
-                indexerposition=IndexerPosition.MOVING,
+                feedIndexerMoving=True,
+                indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.LOW_POWER,
             ),
             dict(operatingmode=SPFOperatingMode.OPERATE),
@@ -322,7 +326,8 @@ def test_compute_dish_mode_ignoring_spfrx(
         (
             dict(
                 operatingmode=DSOperatingMode.STANDBY,
-                indexerposition=IndexerPosition.MOVING,
+                feedIndexerMoving=True,
+                indexerposition=IndexerPosition.UNKNOWN,
                 powerstate=DSPowerState.LOW_POWER,
             ),
             None,
@@ -1024,28 +1029,36 @@ def test_capability_state_rules_degraded(
     ),
     [
         (
-            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=None, feedIndexerMoving=True, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(dishmode=DishMode.STOW),
             dict(b1capabilitystate=SPFRxCapabilityStates.OPERATE),
             dict(b1capabilitystate=SPFCapabilityStates.OPERATE_FULL),
             CapabilityStates.OPERATE_FULL,
         ),
         (
-            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=None, feedIndexerMoving=True, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(dishmode=DishMode.STOW),
             None,
             dict(b1capabilitystate=SPFCapabilityStates.OPERATE_FULL),
             CapabilityStates.OPERATE_FULL,
         ),
         (
-            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=None, feedIndexerMoving=True, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(dishmode=DishMode.STOW),
             dict(b1capabilitystate=SPFRxCapabilityStates.OPERATE),
             None,
             CapabilityStates.OPERATE_FULL,
         ),
         (
-            dict(operatingmode=None, indexerposition=IndexerPosition.MOVING),
+            dict(
+                operatingmode=None, feedIndexerMoving=True, indexerposition=IndexerPosition.UNKNOWN
+            ),
             dict(dishmode=DishMode.STOW),
             None,
             None,
