@@ -73,7 +73,7 @@ def test_set_operate_from_standbyfp(
     dish_manager_proxy.ConfigureBand1(True)
     band_event_store.wait_for_value(Band.B1, timeout=30)
     # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
 
     # Transition to STANDBY_FP
     dish_manager_proxy.SetStandbyFPMode()

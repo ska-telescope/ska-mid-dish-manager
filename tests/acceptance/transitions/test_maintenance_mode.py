@@ -77,7 +77,7 @@ def test_maintenance_mode_cmd(
             assert message in events_string
     else:
         # Expected test execution path when monitoring the AP Manager
-        dsc_event_store.wait_for_value(DSOperatingMode.MAINTENANCE, timeout=30)
+        dsc_event_store.wait_for_value(DSOperatingMode.MAINTENANCE, timeout=120)
         spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
         spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
         mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)

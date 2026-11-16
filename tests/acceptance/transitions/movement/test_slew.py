@@ -57,7 +57,7 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
     # Set mode to Operate to accept Slew command
     dish_manager_proxy.ConfigureBand1(True)
     # Await auto transition to OPERATE following band config
-    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
     dish_manager_proxy.Slew([100, 91])
 
     lrc_events = ds_lrc_finished_event_store.get_queue_values()

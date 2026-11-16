@@ -62,8 +62,8 @@ class APComponentManager(TangoDeviceComponentManager):
             "actStaticOffsetValueXel",
             "actStaticOffsetValueEl",
             "dscpowerlimitkw",
-            "trackTableCurrentIndex",
-            "trackTableEndIndex",
+            # "trackTableCurrentIndex", - Currently noop on AP Manager
+            # "trackTableEndIndex", - Currently noop on AP Manager
             "dscCtrlState",
             "connectionState",
             "dscErrorStatus",
@@ -93,8 +93,8 @@ class APComponentManager(TangoDeviceComponentManager):
             "achievedTargetLock",
             "dscCmdAuth",
             "dscpowerlimitkw",
-            "trackTableCurrentIndex",
-            "trackTableEndIndex",
+            # "trackTableCurrentIndex", - Currently noop on AP Manager
+            # "trackTableEndIndex", - Currently noop on AP Manager
             "dscCtrlState",
             "connectionState",
             "dscErrorStatus",
