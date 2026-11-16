@@ -10,6 +10,15 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - DishManager automatically sets the controlMode to MONITOR_AND_CONTROL for sub-devices with a controlMode attribute.
 - Upgraded ska-mid-dish-b5dc-proxy chart to v1.0.1
 
+    - Configured alarm events.
+    - Upgraded ska-tango-util to v1.3.1
+    - Upgraded ska-tango-base to v1.3.1
+    - Upgraded ska-tango-dsconfig to v1.9.2
+    - Updated Dockerfile to use new base images
+    - Added retry on B5dcDeviceFrequencyException and B5dcDeviceAttenuationException for SetFrequency and SetAttenuation commands.
+    - Set controlMode attribute to MONITOR_AND_CONTROL on deployment.
+    - Upgraded base classes to v1.7.0
+    - Uses the new future device interfaces and handles monitoring and control from ControlMode attribute.
     - communicationState is renamed to connectionState
 
 - Updated state transition rules to use `feedIndexerMoving` attribute from DSManager to determine if the feed indexer is moving.
