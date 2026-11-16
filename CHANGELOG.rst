@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated ConfigureBand command to address SKB-1594
 - DishManager automatically sets the controlMode to MONITOR_AND_CONTROL for sub-devices with a controlMode attribute.
 - Upgraded ska-mid-dish-b5dc-proxy chart to v1.0.1
 

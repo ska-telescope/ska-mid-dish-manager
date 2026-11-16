@@ -45,7 +45,7 @@ def test_abort_commands(
     dish_manager_proxy.ConfigureBand1(True)
 
     # Check that Dish Manager is waiting to transition
-    status_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
+    status_event_store.wait_for_progress_update("Awaiting SPF operatingmode change to OPERATE")
     # Check that the Dish Manager did not transition
     dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
     assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
