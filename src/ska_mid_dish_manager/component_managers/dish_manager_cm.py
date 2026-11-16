@@ -37,6 +37,7 @@ from ska_mid_dish_manager.models.command_actions import (
     ConfigureBand6Action,
     ConfigureBandActionSequence,
     InterlockAckAction,
+    MaintenanceModeCallback,
     SetMaintenanceModeAction,
     SetOperateModeAction,
     SetStandbyFPModeAction,
@@ -713,6 +714,7 @@ class DishManagerComponentManager(BaseComponentManager):
         self.logger.info(f"{trigger_source} transitioning dish to STOW.", extra=OPERATOR_TAG)
 
         while not self._stop_event.is_set():
+            # TODO need to abort here
             result_code, _ = self.set_stow_mode()
 
             if result_code == ResultCode.OK:
@@ -1287,26 +1289,6 @@ class DishManagerComponentManager(BaseComponentManager):
         if "connectionstate" in kwargs:
             self._update_dish_health_state_and_info()
 
-    def stow_to_maintenance_transition_callback(self) -> None:
-        """Handle the transition from STOW to MAINTENANCE mode.
-
-        This will set the MaintenanceModeActive property to true and
-        set the dish mode to MAINTENANCE if the dish is in STOW mode.
-        If the dish is not in STOW mode, it will log a warning.
-        """
-        if self.component_state["dishmode"] == DishMode.STOW:
-            self.logger.debug("Releasing authority from DS.")
-            ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
-            ds_cm.execute_command("ReleaseAuth", None)
-            self.logger.debug("Transitioning from STOW to MAINTENANCE mode.")
-            self._set_maintenance_mode_active()
-            self._update_component_state(dishmode=DishMode.MAINTENANCE)
-        else:
-            self.logger.error(
-                "Cannot transition to MAINTENANCE mode from %s mode.",
-                self.component_state["dishmode"],
-            )
-
     # ----------------------------------------
     # Command object/ attribute write handlers
     # ----------------------------------------
@@ -1559,8 +1541,15 @@ class DishManagerComponentManager(BaseComponentManager):
         task_abort_event: threading.Event,
     ) -> Tuple[ResultCode, str]:
         """Transition the dish to MAINTENANCE mode."""
-        command_action = SetMaintenanceModeAction(
+        action_on_success = MaintenanceModeCallback(
             self.logger, self, self.get_action_timeout(), progress_callback=progress_callback
+        )
+        command_action = SetMaintenanceModeAction(
+            self.logger,
+            self,
+            self.get_action_timeout(),
+            action_on_success=action_on_success,
+            progress_callback=progress_callback,
         )
         result_code, msg = command_action.execute(task_abort_event)
         return result_code, msg
@@ -1743,7 +1732,10 @@ class DishManagerComponentManager(BaseComponentManager):
         self.logger.info(
             "Updating dish manager dishmode to %s.", new_dish_mode, extra=OPERATOR_TAG
         )
-        self._update_component_state(dishmode=new_dish_mode)
+        # self._update_component_state(dishmode=new_dish_mode)
+        # TODO: send this update to the device interface without it blocking the command
+        # For now, we are directly updating the component state dictionary.
+        self._component_state["dishmode"] = new_dish_mode
 
     @last_command_failure_decorator
     def set_stow_mode(self) -> Tuple[ResultCode, str]:
