@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated ConfigureBand command to address SKB-1594 & SKB-1593
 - Updated state transition rules to use `feedIndexerMoving` attribute from DSManager to determine if the feed indexer is moving.
 - Upgraded ska-mid-dish-ds-manager chart to v9.4.1
 
