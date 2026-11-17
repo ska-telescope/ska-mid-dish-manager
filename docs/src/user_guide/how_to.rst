@@ -109,6 +109,33 @@ which differ from those of the SKA MID dish tabulated below;
    * - Minimum Azimuth 
      - -270.0
 
+2: **ConfigureBand command mapping differences**
+
+Not all ConfigureBandX() Tango command calls are available on the APManager Tango device. 
+
+The ConfigureBand calls to APManager band mappings are given below;
+
+.. list-table:: ConfigureBandX command mappings for APManager monitoring
+   :widths: 50 50
+   :header-rows: 1
+
+   * - Tango command name
+     - APManager requested band or side effect
+   * - ConfigureBand1()
+     - u-band
+   * - ConfigureBand2()
+     - l-band
+   * - ConfigureBand3()
+     - s-band
+   * - ConfigureBand4()
+     - Unavailable, command will fail immediately
+   * - ConfigureBand5a()
+     - Unavailable, command will fail immediately
+   * - ConfigureBand5b()
+     - Unavailable, command will fail immediately
+   * - ConfigureBand6()
+     - x-band
+
 
 Deploy DishManager to monitor an SKA MID Dish with Simulators
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
