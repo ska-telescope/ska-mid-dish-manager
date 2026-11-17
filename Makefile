@@ -96,6 +96,7 @@ K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	$(CUSTOM_VALUES) \
 	$(CUSTOM_DSMANAGER_VALUES) \
+	$(CUSTOM_SIMULATORS_VALUES) \
 	--values $(VALUES_FILE)
 
 -include .make/oci.mk
