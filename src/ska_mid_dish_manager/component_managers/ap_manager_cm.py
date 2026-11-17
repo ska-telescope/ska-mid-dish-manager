@@ -2,9 +2,9 @@
 
 import logging
 from threading import Lock
-from typing import Any, Callable, Optional, override
+from typing import Any, Callable, Optional, Tuple, override
 
-from ska_control_model import CommunicationStatus, HealthState
+from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
@@ -169,3 +169,21 @@ class APComponentManager(TangoDeviceComponentManager):
                 )
 
         super().stop_communicating()
+
+    def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
+        """Unpack the AP Manager LRC reply to enable LRC action tracking."""
+        [[result_code], [msg]] = reply
+        if result_code in [ResultCode.FAILED, ResultCode.REJECTED]:
+            self.logger.error(
+                "[%s] on [%s] failed with message: %s",
+                command_name,
+                self._tango_device_fqdn,
+                msg,
+            )
+            status_map = {
+                ResultCode.FAILED: TaskStatus.FAILED,
+                ResultCode.REJECTED: TaskStatus.REJECTED,
+            }
+            return status_map[result_code], msg
+
+        return TaskStatus.IN_PROGRESS, msg
