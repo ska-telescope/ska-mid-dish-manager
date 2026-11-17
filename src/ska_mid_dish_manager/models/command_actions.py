@@ -295,9 +295,6 @@ class SetMaintenanceModeAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        # This is not a FannedOutTangoLongRunningCommand because DSManager bypasses the lrcQueue
-        # and does not return the command ID in its response.
-
         awaited_dish_mode_before_maint_completion = {}
 
         # The command fanout to DS on going to DishMode MAINTENANCE requires fanning out;
@@ -305,6 +302,7 @@ class SetMaintenanceModeAction(Action):
         # - Command APMaintenance() if the MeerKAT AP is being controlled
         ds_sub_component_manager = self.dish_manager_cm.sub_component_managers["DS"]
         if isinstance(ds_sub_component_manager, DSComponentManager):
+            # DS Manager bypasses the LRC queue and does not return a command ID.
             ds_command = FannedOutTangoCommand(
                 logger=self.logger,
                 device="DS",
@@ -315,7 +313,7 @@ class SetMaintenanceModeAction(Action):
             )
             awaited_dish_mode_before_maint_completion = {"dishmode": DishMode.STOW}
         else:
-            ds_command = FannedOutTangoCommand(
+            ds_command = FannedOutTangoLongRunningCommand(
                 logger=self.logger,
                 device="DS",
                 command_name="APMaintenance",
@@ -324,6 +322,7 @@ class SetMaintenanceModeAction(Action):
                     "operatingmode": DSOperatingMode.MAINTENANCE,
                 },
                 progress_callback=self._progress_callback,
+                timeout_s=120.0,
             )
             # Dish Mode calculation will go to UNKNOWN while DSOperatingMode is MAINTENANCE
             # therefore we dont await a particular dish Mode

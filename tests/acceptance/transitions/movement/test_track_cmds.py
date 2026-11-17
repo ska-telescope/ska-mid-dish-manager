@@ -231,8 +231,9 @@ def test_append_dvs_case(
     [[_], [unique_id]] = dish_manager_proxy.Track()
 
     result_event_store.wait_for_command_id(unique_id, timeout=10)
-    # AP Manager doesnt report an interim SLEW
-    # pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
+    # TODO AP Manager doesnt report an interim SLEW, but the test passes (ie:
+    # the expected final position is reached if SLEW skipped), investigate why
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
     number_of_1_second_appends = 20

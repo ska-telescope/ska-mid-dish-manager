@@ -1,5 +1,6 @@
 """Unit tests verify SetMaintenanceMode behaviour."""
 
+import json
 from unittest.mock import call
 
 import pytest
@@ -84,6 +85,38 @@ def test_happy_case_with_ap_manager(dish_manager_resources_with_ap_manager, even
     )
 
     ds_cm.execute_command.assert_called_once_with("APMaintenance", None)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_ap_maintenance_lrc_failure_finishes_action(
+    dish_manager_resources_with_ap_manager, event_store_class
+):
+    """A failed APMaintenance LRC should fail SetMaintenanceMode without waiting for timeout."""
+    device_proxy, dish_manager_cm = dish_manager_resources_with_ap_manager
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    command_id = "ap_maintenance_command_id"
+    failure_message = "AP maintenance failed"
+    ds_cm.execute_command.return_value = (TaskStatus.IN_PROGRESS, command_id)
+    ds_cm.read_attribute_value.return_value = (
+        json.dumps(
+            {
+                "uid": command_id,
+                "name": "APMaintenance",
+                "status": TaskStatus.COMPLETED.name,
+                "result": [3, failure_message],
+            }
+        ),
+    )
+
+    result_event_store = event_store_class()
+    subscriptions = setup_subscriptions(device_proxy, {"lrcFinished": result_event_store})
+    [[_], [unique_id]] = device_proxy.SetMaintenanceMode()
+
+    expected_result = json.dumps([3, failure_message])
+    result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
+
+    remove_subscriptions(subscriptions)
 
 
 @pytest.mark.unit
