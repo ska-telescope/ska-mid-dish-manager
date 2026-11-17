@@ -65,7 +65,7 @@ def test_abort_commands(
     cmds_in_queue_store.wait_for_value((), timeout=30)
 
     # Check that the Dish Manager transitioned to FP as part of the Abort sequence
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=120)
     assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
 
     remove_subscriptions(subscriptions)

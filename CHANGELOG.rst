@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated dcoker-compose to include Meerkat weather related code.
 
 Version 12.0.0
 **************
