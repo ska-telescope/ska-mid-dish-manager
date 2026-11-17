@@ -337,6 +337,7 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 desiredpointingaz=[0.0, 0.0],
                 desiredpointingel=[0.0, 0.0],
                 achievedpointing=[0.0, 0.0, 0.0],
+                feedindexermoving=False,
                 band0pointingmodelparams=[],
                 band1pointingmodelparams=[],
                 band2pointingmodelparams=[],
