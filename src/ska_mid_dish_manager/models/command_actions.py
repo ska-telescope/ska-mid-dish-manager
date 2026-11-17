@@ -703,6 +703,7 @@ class ConfigureBandAction(Action):
                 device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
                 command_argument=self.indexer_enum,
                 awaited_component_state={"indexerposition": self.indexer_enum},
+                timeout_s=self.timeout_s,
                 progress_callback=self._progress_callback,
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)
@@ -874,6 +875,7 @@ class ConfigureBand6Action(Action):
                 device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
                 command_argument=7,
                 awaited_component_state={"indexerposition": IndexerPosition.B6},
+                timeout_s=self.timeout_s,
                 progress_callback=self._progress_callback,
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)
