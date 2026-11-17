@@ -78,15 +78,12 @@ trigger-dish-lmc-integration:
 
   trigger:
     project: 'ska-telescope/mid-dish/ska-dish-lmc'
-    branch: 'kar-2531-set-b5dc-proxy-version'
+    branch: 'master'
     strategy: mirror
 
   rules:
-    # Test this mechanism only on our feature branch.
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == "kar-2531-enable-multi-project-trigger-pipeline"'
-      when: on_success
-
-    - when: never
+    - when: manual
+      allow_failure: true
 
 k8s-test-runner-incl-b5dc:
   extends: k8s-test-runner
@@ -123,7 +120,7 @@ k8s-test-runner-movement:
     on_stop: stop-k8s-test-runner-movement
     auto_stop_in: 1 minute
 
-# runs multiple acceptance tests in parallel with minimal deployment
+# Runs multiple acceptance tests in parallel with minimal deployment
 k8s-test-runner-parallel:
   extends: k8s-test-runner
   parallel: 3

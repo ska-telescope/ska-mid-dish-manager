@@ -83,10 +83,20 @@ CUSTOM_DSMANAGER_VALUES = \
     --set ska-mid-dish-ds-manager.dishstructuremanager.image.registry=$(CI_REGISTRY)/ska-telescope/mid-dish/ska-mid-dish-ds-manager
 endif
 
+CUSTOM_SIMULATORS_VALUES =
+
+ifneq ($(strip $(CUSTOM_SIMULATORS_IMAGE_TAG)),)
+# Example OCI registry image: "registry.gitlab.com/ska-telescope/mid-dish/ska-mid-dish-simulators/ska-mid-dish-simulators:a1b2c3d4"
+CUSTOM_SIMULATORS_VALUES = \
+    --set ska-mid-dish-simulators.dishsimulators.image.tag=$(CUSTOM_SIMULATORS_IMAGE_TAG) \
+    --set ska-mid-dish-simulators.dishsimulators.image.registry=$(CI_REGISTRY)/ska-telescope/mid-dish/ska-mid-dish-simulators
+endif
+
 K8S_CHART_PARAMS = --set global.tango_host=$(TANGO_HOST) \
 	--set global.cluster_domain=$(CLUSTER_DOMAIN) \
 	$(CUSTOM_VALUES) \
 	$(CUSTOM_DSMANAGER_VALUES) \
+	$(CUSTOM_SIMULATORS_VALUES) \
 	--values $(VALUES_FILE)
 
 -include .make/oci.mk
