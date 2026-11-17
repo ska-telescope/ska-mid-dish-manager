@@ -73,6 +73,8 @@ def test_abort_commands(
         result_event_store.wait_for_finished_command_result(
             unique_id, '[0, "Abort sequence completed"]', timeout=30
         )
+
+        # Checking that DS modes are correct after calling onfigureBand1
         assert ds_device_proxy.operatingMode == DSOperatingMode.STANDBY
         power_state_event_store.wait_for_value(DSPowerState.FULL_POWER, timeout=30)
 
@@ -84,6 +86,10 @@ def test_abort_commands(
         # Check that the Dish Manager transitioned to FP as part of the Abort sequence
         dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
         assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+
+        # Double check that DS values are still  Standby and FullPower
+        assert ds_device_proxy.operatingMode == DSOperatingMode.STANDBY
+        assert ds_device_proxy.powerState == DSPowerState.FULL_POWER
     finally:
         remove_subscriptions(subscriptions)
 
