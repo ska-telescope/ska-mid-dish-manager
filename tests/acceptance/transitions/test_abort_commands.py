@@ -12,6 +12,8 @@ from ska_mid_dish_manager.models.constants import (
 from ska_mid_dish_manager.models.dish_enums import (
     Band,
     DishMode,
+    DSOperatingMode,
+    DSPowerState,
     PointingState,
     TrackTableLoadMode,
 )
@@ -24,6 +26,7 @@ def test_abort_commands(
     event_store_class,
     dish_manager_proxy,
     spf_device_proxy,
+    ds_device_proxy,
     toggle_skip_attributes,
 ):
     """Test Abort aborts the executing long running command."""
@@ -31,6 +34,7 @@ def test_abort_commands(
     status_event_store = event_store_class()
     result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
+    power_state_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": dish_mode_event_store,
@@ -39,6 +43,14 @@ def test_abort_commands(
         "Status": status_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    ds_subscriptions = setup_subscriptions(
+        ds_device_proxy,
+        {
+            "powerState": power_state_event_store,
+        },
+    )
+    subscriptions.update(ds_subscriptions)
 
     # Attempt to configure which will take SPF to Operate mode,
     # this wont happen because skipAttributeUpdates was set to True
@@ -53,22 +65,27 @@ def test_abort_commands(
     # enable spf to send attribute updates
     spf_device_proxy.skipAttributeUpdates = False
 
-    # Abort the LRC
-    [[_], [unique_id]] = dish_manager_proxy.Abort()
-    # Confirm Dish Manager aborted the request on the Configure action
-    result_event_store.wait_for_finished_command_result(
-        unique_id, '[0, "Abort sequence completed"]', timeout=30
-    )
-    status_event_store.wait_for_progress_update("SetOperateMode aborted", timeout=30)
+    try:
+        # Abort the LRC
+        [[_], [unique_id]] = dish_manager_proxy.Abort()
 
-    # Confirm that abort finished and the queue is cleared
-    cmds_in_queue_store.wait_for_value((), timeout=30)
+        # Confirm Dish Manager aborted the request on the Configure action
+        result_event_store.wait_for_finished_command_result(
+            unique_id, '[0, "Abort sequence completed"]', timeout=30
+        )
+        assert ds_device_proxy.operatingMode == DSOperatingMode.STANDBY
+        power_state_event_store.wait_for_value(DSPowerState.FULL_POWER, timeout=30)
 
-    # Check that the Dish Manager transitioned to FP as part of the Abort sequence
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=120)
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+        status_event_store.wait_for_progress_update("SetOperateMode aborted", timeout=30)
 
-    remove_subscriptions(subscriptions)
+        # Confirm that abort finished and the queue is cleared
+        cmds_in_queue_store.wait_for_value((), timeout=30)
+
+        # Check that the Dish Manager transitioned to FP as part of the Abort sequence
+        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+        assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    finally:
+        remove_subscriptions(subscriptions)
 
 
 @pytest.fixture
