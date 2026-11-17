@@ -82,12 +82,8 @@ trigger-dish-lmc-integration:
     strategy: mirror
 
   rules:
-
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: on_success
+    - when: manual
       allow_failure: true
-
-    - when: never
 
 k8s-test-runner-incl-b5dc:
   extends: k8s-test-runner
