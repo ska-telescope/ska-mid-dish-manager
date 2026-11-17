@@ -80,6 +80,7 @@ class FannedOutCommand:
         self.timeout_s = timeout_s
         self.start_time: float = 0.0
         self.executed_cmd_message = None
+        self.executed_cmd_result_code: Optional[ResultCode] = None
         self._status = FannedOutCommandStatus.PENDING
         self._task_finish_reported = False
         self._progress_callback = progress_callback
@@ -522,6 +523,47 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
                     self.executed_cmd_response = lrc_result
 
                     if lrc_status == TaskStatus.COMPLETED.name:
+                        # Respond to/Act on an unhealthy result code immediately if one was
+                        # receieved
+                        if isinstance(lrc_result, (list, tuple)):
+                            if len(lrc_result) < 2:
+                                self.logger.error(
+                                    "Invalid result in lrcFinished for %s.%s: %r",
+                                    self.device,
+                                    self.command_name,
+                                    lrc_result,
+                                )
+                                self._set_status(FannedOutCommandStatus.FAILED)
+                                return
+
+                            try:
+                                result_code = ResultCode(int(lrc_result[0]))
+                            except (TypeError, ValueError):
+                                self.logger.error(
+                                    "Invalid result code in lrcFinished for %s.%s: %r",
+                                    self.device,
+                                    self.command_name,
+                                    lrc_result[0],
+                                )
+                                self._set_status(FannedOutCommandStatus.FAILED)
+                                return
+
+                            self.executed_cmd_result_code = result_code
+                            self.executed_cmd_response = str(lrc_result[1])
+                            if result_code != ResultCode.OK:
+                                status_by_result_code = {
+                                    ResultCode.FAILED: FannedOutCommandStatus.FAILED,
+                                    ResultCode.REJECTED: FannedOutCommandStatus.REJECTED,
+                                    ResultCode.NOT_ALLOWED: FannedOutCommandStatus.REJECTED,
+                                    ResultCode.ABORTED: FannedOutCommandStatus.ABORTED,
+                                }
+                                self._set_status(
+                                    status_by_result_code.get(
+                                        result_code, FannedOutCommandStatus.FAILED
+                                    )
+                                )
+                                return
+
                         # Don't mark it as completed yet, still need to check component state
                         self.is_lrc_finished = True
                     elif lrc_status == TaskStatus.ABORTED.name:

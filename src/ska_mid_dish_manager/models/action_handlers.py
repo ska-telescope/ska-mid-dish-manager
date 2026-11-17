@@ -207,6 +207,44 @@ class ActionHandler:
             f"{cmd.device}.{cmd.command_name}": cmd.status.name for cmd in self.fanned_out_commands
         }
 
+    def _trigger_command_failure(
+        self, task_callback, task_abort_event, cmd: FannedOutCommand, message: str
+    ) -> None:
+        """Fail the action using the failed outcome reported by a fanned-out command."""
+        result_message: Optional[str] = None
+        if cmd.status == FannedOutCommandStatus.ABORTED:
+            task_status = TaskStatus.ABORTED
+            result_code = ResultCode.ABORTED
+        else:
+            # The action LRC is already IN_PROGRESS, so finish it as FAILED rather than
+            # attempting the invalid IN_PROGRESS -> REJECTED transition.
+            task_status = TaskStatus.FAILED
+            result_code = cmd.executed_cmd_result_code
+            result_message = (
+                str(cmd.executed_cmd_response)
+                if result_code is not None and result_code != ResultCode.OK
+                else None
+            )
+            if result_code not in (
+                ResultCode.FAILED,
+                ResultCode.REJECTED,
+                ResultCode.NOT_ALLOWED,
+            ):
+                result_code = (
+                    ResultCode.REJECTED
+                    if cmd.status == FannedOutCommandStatus.REJECTED
+                    else ResultCode.FAILED
+                )
+
+        self._trigger_failure(
+            task_callback,
+            task_abort_event,
+            message,
+            task_status=task_status,
+            result_code=result_code,
+            result_message=result_message,
+        )
+
     def _trigger_failure(
         self,
         task_callback,
@@ -214,6 +252,7 @@ class ActionHandler:
         message: str,
         task_status=TaskStatus.FAILED,
         result_code=ResultCode.FAILED,
+        result_message: Optional[str] = None,
     ) -> None:
         """Handle failure of the action and optionally trigger the on-failure action.
 
@@ -227,6 +266,8 @@ class ActionHandler:
         :type task_status: TaskStatus
         :param result_code: Result code to use for the task_callback (default: ResultCode.FAILED).
         :type result_code: ResultCode
+        :param result_message: Optional result detail; defaults to the action failure message.
+        :type result_message: Optional[str]
         """
         self.logger.error(message)
         report_task_progress(message, self.progress_callback)
@@ -240,7 +281,7 @@ class ActionHandler:
             update_task_status(
                 task_callback,
                 status=task_status,
-                result=(result_code, f"{self.action_name} failed"),
+                result=(result_code, result_message or f"{self.action_name} failed"),
             )
 
     def _trigger_success(
@@ -303,9 +344,10 @@ class ActionHandler:
         for cmd in self.fanned_out_commands:
             cmd.execute()
             if cmd.failed:
-                self._trigger_failure(
+                self._trigger_command_failure(
                     task_callback,
                     task_abort_event,
+                    cmd,
                     f"{self.action_name} failed {cmd.executed_cmd_response}",
                 )
                 return
@@ -343,11 +385,16 @@ class ActionHandler:
 
             # Handle any failed fanned out command
             if any(cmd.failed for cmd in self.fanned_out_commands):
-                message = (
-                    f"Action '{self.action_name}' failed. "
-                    f"Fanned out commands: {self._command_statuses()}"
+                failed_command = next(cmd for cmd in self.fanned_out_commands if cmd.failed)
+                self._trigger_command_failure(
+                    task_callback,
+                    task_abort_event,
+                    failed_command,
+                    (
+                        f"Action '{self.action_name}' failed. "
+                        f"Fanned out commands: {self._command_statuses()}"
+                    ),
                 )
-                self._trigger_failure(task_callback, task_abort_event, message)
                 return
 
             # Check if all commands have succeeded
@@ -427,9 +474,10 @@ class SequentialActionHandler(ActionHandler):
                 continue
 
             if cmd.failed:
-                self._trigger_failure(
+                self._trigger_command_failure(
                     task_callback,
                     task_abort_event,
+                    cmd,
                     f"{self.action_name} failed {cmd.executed_cmd_response}",
                 )
                 return
@@ -472,11 +520,15 @@ class SequentialActionHandler(ActionHandler):
                 cmd.report_progress(task_abort_event)
 
             if cmd.failed:
-                message = (
-                    f"Action '{self.action_name}' failed. "
-                    f"{cmd.command_name} on device {cmd.device} failed."
+                self._trigger_command_failure(
+                    task_callback,
+                    task_abort_event,
+                    cmd,
+                    (
+                        f"Action '{self.action_name}' failed. "
+                        f"{cmd.command_name} on device {cmd.device} failed."
+                    ),
                 )
-                self._trigger_failure(task_callback, task_abort_event, message)
                 return
 
             if cmd.successful:
