@@ -13,6 +13,7 @@ stages:
   - publish
   - pages
   - scan
+  - cascade
 
 # Standardised included jobs
 
@@ -70,7 +71,7 @@ k8s-test-runner:
 
 # Trigger Dish LMC integration tests using the Dish Manager.
 trigger-dish-lmc-integration:
-  stage: publish
+  stage: cascade
 
   variables:
     CUSTOM_DISHMANAGER_VERSION_TAG: "$CI_COMMIT_SHORT_SHA"
