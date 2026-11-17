@@ -116,8 +116,16 @@ def test_configure_band_b(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_fqdn,
 ):
     """Test ConfigureBand."""
+    if "meerkat-ap-manager" in ds_device_fqdn and band_request in [
+        "ConfigureBand4",
+        "ConfigureBand5a",
+        "ConfigureBand5b",
+    ]:
+        pytest.skip(reason=f"Skipping {band_request} test for unsupported command on APManager.")
+
     # Just skip the band we already are in
     if expected_band == dish_manager_proxy.configuredBand:
         pytest.skip(f"Already in band {expected_band}")  # ty: ignore[too-many-positional-arguments]
