@@ -23,11 +23,6 @@ STOW_ELEVATION_DEGREES = 90.2
 STOW_ELEVATION_DEGREES_ACU_SIMULATOR = 90.0
 ELEVATION_SPEED_DEGREES_PER_SECOND = 1.0
 DEFAULT_ACTION_TIMEOUT_S = 120
-# SPFRx keeps reporting OPERATE for a short while after accepting a band configuration, only
-# moving to CONFIGURE once it starts configuring. Its state is not trusted to complete the
-# command until this has elapsed, otherwise the command completes against the state SPFRx was
-# in before it started configuring.
-SPFRX_CONFIGURE_COMPLETION_DELAY_S = 12.0
 # Name of the environment variable holding the URL of the TZ data file that is
 # downloaded and forwarded to SPFRx by the UpdateTZData command.
 TZ_DATA_URL_ENV_VAR = "TZ_DATA_URL"
@@ -49,3 +44,8 @@ AP_MANAGER_TRL_FAMILY_NAME = "meerkat-ap-manager"
 
 
 OPERATOR_TAG = {"user": "operator"}
+
+# SPFRx ConfigureBand timeouts
+SPFRX_CONFIG_WAIT_TIME = 12
+SPFRX_OPERATE_WAIT_TIME = 12
+SPFRX_BAND_WAIT_TIME = 12
