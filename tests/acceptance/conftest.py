@@ -297,12 +297,6 @@ def reset_dish_to_standby(
         setup_subscriptions(spf_device_proxy, {"operatingMode": spf_op_mode_events})
     )
 
-    subscriptions.update(
-        setup_subscriptions(
-            spf_device_proxy,
-            {"operatingMode": spf_op_mode_events},
-        )
-    )
     subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
 
     # reset the simulated devices
