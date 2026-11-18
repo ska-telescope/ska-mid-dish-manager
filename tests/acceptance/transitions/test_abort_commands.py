@@ -38,8 +38,11 @@ def test_abort_commands(
         "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+    dish_manager_proxy.SetStandbyFPMode()
+    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
 
     dish_manager_proxy.ConfigureBand1(True)
+
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     # Confirm Dish Manager aborted the request on the Configure action
     result_event_store.wait_for_finished_command_result(

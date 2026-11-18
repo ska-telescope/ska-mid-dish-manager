@@ -17,34 +17,6 @@ from ska_mid_dish_manager.models.dish_enums import (
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_standbylp_cmd_fails_from_standbylp_dish_mode(dish_manager_resources, event_store_class):
-    """Execute tests."""
-    device_proxy, _ = dish_manager_resources
-
-    dish_mode_event_store = event_store_class()
-
-    device_proxy.subscribe_event(
-        "dishMode",
-        tango.EventType.CHANGE_EVENT,
-        dish_mode_event_store,
-    )
-
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_LP)
-
-    error_msg = (
-        "CommandNotAllowedError: SetStandbyLPMode not allowed in STANDBY_LP dishMode. "
-        "Commands allowed from STANDBY_LP are: ['ConfigureBand', 'ConfigureBand1', "
-        "'ConfigureBand2', 'ConfigureBand3', 'ConfigureBand4', 'ConfigureBand5a', "
-        "'ConfigureBand5b', 'ConfigureBand6', 'SetStandbyFPMode', 'SetStowMode']"
-    )
-    with pytest.raises(tango.DevFailed) as exc_info:
-        device_proxy.SetStandbyLPMode()
-
-    assert error_msg in str(exc_info.value)
-
-
-@pytest.mark.unit
-@pytest.mark.forked
 def test_standbylp_cmd_succeeds_from_standbyfp_dish_mode(
     dish_manager_resources, event_store_class
 ):

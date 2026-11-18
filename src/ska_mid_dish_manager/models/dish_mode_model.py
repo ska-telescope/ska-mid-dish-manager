@@ -3,6 +3,9 @@
 It assesses the current state of the dish to decide whether a requested command is allowed.
 Mode transition commands are checked against the dish mode transition graph, while other
 commands (such as Track and Slew) have their own checks on the component state.
+
+A command whose target mode is the dish's current mode is also allowed, so repeating a
+command (for example SetStowMode while already in STOW) succeeds instead of being rejected.
 """
 
 from collections.abc import Callable
@@ -98,13 +101,20 @@ class DishModeModel:
     def _build_allowed_commands(dishmode_graph: nx.DiGraph) -> dict[str, frozenset[str]]:
         """Precompute the commands allowed from each dish mode.
 
+        A command is allowed in a mode if it leads out of that mode, or if it leads into
+        that mode (so the dish is already where the command would take it).
+
         :param dishmode_graph: The dish mode transition graph.
         :return: The set of allowed commands, keyed by dish mode name.
         """
         allowed_commands_by_mode: dict[str, frozenset[str]] = {}
         for mode in dishmode_graph.nodes:
+            edges = list(dishmode_graph.out_edges(mode, data=True))
+            if mode != "CONFIG":
+                edges += dishmode_graph.in_edges(mode, data=True)
+
             commands: set[str] = set()
-            for _, _, edge_data in dishmode_graph.out_edges(mode, data=True):
+            for _, _, edge_data in edges:
                 commands.update(edge_data.get("commands", ()))
             allowed_commands_by_mode[mode] = frozenset(commands)
         return allowed_commands_by_mode
@@ -139,9 +149,10 @@ class DishModeModel:
     ) -> bool:
         """Check whether a Tango command is allowed in the current state of the dish.
 
-        Mode transition commands are checked against the dish mode transition graph. Commands
-        with their own state checks (such as Track and Slew) need the component manager, since
-        they depend on more than the dish mode.
+        Mode transition commands are checked against the dish mode transition graph. A
+        command is also allowed when the dish is already in the mode it would lead to.
+        Commands with their own state checks (such as Track and Slew) depend on more than
+        the dish mode.
 
         :param cmd_name: The requested command.
         :param component_state: The current component state dictionary.
@@ -200,8 +211,9 @@ class DishModeModel:
             )
 
     def _is_set_operate_mode_allowed(self, component_state: Dict) -> None:
-        if component_state["dishmode"] != DishMode.STANDBY_FP:
+        # Allowed from STANDBY_FP, or in OPERATE, where the dish is already in the target mode
+        if component_state["dishmode"] not in (DishMode.STANDBY_FP, DishMode.OPERATE):
             raise CommandNotAllowedError(
                 "Set operate mode command rejected for current dishMode. "
-                "Set operate mode command is allowed for dishMode STANDBY_FP"
+                "Set operate mode command is allowed for dishMode STANDBY_FP or OPERATE"
             )
