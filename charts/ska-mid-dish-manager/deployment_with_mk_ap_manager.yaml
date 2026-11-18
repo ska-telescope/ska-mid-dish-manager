@@ -45,7 +45,7 @@ ska-mid-meerkat-ap-manager:
     image:
       registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
       image: ska-mid-meerkat-lmc
-      tag: 0.3.1-dev.c193c0bd8
+      tag: 0.3.1-dev.c7da0d6d3
       pullPolicy: IfNotPresent
 
     # Configure MK AP server instance to connect to
