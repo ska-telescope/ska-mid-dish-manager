@@ -18,14 +18,12 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import calculate_slew_target, remove_subscriptions, setup_subscriptions
 
 
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
     spf_device_proxy,
-    toggle_skip_attributes,
 ):
     """Test Abort aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
@@ -41,26 +39,13 @@ def test_abort_commands(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    # Attempt to configure which will take SPF to Operate mode,
-    # this wont happen because skipAttributeUpdates was set to True
     dish_manager_proxy.ConfigureBand1(True)
-
-    # Check that Dish Manager is waiting to transition
-    progress_event_store.wait_for_progress_update("Awaiting configuredband change to B1")
-    # Check that the Dish Manager did not transition
-    dish_mode_event_store.wait_for_value(DishMode.UNKNOWN, timeout=30)
-    assert dish_manager_proxy.dishMode == DishMode.UNKNOWN
-
-    # enable spf to send attribute updates
-    spf_device_proxy.skipAttributeUpdates = False
-
-    # Abort the LRC
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     # Confirm Dish Manager aborted the request on the Configure action
     result_event_store.wait_for_finished_command_result(
-        unique_id, '[0, "Abort sequence completed"]', timeout=30
+        unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
-    progress_event_store.wait_for_progress_update("SetOperateMode aborted", timeout=30)
+    progress_event_store.wait_for_progress_update("ConfigureBand1 aborted", timeout=30)
 
     # Confirm that abort finished and the queue is cleared
     cmds_in_queue_store.wait_for_value((), timeout=30)
@@ -72,7 +57,6 @@ def test_abort_commands(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.fixture
 def track_a_sample(
     event_store_class,
@@ -144,7 +128,6 @@ def track_a_sample(
     yield
 
 
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands_during_track(
     monitor_tango_servers,
@@ -165,7 +148,7 @@ def test_abort_commands_during_track(
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_finished_command_result(
-        unique_id, '[0, "Abort sequence completed"]', timeout=30
+        unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=10)
@@ -174,7 +157,6 @@ def test_abort_commands_during_track(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands_during_slew(
     monitor_tango_servers,
@@ -197,6 +179,7 @@ def test_abort_commands_during_slew(
 
     dish_manager_proxy.ConfigureBand1(True)
     configured_band_event_store.wait_for_value(Band.B1, timeout=30)
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
     # Slew the dish
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
@@ -207,7 +190,7 @@ def test_abort_commands_during_slew(
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_finished_command_result(
-        unique_id, '[0, "Abort sequence completed"]', timeout=30
+        unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
@@ -221,7 +204,6 @@ def test_abort_commands_during_slew(
     remove_subscriptions(subscriptions)
 
 
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.acceptance
 def test_abort_commands_during_stow(
     monitor_tango_servers,
@@ -256,7 +238,7 @@ def test_abort_commands_during_stow(
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
     result_event_store.wait_for_finished_command_result(
-        unique_id, '[0, "Abort sequence completed"]', timeout=30
+        unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
 
     main_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)

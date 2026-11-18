@@ -279,8 +279,8 @@ class SetOperateModeAction(Action):
         return super().execute(task_abort_event, completed_response_msg)
 
 
-class MaintenanceModeCallback(Action):
-    """Callback action for handling the transition to MAINTENANCE mode."""
+class CompleteMaintenanceModeAction(Action):
+    """Action for handling the transition to MAINTENANCE mode."""
 
     def __init__(
         self,

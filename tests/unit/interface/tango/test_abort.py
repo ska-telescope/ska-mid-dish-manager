@@ -20,7 +20,6 @@ from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestam
 
 @pytest.mark.unit
 @pytest.mark.forked
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 def test_only_one_abort_runs_at_a_time(dish_manager_resources):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
@@ -64,7 +63,6 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     assert "<- DishManager.Abort" in caplog.text
 
 
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 @pytest.mark.parametrize(
@@ -82,7 +80,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
 
     dish_mode_event_store = event_store_class()
-    progress_event_store = event_store_class()
+    result_event_store = event_store_class()
     cmds_in_queue_store = event_store_class()
 
     device_proxy.subscribe_event(
@@ -92,9 +90,9 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     )
 
     device_proxy.subscribe_event(
-        "lrcExecuting",
+        "lrcFinished",
         tango.EventType.CHANGE_EVENT,
-        progress_event_store,
+        result_event_store,
     )
 
     device_proxy.subscribe_event(
@@ -108,10 +106,6 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     dish_mode_event_store.wait_for_value(DishMode.OPERATE)
-
-    # since we check that the queue is empty, remove the empty queue
-    # event received after subscription to prevent false reporting
-    cmds_in_queue_store.clear_queue()
 
     # tracktable will be reset when the dish is tracking. this will make another call to
     # DS to fetch a tai calculation. just replace that object to use the manual approach
@@ -128,7 +122,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     ds_cm._update_component_state(pointingstate=pointing_state)
 
     # Abort the LRC
-    device_proxy.Abort()
+    [[_], [unique_id]] = device_proxy.Abort()
     ds_cm._update_component_state(
         **{
             "pointingstate": PointingState.READY,
@@ -137,14 +131,12 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
         }
     )
 
-    progress_event_store.wait_for_progress_update("Abort sequence completed", timeout=30)
-
-    # Confirm that abort cleared the command queue
-    cmds_in_queue_store.wait_for_value((), timeout=30)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
+    )
     assert device_proxy.dishMode == DishMode.STANDBY_FP
 
 
-@pytest.mark.skip(reason="Skipping until abort command implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_abort_sends_lrc_update_after_abort_sequence_finishes(

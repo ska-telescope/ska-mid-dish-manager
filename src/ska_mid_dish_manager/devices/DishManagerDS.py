@@ -9,7 +9,7 @@ import logging
 import weakref
 from datetime import datetime
 from functools import partial, reduce
-from typing import Literal, override
+from typing import Any, Literal, cast, override
 
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
@@ -23,7 +23,7 @@ from ska_tango_base.future import (
     ControlModeMixin,
 )
 from ska_tango_base.long_running_commands import LRCMixin
-from ska_tango_base.type_hints import DevVarLongStringArrayType, TaskFunctionType
+from ska_tango_base.type_hints import DevVarLongStringArrayType, TaskCallbackType, TaskFunctionType
 from tango import (
     AttrQuality,
     AttrWriteType,
@@ -84,6 +84,13 @@ from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 # Used for input validation. Input samples to tracktable that is less that
 # TRACK_LOAD_FUTURE_THRESHOLD_SEC in the future are logged
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
+COMMANDS_ALLOWED_DURING_ABORT = ("SetStowMode",)
+FINAL_TASK_STATUSES = [
+    TaskStatus.COMPLETED,
+    TaskStatus.FAILED,
+    TaskStatus.ABORTED,
+    TaskStatus.REJECTED,
+]
 
 
 class DishManager(
@@ -351,52 +358,77 @@ class DishManager(
         self.logger.error("Unhandled exception occurred during task execution: %s", str(exception))
 
     @override
-    def schedule_abort_task(self, task_callback):
-        """Schedule an abort task with the provided callback.
+    def execute_Abort(self) -> DevVarLongStringArrayType:
+        """Execute the Abort command.
 
-        :param task_callback: The callback function to be executed for the abort task.
+        Cancels all queued and running long running commands. Unless the dish is in
+        MAINTENANCE mode, it then runs the abort sequence (stopping dish movement and
+        transitioning to STANDBY_FP) once the cancellation completes. The Abort command
+        completes when all of its work is done. Only one Abort can run at a time.
+
+        :return: ResultCode.STARTED and the command ID, or ResultCode.REJECTED if an
+            Abort is already in progress.
         """
-        aggregator = AbortCallbackAggregator(task_callback)
-        abort_sequence_callback = aggregator.new_callback()
+        if self.component_manager.abort_sequence_in_progress:
+            return ([ResultCode.REJECTED], ["Abort scan already in progress."])
 
-        def commence_abort_sequence():
-            abort_sequence_handler = AbortSequenceCommandHandler(self.component_manager)
-            status, message = self.task_executor.submit(
-                abort_sequence_handler.complete_abort_sequence,
-                task_callback=abort_sequence_callback,
-            )
-            if status is TaskStatus.REJECTED:
-                raise RuntimeError(message)
+        command_id, task_callback = self.allocate_lrc("Abort")
+        self.component_manager.abort_sequence_in_progress = True
 
-        # if dish is in maintenance mode cancel LRCs only
+        # clear the flag once the whole Abort has finished, whatever the outcome
+        def abort_task_callback(**kwargs: Any) -> None:
+            task_callback(**kwargs)
+            if kwargs.get("status") in FINAL_TASK_STATUSES:
+                self.component_manager.abort_sequence_in_progress = False
+
+        aggregator = AbortCallbackAggregator(cast(TaskCallbackType, abort_task_callback))
+
         if self.component_manager.component_state.get("dishmode") == DishMode.MAINTENANCE:
             self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
             abort_lrc_callback = aggregator.new_callback()
-            return super().schedule_abort_task(abort_lrc_callback)
+        else:
+            abort_sequence_callback = aggregator.new_callback()
 
-        abort_lrc_callback = aggregator.new_callback(on_completed=commence_abort_sequence)
-        return super().schedule_abort_task(abort_lrc_callback)
+            def commence_abort_sequence() -> None:
+                abort_sequence_handler = AbortSequenceCommandHandler(self.component_manager)
+                self.task_executor.submit(
+                    abort_sequence_handler.complete_abort_sequence,
+                    task_callback=abort_sequence_callback,
+                )
+
+            abort_lrc_callback = aggregator.new_callback(on_completed=commence_abort_sequence)
+
+        status, _ = self.schedule_abort_task(abort_lrc_callback)
+        assert status == TaskStatus.IN_PROGRESS
+        return ([ResultCode.STARTED], [command_id])
 
     def is_command_allowed(self, command_name: str) -> bool:
-        """Check if a command is allowed in the current dish mode.
+        """Check whether a command is allowed in the current state of the dish.
 
         :param command_name: Name of the Tango command to check.
 
         :raises StateModelError: If control is disabled.
+        :raises CommandNotAllowedError: If the abort sequence is in progress, or the command
+            is not allowed in the current state.
         :raises ValueError: If the command has no rule, or the dish mode is unknown to the model.
-        :raises CommandNotAllowedError: If the command is not allowed in the current state.
 
-        :return: Whether the command is allowed in the current dish mode.
-
+        :return: True if the command is allowed.
         """
         try:
             self.check_component_controlled()
+            if (
+                self.component_manager.abort_sequence_in_progress
+                and command_name not in COMMANDS_ALLOWED_DURING_ABORT
+            ):
+                raise CommandNotAllowedError(
+                    f"{command_name} not allowed while the abort sequence is in progress."
+                )
             return self._dish_mode_model.is_command_allowed(
                 command_name, component_state=self.component_manager.component_state
             )
-        except (faults.StateModelError, CommandNotAllowedError, ValueError):
+        except (faults.StateModelError, CommandNotAllowedError, ValueError) as exc:
             # TODO send error information to last command failure attribute
-            self.logger.exception("Command %s is not allowed", command_name)
+            self.logger.warning("Command %s is not allowed: %s", command_name, exc)
             raise
 
     def _clear_scan_id(self):
@@ -1371,11 +1403,12 @@ class DishManager(
 
         length_of_table = len(table)
         sequence_length = length_of_table / 3
-        task_status, msg = self.component_manager.track_load_table(
+
+        result_code, msg = self.component_manager.track_load_table(
             sequence_length, table, self._track_table_load_mode
         )
 
-        if task_status == TaskStatus.FAILED:
+        if result_code == ResultCode.FAILED:
             raise RuntimeError(f"Write to programTrackTable failed: {msg}")
         self._program_track_table = table
         self.push_change_event("programTrackTable", table)

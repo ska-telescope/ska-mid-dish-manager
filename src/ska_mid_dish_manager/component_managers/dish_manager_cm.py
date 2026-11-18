@@ -34,10 +34,10 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManag
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.abort_sequence_command_handler import AbortSequenceCommandHandler
 from ska_mid_dish_manager.models.command_actions import (
+    CompleteMaintenanceModeAction,
     ConfigureBand6Action,
     ConfigureBandActionSequence,
     InterlockAckAction,
-    MaintenanceModeCallback,
     SetMaintenanceModeAction,
     SetOperateModeAction,
     SetStandbyFPModeAction,
@@ -83,7 +83,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     TrackInterpolationMode,
     TrackTableLoadMode,
 )
-from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 from ska_mid_dish_manager.models.dish_state_transition import StateTransition
 from ska_mid_dish_manager.utils.decorators import (
     last_command_failure_decorator,
@@ -121,7 +120,6 @@ class DishManagerComponentManager(BaseComponentManager):
         clear_scan_id_callback: Optional[Callable] = None,
         **kwargs,
     ):
-        # pylint: disable=useless-super-delegation
         self.logger = logger
         self.tango_device_name = tango_device_name
         self._tango_db_accessor = TangoDbAccessor(logger, tango_device_name)
@@ -252,7 +250,7 @@ class DishManagerComponentManager(BaseComponentManager):
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
         self.clear_scan_id_callback = clear_scan_id_callback
-        self._dish_mode_model = DishModeModel()
+        self._abort_sequence_in_progress = False
         self._state_transition = StateTransition()
         self._state_update_lock = Lock()
         self._stop_event = threading.Event()
@@ -516,6 +514,16 @@ class DishManagerComponentManager(BaseComponentManager):
         This should be set to True only after wind speeds have dropped back to safe levels.
         """
         self._reset_alarm = value
+
+    @property
+    def abort_sequence_in_progress(self) -> bool:
+        """Indicates whether an abort scan is currently in progress."""
+        return self._abort_sequence_in_progress
+
+    @abort_sequence_in_progress.setter
+    def abort_sequence_in_progress(self, value: bool):
+        """Sets the abort scan in progress state."""
+        self._abort_sequence_in_progress = value
 
     # --------------
     # Helper methods
@@ -1497,13 +1505,15 @@ class DishManagerComponentManager(BaseComponentManager):
     @last_command_failure_decorator
     def track_load_table(
         self, sequence_length: int, table: list[float], load_mode: TrackTableLoadMode
-    ) -> Tuple[TaskStatus, str]:
+    ) -> Tuple[ResultCode, str]:
         """Load the track table."""
         float_list = [load_mode, sequence_length]
         float_list.extend(table)
         ds_cm: DSComponentManager = cast(DSComponentManager, self.sub_component_managers["DS"])
         task_status, msg = ds_cm.execute_command("TrackLoadTable", float_list)
-        return task_status, msg
+        if task_status == TaskStatus.FAILED:
+            return ResultCode.FAILED, msg
+        return ResultCode.OK, msg
 
     @last_command_failure_decorator
     @TaskExecutor.task
@@ -1541,7 +1551,7 @@ class DishManagerComponentManager(BaseComponentManager):
         task_abort_event: threading.Event,
     ) -> Tuple[ResultCode, str]:
         """Transition the dish to MAINTENANCE mode."""
-        action_on_success = MaintenanceModeCallback(
+        action_on_success = CompleteMaintenanceModeAction(
             self.logger, self, self.get_action_timeout(), progress_callback=progress_callback
         )
         command_action = SetMaintenanceModeAction(
