@@ -15,7 +15,6 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     DSPowerState,
-    SPFOperatingMode,
 )
 from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
 
@@ -41,7 +40,7 @@ def undo_raise_exceptions(spf_device_proxy, spfrx_device_proxy):
 
 
 @pytest.fixture
-def toggle_skip_attributes(spf_device_proxy):
+def toggle_skip_attributes(spf_device_proxy,reset_dish_to_standby):
     """Ensure that attribute updates on spf is restored."""
     # Set a flag on SPF to skip attribute updates.
     # This is useful to ensure that the long running command
@@ -330,16 +329,12 @@ def reset_dish_to_standby(
             dish_manager_proxy.SetStandbyFPMode()
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
 
-        if spf_device_proxy.operatingMode != SPFOperatingMode.OPERATE:
-            spf_op_mode_events.wait_for_value(SPFOperatingMode.OPERATE, timeout=60)
-
     except (RuntimeError, tango.DevFailed, AssertionError):
         logger.exception(
             "Failed to get to known state. Successfully completed: %s", update_messages
         )
         logger.error("DishManager status: %s", dish_manager_proxy.status())
         logger.error("DSManager status: %s", ds_device_proxy.status())
-        logger.error("DSManager status: %s", spf_device_proxy.status())
         logger.error("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
         raise
     finally:
