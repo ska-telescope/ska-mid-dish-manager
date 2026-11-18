@@ -9,10 +9,12 @@ variables:
 stages:
   - lint
   - build
+  - cascade
   - test
   - publish
   - pages
   - scan
+
 
 # Standardised included jobs
 
@@ -68,6 +70,22 @@ k8s-test-runner:
      KUBE_NAMESPACE: "ci-$(CI_PROJECT_NAME)-$(CI_JOB_ID)"
      VALUES_FILE: charts/ska-mid-dish-manager/minimal_deployment_helm_flags.yaml
 
+# Trigger Dish LMC integration tests using the Dish Manager.
+trigger-dish-lmc-integration:
+  stage: cascade
+
+  variables:
+    CUSTOM_DISHMANAGER_VERSION_TAG: "$CI_COMMIT_SHORT_SHA"
+
+  trigger:
+    project: 'ska-telescope/mid-dish/ska-dish-lmc'
+    branch: 'master'
+    strategy: mirror
+
+  rules:
+    - when: manual
+      allow_failure: true
+
 k8s-test-runner-incl-b5dc:
   extends: k8s-test-runner
   allow_failure: true
@@ -116,7 +134,7 @@ k8s-test-runner-movement:
     on_stop: stop-k8s-test-runner-movement
     auto_stop_in: 1 minute
 
-# runs multiple acceptance tests in parallel with minimal deployment
+# Runs multiple acceptance tests in parallel with minimal deployment
 k8s-test-runner-parallel:
   extends: k8s-test-runner
   parallel: 3
