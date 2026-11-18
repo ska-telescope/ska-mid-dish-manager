@@ -9,11 +9,12 @@ variables:
 stages:
   - lint
   - build
+  - cascade
   - test
   - publish
   - pages
   - scan
-  - cascade
+
 
 # Standardised included jobs
 
