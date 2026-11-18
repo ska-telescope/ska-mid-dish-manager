@@ -99,7 +99,6 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         "DS.SetIndexPosition started",
         f"Awaiting DS indexerposition change to {band_number}",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         f"SPFRX.{command} started",
         f"Running {command} on device SPFRX",
         f"{command} on SPFRX timeout is 0",

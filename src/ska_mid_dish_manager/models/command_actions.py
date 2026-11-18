@@ -17,6 +17,7 @@ from ska_mid_dish_manager.models.action_handlers import (
 from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
+    INDEXER_POS_TIMEOUT,
     OPERATOR_TAG,
     SPFRX_BAND_WAIT_TIME,
     SPFRX_CONFIG_WAIT_TIME,
@@ -702,7 +703,7 @@ class ConfigureBandAction(Action):
                 device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
                 command_argument=self.indexer_enum,
                 awaited_component_state={"indexerposition": self.indexer_enum},
-                timeout_s=self.timeout_s,
+                timeout_s=INDEXER_POS_TIMEOUT,
                 progress_callback=self._progress_callback,
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)
@@ -874,7 +875,7 @@ class ConfigureBand6Action(Action):
                 device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
                 command_argument=7,
                 awaited_component_state={"indexerposition": IndexerPosition.B6},
-                timeout_s=self.timeout_s,
+                timeout_s=INDEXER_POS_TIMEOUT,
                 progress_callback=self._progress_callback,
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)

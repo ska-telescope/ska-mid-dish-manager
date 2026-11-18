@@ -206,7 +206,7 @@ def test_configure_band_2_from_stow(
 
     # Stow the dish
     current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 90.2
+    stow_position = 90.2  # NOTE We have no defined STOW position for the AP Manager
     estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     dish_manager_proxy.SetStowMode()
     dm_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
@@ -223,7 +223,6 @@ def test_configure_band_2_from_stow(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand2 started",
         "Running ConfigureBand2 on device SPFRX",
         "ConfigureBand2 on SPFRX timeout is 0",
@@ -331,7 +330,6 @@ def test_configure_band_json(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Running ConfigureBand on device SPFRX",
@@ -515,7 +513,6 @@ def test_configure_band_json_with_b5dc_fanout(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Running ConfigureBand on device SPFRX",
@@ -686,7 +683,6 @@ def test_slow_spfrx_configure_band(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Running ConfigureBand on device SPFRX",

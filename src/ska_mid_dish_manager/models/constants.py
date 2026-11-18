@@ -49,3 +49,6 @@ OPERATOR_TAG = {"user": "operator"}
 SPFRX_CONFIG_WAIT_TIME = 12
 SPFRX_OPERATE_WAIT_TIME = 12
 SPFRX_BAND_WAIT_TIME = 12
+
+# ConfigureBand Indexer position change timeout
+INDEXER_POS_TIMEOUT = 60
