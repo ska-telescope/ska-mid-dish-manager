@@ -15,6 +15,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     DSPowerState,
+    SPFOperatingMode,
 )
 from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
 
@@ -261,6 +262,7 @@ def reset_dish_to_standby(
     power_state_events = event_store_class()
     dish_mode_events = event_store_class()
     lrc_finished_events = event_store_class()
+    spf_op_mode_events = event_store_class()
 
     # A command left running by the previous test keeps waiting on the sub devices we are
     # about to reset, and blocks the queue for the next test. Let it finish first, aborting
@@ -291,6 +293,16 @@ def reset_dish_to_standby(
         )
     )
 
+    subscriptions.update(
+    setup_subscriptions(spf_device_proxy, {"operatingMode": spf_op_mode_events})
+    )
+
+    subscriptions.update(
+        setup_subscriptions(
+            spf_device_proxy,
+            {"operatingMode": spf_op_mode_events},
+        )
+    )
     subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
 
     # reset the simulated devices
@@ -319,10 +331,12 @@ def reset_dish_to_standby(
             power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=20)
             update_messages.append("Got DS to FP")
 
-        # Dish Mode STANDBY_FP is derived from the DS operating mode and power state.
-        # Wait for that aggregation without commanding SPF to OPERATE; tests may need
-        # SPF to remain in its ResetToDefault state (STANDBY_LP).
-        dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+        if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
+            dish_manager_proxy.SetStandbyFPMode()
+            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+        if spf_device_proxy.operatingMode != SPFOperatingMode.OPERATE:
+            spf_device_proxy.SetOperateMode()
+            spf_op_mode_events.wait_for_value(SPFOperatingMode.OPERATE, timeout=60)
 
     except (RuntimeError, tango.DevFailed, AssertionError):
         logger.exception(
