@@ -290,7 +290,6 @@ def reset_dish_to_standby(
             {"operatingMode": op_mode_events, "powerState": power_state_events},
         )
     )
-
     subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
 
     # reset the simulated devices
@@ -322,6 +321,7 @@ def reset_dish_to_standby(
         if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
             dish_manager_proxy.SetStandbyFPMode()
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+
     except (RuntimeError, tango.DevFailed, AssertionError):
         logger.exception(
             "Failed to get to known state. Successfully completed: %s", update_messages
