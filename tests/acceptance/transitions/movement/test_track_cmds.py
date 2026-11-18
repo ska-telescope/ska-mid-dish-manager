@@ -438,6 +438,7 @@ def test_track_fails_when_track_called_late(
         # The AP Manager fails here because I don't believe it runs a
         # the constant internal loop check like the DS Controller does
         # to flush coordinates from its buffer that are expired
+        # TODO Implement APManager tracktable buffer pruning
         pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=10)
 
     remove_subscriptions(subscriptions)

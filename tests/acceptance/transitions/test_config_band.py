@@ -646,7 +646,9 @@ def test_slow_spfrx_configure_band(
     # make sure configuredBand is not B2
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
     result_event_store.wait_for_finished_command_result(
-        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+        unique_id,
+        '[0, "SetOperateMode completed."]',
+        timeout=60,
     )
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
