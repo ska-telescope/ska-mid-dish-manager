@@ -15,6 +15,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
     DSPowerState,
+    SPFOperatingMode,
 )
 from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
 
@@ -291,13 +292,19 @@ def reset_dish_to_standby(
             {"operatingMode": op_mode_events, "powerState": power_state_events},
         )
     )
+
     subscriptions.update(
         setup_subscriptions(
             spf_device_proxy,
             {"operatingMode": spf_op_mode_events},
         )
     )
-    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
+    subscriptions.update(
+        setup_subscriptions(
+            dish_manager_proxy,
+            {"dishMode": dish_mode_events, "lrcFinished": lrc_finished_events},
+        )
+    )
 
     # reset the simulated devices
     spfrx_device_proxy.ResetToDefault()
@@ -325,9 +332,23 @@ def reset_dish_to_standby(
             power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=20)
             update_messages.append("Got DS to FP")
 
+        # ResetToDefault puts SPF in STANDBY_LP. Dish Mode may still read
+        # STANDBY_FP because that state is derived from the DS alone. Move
+        # through STANDBY_LP so the manager's STANDBY_FP action runs again.
+        if (
+            dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+            and spf_device_proxy.operatingMode != SPFOperatingMode.OPERATE
+        ):
+            [[_], [unique_id]] = dish_manager_proxy.SetStandbyLPMode()
+            lrc_finished_events.wait_for_command_id(unique_id, timeout=60)
+            dish_mode_events.wait_for_value(DishMode.STANDBY_LP, timeout=60)
+
         if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
-            dish_manager_proxy.SetStandbyFPMode()
+            [[_], [unique_id]] = dish_manager_proxy.SetStandbyFPMode()
+            lrc_finished_events.wait_for_command_id(unique_id, timeout=60)
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+
+        assert spf_device_proxy.operatingMode == SPFOperatingMode.OPERATE
 
     except (RuntimeError, tango.DevFailed, AssertionError):
         logger.exception(
