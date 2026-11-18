@@ -7,7 +7,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-
+- Added manual job to run lmc integration test prior to dish manager release (cascading pipeline)
+- Added custom sub component's values i.e DS Manager and Simulator to enable the projects to trigger Dish Manager's pipeline for early integration testing
+ 
 Version 12.0.1
 **************
 - Updated ConfigureBand to address SKB-1594 by waiting for CONFIGURE and then OPERATE rather than a set timeout
