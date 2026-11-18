@@ -330,7 +330,7 @@ def reset_dish_to_standby(
             dish_manager_proxy.SetStandbyFPMode()
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
 
-        if spf_device_proxy.operateMode != SPFOperatingMode.OPERATE:
+        if spf_device_proxy.operatingMode != SPFOperatingMode.OPERATE:
             spf_device_proxy.wait_for_value(SPFOperatingMode.OPERATE, timeout=60)
 
     except (RuntimeError, tango.DevFailed, AssertionError):
