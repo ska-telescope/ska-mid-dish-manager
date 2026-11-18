@@ -294,7 +294,7 @@ def reset_dish_to_standby(
     )
 
     subscriptions.update(
-    setup_subscriptions(spf_device_proxy, {"operatingMode": spf_op_mode_events})
+        setup_subscriptions(spf_device_proxy, {"operatingMode": spf_op_mode_events})
     )
 
     subscriptions.update(
