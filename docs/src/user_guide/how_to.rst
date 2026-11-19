@@ -58,7 +58,7 @@ the TRL ``mid-dish/ds-manager/SKA001``.
 Dish Manager control differences when changing dish structure types
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Interchangeability of the 2 dish structure manager variants is enabled by the fact that 
+Interchangeability of the two dish structure manager variants is enabled by the fact that 
 both the ``DSManager`` and ``MeerKATAPManager`` Tango devices expose the same core set of 
 attributes and commands, with each manager device implementing its own internal logic
 to ensure parity is maintained between the 2 interfaces.
