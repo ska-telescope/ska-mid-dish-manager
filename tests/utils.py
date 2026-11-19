@@ -453,7 +453,7 @@ class EventStore:
             ) from err
 
     def wait_for_progress_update(self, progress_message: str, timeout: int = 5) -> List[Any]:
-        """Wait for a long running command progress update by way of the status attribute.
+        """Wait for a long running command progress update.
 
         Wait `timeout` seconds for each fetch.
 

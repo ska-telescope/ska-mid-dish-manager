@@ -440,9 +440,6 @@ def test_configureband_5b_with_subband(
         dish_config["sub_band"] = dish_config.pop("band5_downconversion_subband")
 
     expected_json = json.dumps(expected_config)
-    # check that the SPFRX component manager received the expected ConfigureBand command
-    spfrx_cm_calls = spfrx_cm.execute_command.call_args_list
-    assert call("ConfigureBand", expected_json) in spfrx_cm_calls
 
     wait_for_progress(task_cb, "Running Wait for operatingMode.CONFIGURE on device SPFRX")
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.CONFIGURE)
@@ -470,6 +467,9 @@ def test_configureband_5b_with_subband(
     # wait for all the updates to be processed by the command thread
     command_thread.join(timeout=30)
     assert not command_thread.is_alive(), "ConfigureBand did not finish in time"
+    # check that the SPFRX component manager received the expected ConfigureBand command
+    spfrx_cm_calls = spfrx_cm.execute_command.call_args_list
+    assert call("ConfigureBand", expected_json) in spfrx_cm_calls
     # check that the updates come through
     assert task_cb.call_args_list == [
         call(status=TaskStatus.IN_PROGRESS),
