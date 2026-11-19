@@ -136,6 +136,23 @@ The ConfigureBand calls to APManager band mappings are given below;
    * - ConfigureBand6()
      - x-band
 
+3: **Configuring the MeerKAT dish for control and monitoring at startup**
+
+At start up the AP and AP Manager will not automatically transition out of operatingMode 
+STARTUP.
+
+In order to enable control of the MeerKAT dish the user will be required to call the 
+Tango command SetStandbyMode() on the AP Manager interface.
+
+Once the AP transitions to its stop mode, the APManager will report operatingMode STANDBY 
+and the MeerKAT dish will be ready to accept requests from the APManager device.
+
+.. note::
+
+   This additional step is only required for control and monitoring of a physical MeerKAT 
+   dish. The AP simulator device will automatically handle the operatingMode STARTUP → 
+   STANDBY transition.
+
 
 Deploy DishManager to monitor an SKA MID Dish with Simulators
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
