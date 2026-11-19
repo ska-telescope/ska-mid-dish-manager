@@ -5,6 +5,7 @@ import json
 import logging
 import time
 import typing
+from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus

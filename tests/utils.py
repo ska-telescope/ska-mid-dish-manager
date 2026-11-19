@@ -236,14 +236,14 @@ class EventStore:
                     continue
                 if isinstance(event.attr_value.value, np.ndarray):
                     if (event.attr_value.value == value).all():
-                        return True
+                        return event
                     if np.isclose(event.attr_value.value, value).all():
-                        return True
+                        return event
                     continue
                 if event.attr_value.value != value:
                     continue
                 if event.attr_value.value == value:
-                    return True
+                    return event
         except queue.Empty as err:
             ev_vals = self.extract_event_values(events)
             if proxy:

@@ -98,6 +98,8 @@ class DeviceProxyManager:
         device_proxy_timeout: int = DEVICE_PROXY_TIMEOUT_MS,
     ):
         self._device_proxies: Dict[str, tango.DeviceProxy] = {}
+        # Devices whose controlMode has been checked (and set where available)
+        self._control_mode_configured: set[str] = set()
         self.logger = logger or logging.getLogger(__name__)
         self.event_signal = thread_event or Event()
         self.device_proxy_timeout = device_proxy_timeout
