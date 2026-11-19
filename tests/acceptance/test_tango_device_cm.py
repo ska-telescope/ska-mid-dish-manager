@@ -20,8 +20,6 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.acceptance
-# TODO On completion of the AP manager confirm whether the test_mode
-# attr is still going to exposed
 @pytest.mark.excl_test_against_ap_manager
 def test_tango_device_component_manager_state(
     monitor_tango_servers, component_state_store, ds_device_fqdn

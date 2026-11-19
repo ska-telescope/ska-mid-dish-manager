@@ -210,7 +210,7 @@ class ActionHandler:
     def _trigger_command_failure(
         self, task_callback, task_abort_event, cmd: FannedOutCommand, message: str
     ) -> None:
-        """Fail the action using the failed outcome reported by a fanned-out command."""
+        """Fail the action using the failed result reported by a fanned-out command."""
         result_message: Optional[str] = None
         if cmd.status == FannedOutCommandStatus.ABORTED:
             task_status = TaskStatus.ABORTED

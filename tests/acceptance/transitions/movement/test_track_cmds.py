@@ -232,7 +232,8 @@ def test_append_dvs_case(
 
     result_event_store.wait_for_command_id(unique_id, timeout=10)
     # TODO AP Manager doesnt report an interim SLEW, but the test passes (ie:
-    # the expected final position is reached if SLEW skipped), investigate why
+    # the expected final position is reached if SLEW check is skipped),
+    # investigate why
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
@@ -435,10 +436,9 @@ def test_track_fails_when_track_called_late(
     # we don't have any way yet to confirm that the track command failed
     dish_manager_proxy.Track()
     with pytest.raises(RuntimeError):
-        # The AP Manager fails here because I don't believe it runs a
-        # the constant internal loop check like the DS Controller does
-        # to flush coordinates from its buffer that are expired
-        # TODO Implement APManager tracktable buffer pruning
+        # The AP Manager fails here because it doesnt run the constant internal
+        # check like the DS Controller does to flush coordinates from its buffer
+        # that are expired. This will be added an AP Manager backlog item
         pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=10)
 
     remove_subscriptions(subscriptions)

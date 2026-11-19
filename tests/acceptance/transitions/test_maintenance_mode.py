@@ -6,6 +6,7 @@ import pytest
 from tango import DevFailed, DeviceProxy
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
+from ska_mid_dish_manager.models.constants import AP_MANAGER_TRL_FAMILY_NAME
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DscCmdAuthType,
@@ -55,7 +56,28 @@ def test_maintenance_mode_cmd(
 
     ds_fqdn = ds_device_proxy.name()
 
-    if "ds-manager" in ds_fqdn:
+    if AP_MANAGER_TRL_FAMILY_NAME in ds_fqdn:
+        # Maintenance mode test execution path when monitoring the AP Manager
+        dsc_event_store.wait_for_value(DSOperatingMode.MAINTENANCE, timeout=120)
+        spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
+        spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
+        mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
+
+        expected_progress_updates = [
+            "Fanned out commands: DS.APMaintenance, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
+            "Awaiting DS operatingmode change to MAINTENANCE",
+            "Awaiting SPFRX operatingmode change to STANDBY",
+            "Awaiting SPF operatingmode change to MAINTENANCE",
+            "SetMaintenanceMode completed",
+        ]
+        events = status_event_store.get_queue_events()
+        events_string = "".join([str(event.attr_value.value) for event in events])
+        # Check that all the expected progress messages appeared
+        for message in expected_progress_updates:
+            assert message in events_string
+
+    else:
+        # Maintenance mode test execution path when monitoring the DS Manager
         mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
         spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
         spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
@@ -68,25 +90,6 @@ def test_maintenance_mode_cmd(
             "Awaiting SPFRX operatingmode change to STANDBY",
             "Awaiting SPF operatingmode change to MAINTENANCE",
             "Awaiting dishmode change to STOW",
-            "SetMaintenanceMode completed",
-        ]
-        events = status_event_store.get_queue_events()
-        events_string = "".join([str(event.attr_value.value) for event in events])
-        # Check that all the expected progress messages appeared
-        for message in expected_progress_updates:
-            assert message in events_string
-    else:
-        # Expected test execution path when monitoring the AP Manager
-        dsc_event_store.wait_for_value(DSOperatingMode.MAINTENANCE, timeout=120)
-        spfrx_event_store.wait_for_value(SPFRxOperatingMode.STANDBY, timeout=30)
-        spf_event_store.wait_for_value(SPFOperatingMode.MAINTENANCE, timeout=30)
-        mode_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=30)
-
-        expected_progress_updates = [
-            "Fanned out commands: DS.APMaintenance, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode",
-            "Awaiting DS operatingmode change to MAINTENANCE",
-            "Awaiting SPFRX operatingmode change to STANDBY",
-            "Awaiting SPF operatingmode change to MAINTENANCE",
             "SetMaintenanceMode completed",
         ]
         events = status_event_store.get_queue_events()

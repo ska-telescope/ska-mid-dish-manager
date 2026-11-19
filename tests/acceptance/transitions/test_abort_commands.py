@@ -112,7 +112,7 @@ def track_a_sample(
     if current_az >= MAX_AZIMUTH:
         reference_az = current_az - 10.0
     # Use the ACU min elevation to ensure limits are not exceeded
-    # regardless of dish structure type (ie: DS or AP Manager)
+    # regardless of dish structure type
     if current_az <= MIN_AZIMUTH_ACU:
         reference_az = current_az + 10.0
 

@@ -3,6 +3,7 @@
 import pytest
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
+from ska_mid_dish_manager.models.constants import AP_MANAGER_TRL_FAMILY_NAME
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
@@ -119,7 +120,7 @@ def test_configure_band_b(
     ds_device_fqdn,
 ):
     """Test ConfigureBand."""
-    if "meerkat-ap-manager" in ds_device_fqdn and band_request in [
+    if AP_MANAGER_TRL_FAMILY_NAME in ds_device_fqdn and band_request in [
         "ConfigureBand4",
         "ConfigureBand5a",
         "ConfigureBand5b",

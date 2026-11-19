@@ -61,7 +61,7 @@ class APComponentManager(TangoDeviceComponentManager):
             "dscErrorStatus",
             "dscWarningStatus",
             "dscSafetyStatus",
-            # "feedIndexerMoving", - Not yet available on APManager
+            "feedIndexerMoving",
         )
 
         quality_monitored_attrs: tuple[str, ...] = (
@@ -93,7 +93,7 @@ class APComponentManager(TangoDeviceComponentManager):
             "dscErrorStatus",
             "dscWarningStatus",
             "dscSafetyStatus",
-            # "feedIndexerMoving", - Not yet available on AP Manager
+            "feedIndexerMoving",
         )
 
         super().__init__(
