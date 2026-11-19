@@ -8,6 +8,7 @@ from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.dish_enums import PointingState
+from tests.utils import progress_call
 
 
 @pytest.mark.unit
@@ -24,34 +25,34 @@ def test_slew_handler(
     """
     component_state_cb = callbacks["comp_state_cb"]
     task_cb = callbacks["task_cb"]
+    ds_cm = component_manager.sub_component_managers["DS"]
 
-    threading.Thread(
+    command_thread = threading.Thread(
         target=component_manager.slew,
         args=([20.0, 30.0],),
         kwargs={"task_callback": task_cb, "task_abort_event": task_abort_event},
         daemon=True,
-    ).start()
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values(timeout=1)
+    )
+    command_thread.start()
 
     # check that the component state reports the requested command
-    component_manager._update_component_state(pointingstate=PointingState.SLEW)
-    component_manager.sub_component_managers["DS"]._update_component_state(
-        pointingstate=PointingState.SLEW
-    )
+    # component_manager._update_component_state(pointingstate=PointingState.SLEW)
+    ds_cm._update_component_state(pointingstate=PointingState.SLEW)
     component_state_cb.wait_for_value("pointingstate", PointingState.SLEW)
 
+    # wait for all the updates to be processed by the command thread
+    command_thread.join(timeout=30)
+    assert not command_thread.is_alive(), "SetStandbyLPMode did not finish in time"
     # check that the updates come through
     assert task_cb.call_args_list == [
         call(status=TaskStatus.IN_PROGRESS),
-        call(progress=None, progress_info="Fanned out commands: DS.Slew"),
-        call(progress=None, progress_info="DS.Slew completed"),
-        call(
-            progress=None,
-            progress_info=(
-                "The DS has been commanded to Slew to [20.0, 30.0]. "
-                "Monitor the pointing attributes for the completion status of the task."
-            ),
+        progress_call("Slew started"),
+        progress_call("DS.Slew started"),
+        progress_call("Fanned out commands: DS.Slew"),
+        progress_call("DS.Slew completed"),
+        progress_call(
+            "The DS has been commanded to Slew to [20.0, 30.0]. "
+            "Monitor the pointing attributes for the completion status of the task."
         ),
         call(
             status=TaskStatus.COMPLETED,

@@ -16,6 +16,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     SPFOperatingMode,
     SPFRxOperatingMode,
 )
+from tests.utils import progress_call
 
 
 @pytest.mark.unit
@@ -33,31 +34,27 @@ def test_set_maintenance_mode_handler(
     """
     component_state_cb = callbacks["comp_state_cb"]
     task_cb = callbacks["task_cb"]
+    spfrx_cm = component_manager.sub_component_managers["SPFRX"]
+    ds_cm = component_manager.sub_component_managers["DS"]
+    spf_cm = component_manager.sub_component_managers["SPF"]
 
     caplog.set_level(logging.DEBUG)
 
-    threading.Thread(
+    command_thread = threading.Thread(
         target=component_manager.set_maintenance_mode,
         args=(),
         kwargs={"task_callback": task_cb, "task_abort_event": task_abort_event},
         daemon=True,
-    ).start()
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values(timeout=1)
+    )
+    command_thread.start()
 
-    component_manager.sub_component_managers["DS"]._update_component_state(
-        operatingmode=DSOperatingMode.STOW
-    )
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.STOW)
     component_state_cb.wait_for_value("dishmode", DishMode.STOW)
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        operatingmode=SPFRxOperatingMode.STANDBY
-    )
-    component_manager.sub_component_managers["SPF"]._update_component_state(
-        operatingmode=SPFOperatingMode.MAINTENANCE
-    )
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
 
     # finish the final bit of the maint transition
-    component_manager.sub_component_managers["DS"]._update_component_state(
+    ds_cm._update_component_state(
         dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
         dscctrlstate=DscCtrlState.NO_AUTHORITY,
     )
@@ -68,41 +65,37 @@ def test_set_maintenance_mode_handler(
     # TODO: Remove below. Waiting for SPFRx to implement maintenance mode
     assert "Nothing done on SPFRx, awaiting implementation on it." in caplog.text
 
+    # wait for all the updates to be processed by the command thread
+    command_thread.join(timeout=30)
+    assert not command_thread.is_alive(), "SetStandbyLPMode did not finish in time"
+    # check that the updates come through
     assert task_cb.call_args_list == [
         call(status=TaskStatus.IN_PROGRESS),
-        call(progress=None, progress_info="Awaiting DS operatingmode change to STOW"),
-        call(progress=None, progress_info="Awaiting SPFRX operatingmode change to STANDBY"),
-        call(progress=None, progress_info="Awaiting SPF operatingmode change to MAINTENANCE"),
-        call(
-            progress=None,
-            progress_info=(
-                "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode"
-            ),
+        progress_call("SetMaintenanceMode started"),
+        progress_call("DS.Stow started"),
+        progress_call("Awaiting DS operatingmode change to STOW"),
+        progress_call("SPFRX.SetStandbyMode started"),
+        progress_call("Awaiting SPFRX operatingmode change to STANDBY"),
+        progress_call("SPF.SetMaintenanceMode started"),
+        progress_call("Awaiting SPF operatingmode change to MAINTENANCE"),
+        progress_call(
+            "Fanned out commands: DS.Stow, SPFRX.SetStandbyMode, SPF.SetMaintenanceMode"
         ),
-        call(progress=None, progress_info="Awaiting dishmode change to STOW"),
-        call(progress=None, progress_info="DS operatingmode changed to STOW"),
-        call(progress=None, progress_info="DS.Stow completed"),
-        call(progress=None, progress_info="SPFRX operatingmode changed to STANDBY"),
-        call(progress=None, progress_info="SPFRX.SetStandbyMode completed"),
-        call(progress=None, progress_info="SPF operatingmode changed to MAINTENANCE"),
-        call(progress=None, progress_info="SPF.SetMaintenanceMode completed"),
-        call(
-            progress=None,
-            progress_info="SetMaintenanceMode complete. Triggering on success action.",
-        ),
-        call(
-            progress=None,
-            progress_info=(
-                "Awaiting DS dsccmdauth, dscctrlstate change to NO_AUTHORITY, NO_AUTHORITY"
-            ),
-        ),
-        call(progress=None, progress_info="Fanned out commands: DS.ReleaseAuth"),
-        call(
-            progress=None,
-            progress_info="Awaiting dsccmdauth, dscctrlstate change to NO_AUTHORITY, NO_AUTHORITY",
-        ),
-        call(progress=None, progress_info="DS dsccmdauth changed to NO_AUTHORITY"),
-        call(progress=None, progress_info="DS dscctrlstate changed to NO_AUTHORITY"),
-        call(progress=None, progress_info="DS.ReleaseAuth completed"),
+        progress_call("Awaiting dishmode change to STOW"),
+        progress_call("DS operatingmode changed to STOW"),
+        progress_call("DS.Stow completed"),
+        progress_call("SPFRX operatingmode changed to STANDBY"),
+        progress_call("SPFRX.SetStandbyMode completed"),
+        progress_call("SPF operatingmode changed to MAINTENANCE"),
+        progress_call("SPF.SetMaintenanceMode completed"),
+        progress_call("SetMaintenanceMode complete. Triggering on success action."),
+        progress_call("ReleaseAuth started"),
+        progress_call("DS.ReleaseAuth started"),
+        progress_call("Awaiting DS dsccmdauth, dscctrlstate change to NO_AUTHORITY, NO_AUTHORITY"),
+        progress_call("Fanned out commands: DS.ReleaseAuth"),
+        progress_call("Awaiting dsccmdauth, dscctrlstate change to NO_AUTHORITY, NO_AUTHORITY"),
+        progress_call("DS dsccmdauth changed to NO_AUTHORITY"),
+        progress_call("DS dscctrlstate changed to NO_AUTHORITY"),
+        progress_call("DS.ReleaseAuth completed"),
         call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetMaintenanceMode completed.")),
     ]

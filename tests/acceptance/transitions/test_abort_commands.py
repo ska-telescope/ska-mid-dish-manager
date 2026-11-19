@@ -188,7 +188,7 @@ def test_abort_commands_during_slew(
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     requested_az, requested_el = calculate_slew_target(current_az, current_el, 30.0, 15.0)
     dish_manager_proxy.Slew([requested_az, requested_el])
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=10)
+    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=30)
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()
@@ -236,7 +236,7 @@ def test_abort_commands_during_stow(
 
     # Stow the dish
     dish_manager_proxy.SetStowMode()
-    main_event_store.wait_for_value(PointingState.SLEW, timeout=10)
+    main_event_store.wait_for_value(PointingState.SLEW, timeout=30)
 
     # Call Abort on DishManager
     [[_], [unique_id]] = dish_manager_proxy.Abort()

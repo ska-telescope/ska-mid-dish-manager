@@ -12,10 +12,12 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_ACTION_TIMEOUT_S,
     OPERATOR_TAG,
 )
+from ska_mid_dish_manager.models.dish_enums import FannedOutCommandStatus
 from ska_mid_dish_manager.models.fanned_out_command import (
     FannedOutCommand,
     FannedOutTangoCommand,
     FannedOutTangoLongRunningCommand,
+    FannedOutWaitForState,
 )
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
@@ -104,9 +106,9 @@ class ActionHandler:
         self,
         logger: logging.Logger,
         action_name: str,
-        fanned_out_commands: list[FannedOutCommand]
-        | list[FannedOutTangoCommand]
-        | list[FannedOutTangoLongRunningCommand],
+        fanned_out_commands: list[FannedOutCommand | FannedOutWaitForState]
+        | list[FannedOutTangoCommand | FannedOutWaitForState]
+        | list[FannedOutTangoLongRunningCommand | FannedOutWaitForState],
         component_state: dict,
         awaited_component_state: dict[str, Any] = {},
         action_on_success: Optional[Action] = None,
@@ -262,6 +264,7 @@ class ActionHandler:
             f"Starting Action {self.action_name}. Fanning out {fanned_out_commands_str} commands.",
             extra=OPERATOR_TAG,
         )
+        self.progress_callback(progress_info=f"{self.action_name} started")
 
         # Fan-out: Dispatch all fanned-out commands
         for cmd in self.fanned_out_commands:
@@ -273,6 +276,9 @@ class ActionHandler:
                 )
                 return ResultCode.FAILED, f"{self.action_name} failed {cmd.executed_cmd_response}"
 
+            if cmd.status == FannedOutCommandStatus.IGNORED:
+                cmd.report_progress(self.progress_callback)
+                continue
         self.progress_callback(progress_info=f"Fanned out commands: {fanned_out_commands_str}")
 
         # If we're not waiting for anything, finish up
@@ -364,9 +370,15 @@ class SequentialActionHandler(ActionHandler):
             ),
             extra=OPERATOR_TAG,
         )
+        self.progress_callback(progress_info=f"{self.action_name} started")
 
         for cmd in self.fanned_out_commands:
             cmd.execute()
+
+            if cmd.status == FannedOutCommandStatus.IGNORED:
+                self.progress_callback(progress_info=f"{cmd.device}.{cmd.command_name} ignored")
+                continue
+
             if cmd.failed:
                 self._trigger_failure(
                     task_abort_event,
@@ -379,7 +391,9 @@ class SequentialActionHandler(ActionHandler):
             )
 
             if cmd.timeout_s <= 0:
-                self.progress_callback(progress_info=f"Not waiting for: {cmd} as the timeout is 0")
+                self.progress_callback(
+                    progress_info=f"{cmd.command_name} on {cmd.device} timeout is 0"
+                )
                 continue
 
             if cmd.awaited_component_state:
@@ -401,6 +415,12 @@ class SequentialActionHandler(ActionHandler):
                 if cmd.failed or cmd.successful:
                     break
                 task_abort_event.wait(timeout=1)
+
+            # The deadline can pass between checks before the command has evaluated its own
+            # timeout, so give it a final update to settle on its status, e.g. a wait that
+            # continues on timeout.
+            if not cmd.finished:
+                cmd.report_progress(self.progress_callback)
 
             if cmd.failed:
                 message = (

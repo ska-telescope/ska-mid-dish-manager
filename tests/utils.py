@@ -8,8 +8,10 @@ import string
 import time
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Tuple
+from unittest.mock import MagicMock, call
 
 import numpy as np
+import pytest
 import tango
 from matplotlib import pyplot as plt
 from ska_control_model import CommunicationStatus
@@ -381,17 +383,17 @@ class EventStore:
                     last_received_result = received_result
 
                     if received_result == expected_obj:
-                        return True
+                        return event
 
                     if isinstance(received_result, str):
                         try:
                             if json.loads(received_result) == expected_obj:
-                                return True
+                                return event
                         except json.JSONDecodeError:
                             pass
 
                     if str(received_result) == command_result:
-                        return True
+                        return event
 
                     continue
 
@@ -1038,7 +1040,6 @@ def calculate_on_source_dev(
     try:
         err = math.acos(dot_product)
     except ValueError:
-        print("Check vectors are normalized. arccos argument is > 1 or < -1.")
         raise
     return radians_to_arcsec(err)
 
@@ -1183,3 +1184,19 @@ def remove_subscriptions(subscriptions: Dict[tango.DeviceProxy, List[int]]) -> N
                 device_proxy.unsubscribe_event(sub_id)
             except Exception:
                 continue
+
+
+def wait_for_progress(task_cb: MagicMock, progress_info: str, timeout: float = 5) -> None:
+    """Wait until the task callback has reported the given progress message."""
+    expected = call(progress=None, progress_info=progress_info)
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if expected in task_cb.call_args_list:
+            return
+        time.sleep(0.05)
+    pytest.fail(f"Timed out waiting for progress: {progress_info!r}")
+
+
+def progress_call(info: str) -> Any:
+    """Helper function to create a progress call for task callback."""
+    return call(progress=None, progress_info=info)

@@ -11,7 +11,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 from ska_control_model import CommunicationStatus
-from ska_control_model.future import AdminMode
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 
@@ -59,7 +59,9 @@ def test_wms_group_activation_and_polling_starts(mock_tango_group):
     wait_event = threading.Event()
     wait_event.wait(timeout=wms._wms_polling_period)
 
-    wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.ONLINE)
+    wms.write_wms_group_attribute_value.assert_called_with(
+        "controlMode", ControlMode.MONITOR_NO_CONTROL
+    )
     wms._run_wms_group_polling.assert_called()
 
 
@@ -116,7 +118,9 @@ def test_wms_cm_wind_gust_and_mean_wind_speed_updates(mock_tango_group):
     wms.stop_communicating()
     wait_event.wait(timeout=COMM_STATE_UPDATE_WAIT)
     assert wms.communication_state == CommunicationStatus.DISABLED
-    wms.write_wms_group_attribute_value.assert_called_with("adminMode", AdminMode.ENGINEERING)
+    wms.write_wms_group_attribute_value.assert_called_with(
+        "controlMode", ControlMode.NO_MONITOR_NO_CONTROL
+    )
     assert wms.read_wms_group_attribute_value.call_count == 11
     assert component_state["windgust"] == 20
     assert component_state["meanwindspeed"] == 15

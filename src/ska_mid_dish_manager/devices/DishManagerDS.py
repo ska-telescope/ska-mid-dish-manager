@@ -6,6 +6,7 @@ and the subservient devices
 
 import json
 import logging
+import time
 import weakref
 from datetime import datetime
 from functools import partial, reduce
@@ -23,6 +24,7 @@ from ska_tango_base.future import (
     ControlModeMixin,
 )
 from ska_tango_base.long_running_commands import LRCMixin
+from ska_tango_base.software_bus import Signal, attribute_from_signal
 from ska_tango_base.type_hints import DevVarLongStringArrayType, TaskCallbackType, TaskFunctionType
 from tango import (
     AttrQuality,
@@ -134,6 +136,24 @@ class DishManager(
         default_value=DEFAULT_ACTION_TIMEOUT_S,
     )
 
+    # lastCommandInvoked and lastCommandedMode are enqueued on the shared bus.
+    _last_command_invoked = Signal[tuple[str, str]](initial_value=("0.0", ""))
+    _last_commanded_mode = Signal[tuple[str, str]](initial_value=("0.0", ""))
+
+    def _record_command(self, command_name: str, record_mode: bool = False) -> None:
+        """Record the last command invoked and, optionally, the last commanded mode.
+
+        Used by the component manager for commands it triggers itself (e.g. WindStow,
+        HeartbeatStow). Tango commands are recorded by the `record_command` decorator.
+
+        :param command_name: the name of the command (or trigger source) to record
+        :param record_mode: if True also record it as the last commanded mode
+        """
+        command_and_time = (str(time.time()), command_name)
+        self._last_command_invoked = command_and_time
+        if record_mode:
+            self._last_commanded_mode = command_and_time
+
     @override
     def init_device(self):
         """Initialize the device attributes and properties."""
@@ -232,8 +252,6 @@ class DishManager(
             "meanwindspeed": "meanWindSpeed",
             "windgust": "windGust",
             "autowindstowenabled": "autoWindStowEnabled",
-            "lastcommandedmode": "lastCommandedMode",
-            "lastcommandinvoked": "lastCommandInvoked",
             "lastcommandfailure": "lastCommandFailure",
             "lasttangoeventerror": "lastTangoEventError",
             "dscctrlstate": "dscCtrlState",
@@ -263,10 +281,7 @@ class DishManager(
             "healthinfo": "healthInfo",
             "b1healthstate": "spfcB1HealthState",
             "b2healthstate": "spfcB2HealthState",
-            "b3healthstate": "spfcB3HealthState",
-            "b4healthstate": "spfcB4HealthState",
-            "b5ahealthstate": "spfcB5aHealthState",
-            "b5bhealthstate": "spfcB5bHealthState",
+            "b345healthstate": "spfcB345HealthState",
         }
         for attr in self._component_state_attr_map.values():
             self.set_change_event(attr, True, False)
@@ -478,6 +493,7 @@ class DishManager(
             default_watchdog_timeout=self.DefaultWatchdogTimeout,
             default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
             default_wind_gust_threshold=self.WindGustThreshold,
+            record_command_callback=self._record_command,
         )
 
     # ---------
@@ -604,8 +620,9 @@ class DishManager(
     # ----------
 
     # pylint: disable=invalid-name
-    @attribute(
-        dtype=(str, str),
+    lastCommandedMode = attribute_from_signal(  # noqa: N815
+        _last_commanded_mode,
+        dtype=(str,),
         max_dim_x=2,
         access=AttrWriteType.READ,
         doc=(
@@ -613,20 +630,14 @@ class DishManager(
             "Time is a UNIX UTC timestamp."
         ),
     )
-    @time_tango_write()
-    def lastCommandedMode(self) -> tuple[str, str]:
-        """Return the last commanded mode."""
-        return self.component_manager.component_state["lastcommandedmode"]
 
-    @attribute(
-        dtype=(str, str),
+    lastCommandInvoked = attribute_from_signal(  # noqa: N815
+        _last_command_invoked,
+        dtype=(str,),
         max_dim_x=2,
         access=AttrWriteType.READ,
         doc="Stores the name and timestamp (in UNIX UTC format) of the last invoked command.",
     )
-    def lastCommandInvoked(self) -> tuple[str, str]:
-        """Return the last command invoked and its timestamp."""
-        return self.component_manager.component_state["lastcommandinvoked"]
 
     @attribute(
         dtype=(str, str, str),
@@ -2240,38 +2251,13 @@ class DishManager(
     @attribute(
         dtype=SPFHealthState,
         access=AttrWriteType.READ,
-        doc="The Band 3 healthState as reported by the SPF controller.",
+        doc="The Band 345 healthState as reported by the SPF controller.",
     )
-    def spfcB3HealthState(self):
-        """Return the Band 3 healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b3healthstate", SPFHealthState.UNKNOWN)
-
-    @attribute(
-        dtype=SPFHealthState,
-        access=AttrWriteType.READ,
-        doc="The Band 4 healthState as reported by the SPF controller.",
-    )
-    def spfcB4HealthState(self):
-        """Return the Band 4 healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b4healthstate", SPFHealthState.UNKNOWN)
-
-    @attribute(
-        dtype=SPFHealthState,
-        access=AttrWriteType.READ,
-        doc="The Band 5a healthState as reported by the SPF controller.",
-    )
-    def spfcB5aHealthState(self):
-        """Return the Band 5a healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b5ahealthstate", SPFHealthState.UNKNOWN)
-
-    @attribute(
-        dtype=SPFHealthState,
-        access=AttrWriteType.READ,
-        doc="The Band 5b healthState as reported by the SPF controller.",
-    )
-    def spfcB5bHealthState(self):
-        """Return the Band 5b healthState as reported by the SPF controller."""
-        return self.component_manager.component_state.get("b5bhealthstate", SPFHealthState.UNKNOWN)
+    def spfcB345HealthState(self):
+        """Return the Band 345 healthState as reported by the SPF controller."""
+        return self.component_manager.component_state.get(
+            "b345healthstate", SPFHealthState.UNKNOWN
+        )
 
     # --------
     # Commands

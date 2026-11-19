@@ -6,6 +6,7 @@ from unittest import mock
 
 import pytest
 import tango
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 
@@ -87,3 +88,167 @@ class TestDeviceProxyManager:
 
         mock_dp_ping.assert_called_once()
         mock_dp_reconnect.assert_called_with(True)
+
+    def test_device_proxy_timeout_is_configurable(self, patch_dp):
+        """Test the timeout passed to the manager is applied to the proxies it returns."""
+        dev_factory = DeviceProxyManager(LOGGER, self.signal, device_proxy_timeout=12345)
+
+        device_proxy = dev_factory("device/with/custom/timeout")
+
+        device_proxy.set_timeout_millis.assert_called_with(12345)
+
+    def test_control_mode_is_set_when_device_exposes_it(self, patch_dp, caplog):
+        """Test controlMode is set to MONITOR_AND_CONTROL on devices that have it."""
+        caplog.set_level(logging.DEBUG)
+
+        mock_dp = mock.MagicMock(name="dp with controlMode")
+        mock_dp.get_attribute_list.return_value = ["State", "Status", "controlMode"]
+        mock_dp.controlMode = ControlMode.NO_MONITOR_NO_CONTROL
+        patch_dp.return_value = mock_dp
+
+        trl = "device/with/controlmode"
+        self.dev_factory(trl)
+
+        mock_dp.write_attribute.assert_called_once_with(
+            "controlMode", ControlMode.MONITOR_AND_CONTROL
+        )
+        assert f"Set controlMode to MONITOR_AND_CONTROL for device at {trl}" in caplog.text
+
+    def test_control_mode_is_not_set_when_device_does_not_expose_it(self, patch_dp, caplog):
+        """Test controlMode is left alone on devices that don't have it."""
+        caplog.set_level(logging.DEBUG)
+
+        mock_dp = mock.MagicMock(name="dp without controlMode")
+        mock_dp.get_attribute_list.return_value = ["State", "Status"]
+        patch_dp.return_value = mock_dp
+
+        trl = "device/without/controlmode"
+        self.dev_factory(trl)
+
+        mock_dp.write_attribute.assert_not_called()
+        assert "Set controlMode to MONITOR_AND_CONTROL" not in caplog.text
+
+    def test_control_mode_is_not_written_when_already_set(self, patch_dp, caplog):
+        """Test controlMode is only written when its current value differs."""
+        caplog.set_level(logging.DEBUG)
+
+        mock_dp = mock.MagicMock(name="dp already in MONITOR_AND_CONTROL")
+        mock_dp.get_attribute_list.return_value = ["State", "Status", "controlMode"]
+        mock_dp.controlMode = ControlMode.MONITOR_AND_CONTROL
+        patch_dp.return_value = mock_dp
+
+        self.dev_factory("device/already/configured")
+
+        mock_dp.write_attribute.assert_not_called()
+        assert "Set controlMode to MONITOR_AND_CONTROL" not in caplog.text
+
+    def test_control_mode_is_checked_but_not_rewritten_on_later_access(self, patch_dp):
+        """Test a cached proxy is checked on each access but only written when needed."""
+        mock_dp = mock.MagicMock(name="dp with controlMode")
+        mock_dp.get_attribute_list.return_value = ["State", "Status", "controlMode"]
+        mock_dp.controlMode = ControlMode.NO_MONITOR_NO_CONTROL
+        # Make the write update the value that is read back, like a real attribute
+        mock_dp.write_attribute.side_effect = lambda name, value: setattr(mock_dp, name, value)
+        patch_dp.return_value = mock_dp
+
+        trl = "device/with/controlmode"
+        self.dev_factory(trl)
+        self.dev_factory(trl)
+
+        # The check runs on every access, but the value is already set the second time
+        assert mock_dp.get_attribute_list.call_count == 2
+        mock_dp.write_attribute.assert_called_once()
+
+    def test_control_mode_is_reapplied_after_device_restart(self, patch_dp):
+        """Test controlMode is set again if the device loses it, for example after a restart."""
+        mock_dp = mock.MagicMock(name="dp that restarts")
+        mock_dp.get_attribute_list.return_value = ["State", "Status", "controlMode"]
+        mock_dp.controlMode = ControlMode.NO_MONITOR_NO_CONTROL
+        # Make the write update the value that is read back, like a real attribute
+        mock_dp.write_attribute.side_effect = lambda name, value: setattr(mock_dp, name, value)
+        patch_dp.return_value = mock_dp
+
+        trl = "device/that/restarts"
+        self.dev_factory(trl)
+
+        # The device restarts and comes back with its default control mode
+        mock_dp.controlMode = ControlMode.NO_MONITOR_NO_CONTROL
+        self.dev_factory(trl)
+
+        assert mock_dp.write_attribute.call_args_list == [
+            mock.call("controlMode", ControlMode.MONITOR_AND_CONTROL),
+            mock.call("controlMode", ControlMode.MONITOR_AND_CONTROL),
+        ]
+
+    def test_control_mode_is_not_set_while_device_is_unresponsive(self, patch_dp):
+        """Test controlMode is set on a later call once an unresponsive device recovers."""
+        mock_dp = mock.MagicMock(name="unresponsive dp")
+        mock_dp.get_attribute_list.return_value = ["State", "Status", "controlMode"]
+        mock_dp.controlMode = ControlMode.NO_MONITOR_NO_CONTROL
+        mock_dp.ping.side_effect = tango.DevFailed("FAIL")
+        patch_dp.return_value = mock_dp
+
+        trl = "unresponsive/device/address"
+        # Skip the reconnect retries so the test doesn't wait on the back-off
+        with mock.patch.object(
+            self.dev_factory, "wait_for_device", side_effect=RuntimeError("down")
+        ):
+            self.dev_factory(trl)
+
+        mock_dp.get_attribute_list.assert_not_called()
+        mock_dp.write_attribute.assert_not_called()
+
+        # The device comes back, so the next call configures it
+        mock_dp.ping.side_effect = None
+        self.dev_factory(trl)
+
+        mock_dp.write_attribute.assert_called_once_with(
+            "controlMode", ControlMode.MONITOR_AND_CONTROL
+        )
+
+    def test_failed_control_mode_write_is_logged_and_retried(self, patch_dp, caplog):
+        """Test a failed controlMode write doesn't stop the proxy being returned."""
+        caplog.set_level(logging.DEBUG)
+
+        mock_dp = mock.MagicMock(name="dp with failing write")
+        mock_dp.get_attribute_list.return_value = ["State", "Status", "controlMode"]
+        mock_dp.controlMode = ControlMode.NO_MONITOR_NO_CONTROL
+        mock_dp.write_attribute.side_effect = tango.DevFailed("FAIL")
+        patch_dp.return_value = mock_dp
+
+        trl = "device/with/failing/write"
+        returned_dp = self.dev_factory(trl)
+
+        assert returned_dp is mock_dp
+        assert f"Failed to set controlMode for device at {trl}" in caplog.text
+
+        # The write succeeds on the next access
+        mock_dp.write_attribute.side_effect = None
+        self.dev_factory(trl)
+
+        assert mock_dp.write_attribute.call_count == 2
+
+    def test_failed_attribute_list_read_is_logged_and_retried(self, patch_dp, caplog):
+        """Test a failure reading the attribute list is handled like a failed write."""
+        caplog.set_level(logging.DEBUG)
+
+        mock_dp = mock.MagicMock(name="dp with failing attribute list")
+        mock_dp.get_attribute_list.side_effect = tango.DevFailed("FAIL")
+        mock_dp.controlMode = ControlMode.NO_MONITOR_NO_CONTROL
+        patch_dp.return_value = mock_dp
+
+        trl = "device/with/failing/attribute/list"
+        returned_dp = self.dev_factory(trl)
+
+        assert returned_dp is mock_dp
+        assert f"Failed to set controlMode for device at {trl}" in caplog.text
+        mock_dp.write_attribute.assert_not_called()
+
+        # The read succeeds on the next access, so the device is configured then
+        mock_dp.get_attribute_list.side_effect = None
+        mock_dp.get_attribute_list.return_value = ["State", "Status", "controlMode"]
+        self.dev_factory(trl)
+
+        mock_dp.write_attribute.assert_called_once_with(
+            "controlMode", ControlMode.MONITOR_AND_CONTROL
+        )

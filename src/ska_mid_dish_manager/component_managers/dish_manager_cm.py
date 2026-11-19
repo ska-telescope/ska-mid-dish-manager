@@ -6,6 +6,7 @@ import logging
 import os
 import threading
 import time
+from enum import IntEnum
 from functools import partial
 from threading import Lock
 from typing import Callable, Dict, List, Optional, Tuple, cast
@@ -118,6 +119,7 @@ class DishManagerComponentManager(BaseComponentManager):
         wms_device_names: List[str] = [],
         wind_stow_callback: Optional[Callable] = None,
         clear_scan_id_callback: Optional[Callable] = None,
+        record_command_callback: Optional[Callable[[str, bool], None]] = None,
         **kwargs,
     ):
         self.logger = logger
@@ -207,8 +209,6 @@ class DishManagerComponentManager(BaseComponentManager):
             autowindstowenabled=False,
             meanwindspeed=-1,
             windgust=-1,
-            lastcommandedmode=("0.0", ""),
-            lastcommandinvoked=("0.0", ""),
             lastcommandfailure=("0.0", "", ""),
             lasttangoeventerror=("0.0", "", "", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
@@ -240,23 +240,21 @@ class DishManagerComponentManager(BaseComponentManager):
             healthinfo=[],
             b1healthstate=SPFHealthState.UNKNOWN,
             b2healthstate=SPFHealthState.UNKNOWN,
-            b3healthstate=SPFHealthState.UNKNOWN,
-            b4healthstate=SPFHealthState.UNKNOWN,
-            b5ahealthstate=SPFHealthState.UNKNOWN,
-            b5bhealthstate=SPFHealthState.UNKNOWN,
+            b345healthstate=SPFHealthState.UNKNOWN,
             **kwargs,
         )
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
         self.clear_scan_id_callback = clear_scan_id_callback
-        self._abort_sequence_in_progress = False
+        self._record_command_callback = record_command_callback
         self._state_transition = StateTransition()
         self._state_update_lock = Lock()
         self._stop_event = threading.Event()
         self.watchdog_timer = WatchdogTimer(
             callback_on_timeout=self._stow_on_watchdog_expiry,
         )
+        self._abort_sequence_in_progress = False
         self._wind_stow_active = False
         self._reset_alarm = False
         self._wind_limits = {
@@ -290,10 +288,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 b5blnapowerstate=False,
                 b1healthstate=SPFHealthState.UNKNOWN,
                 b2healthstate=SPFHealthState.UNKNOWN,
-                b3healthstate=SPFHealthState.UNKNOWN,
-                b4healthstate=SPFHealthState.UNKNOWN,
-                b5ahealthstate=SPFHealthState.UNKNOWN,
-                b5bhealthstate=SPFHealthState.UNKNOWN,
+                b345healthstate=SPFHealthState.UNKNOWN,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPF
                 ),
@@ -314,6 +309,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 dsccmdauth=DscCmdAuthType.NO_AUTHORITY,
                 configuretargetlock=None,
                 indexerposition=IndexerPosition.UNKNOWN,
+                feedindexermoving=False,
                 powerstate=DSPowerState.UNKNOWN,
                 desiredpointingaz=[0.0, 0.0],
                 desiredpointingel=[0.0, 0.0],
@@ -463,10 +459,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 "b5bLnaPowerState",
                 "b1HealthState",
                 "b2HealthState",
-                "b3HealthState",
-                "b4HealthState",
-                "b5aHealthState",
-                "b5bHealthState",
+                "b345HealthState",
             ],
             "B5DC": [
                 "rfcmPllLock",
@@ -706,12 +699,8 @@ class DishManagerComponentManager(BaseComponentManager):
         :param: trigger_source: The event requesting the dish to stow.
                  It can be due to either a wind condition or communication loss from client.
         """
-        last_commanded_mode = (str(time.time()), trigger_source)
-        update_args = {
-            "lastcommandedmode": last_commanded_mode,
-            "lastcommandinvoked": last_commanded_mode,
-        }
-        self._update_component_state(**update_args)
+        if self._record_command_callback is not None:
+            self._record_command_callback(trigger_source, True)
 
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
@@ -783,7 +772,7 @@ class DishManagerComponentManager(BaseComponentManager):
 
         for key, com_man in self.get_active_sub_component_managers().items():
             health_state = com_man.component_state.get("healthstate")
-            if health_state is None:
+            if not isinstance(health_state, IntEnum):
                 continue
 
             fqdn = com_man._tango_device_fqdn
@@ -1025,12 +1014,16 @@ class DishManagerComponentManager(BaseComponentManager):
             self._build_state_callback(device, kwargs["buildstate"])
 
         current_dish_mode = self.component_state["dishmode"]
-        # Update dishMode if there are operatingmode, indexerposition or adminmode changes
-        if (
-            "operatingmode" in kwargs
-            or "indexerposition" in kwargs
-            or "adminmode" in kwargs
-            or "powerstate" in kwargs
+        # Update dishMode if there are subcomponent driving changes
+        if any(
+            k in kwargs
+            for k in (
+                "operatingmode",
+                "feedindexermoving",
+                "indexerposition",
+                "adminmode",
+                "powerstate",
+            )
         ):
             # Do not compute dish mode if the dish is in MAINTENANCE mode
             if current_dish_mode != DishMode.MAINTENANCE:
@@ -1167,14 +1160,15 @@ class DishManagerComponentManager(BaseComponentManager):
             self._update_component_state(capturing=data_fiber_check)
 
         # CapabilityStates
-        # Update all CapabilityStates when indexerposition, dish_mode or operatingmode changes
-        if (
-            "indexerposition" in kwargs
-            or "operatingmode" in kwargs
-            # Added in `powerstate` and `adminmode` so that if the dishmode changes earlier then
-            # the capability states are recalculated as well
-            or "powerstate" in kwargs
-            or "adminmode" in kwargs
+        if any(
+            k in kwargs
+            for k in (
+                "operatingmode",
+                "feedindexermoving",
+                "indexerposition",
+                "adminmode",
+                "powerstate",
+            )
         ):
             cap_state_updates = {}
             for band in ["b1", "b2", "b3", "b4", "b5a", "b5b"]:

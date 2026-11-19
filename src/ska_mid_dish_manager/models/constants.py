@@ -6,6 +6,7 @@ DEFAULT_DS_MANAGER_TRL = "mid-dish/ds-manager/SKA001"
 DEFAULT_SPFC_TRL = "mid-dish/simulator-spfc/SKA001"
 DEFAULT_SPFRX_TRL = "mid-dish/simulator-spfrx/SKA001"
 DEFAULT_B5DC_PROXY_TRL = "mid-dish/b5dc-manager/SKA001"
+DEFAULT_MK_WMS_TRL = "ska-mid/mk-weather-monitoring/s1"
 DEFAULT_WATCHDOG_TIMEOUT = 0.0
 MAINTENANCE_MODE_ACTIVE_PROPERTY = "MaintenanceModeActive"
 MAINTENANCE_MODE_TRUE_VALUE = "true"
@@ -17,15 +18,10 @@ MEAN_WIND_SPEED_THRESHOLD_MPS = 11.1
 WIND_GUST_THRESHOLD_MPS = 16.9
 # TODO make configurable helm parameter on device property
 DEVICE_PROXY_TIMEOUT_MS = 5000
-SLOW_DEVICE_PROXY_TIMEOUT_MS = 12000
+SPFRX_DEVICE_PROXY_TIMEOUT_MS = 12000
 STOW_ELEVATION_DEGREES = 90.2
 ELEVATION_SPEED_DEGREES_PER_SECOND = 1.0
 DEFAULT_ACTION_TIMEOUT_S = 120
-# SPFRx keeps reporting OPERATE for a short while after accepting a band configuration, only
-# moving to CONFIGURE once it starts configuring. Its state is not trusted to complete the
-# command until this has elapsed, otherwise the command completes against the state SPFRx was
-# in before it started configuring.
-SPFRX_CONFIGURE_COMPLETION_DELAY_S = 2.0
 # Name of the environment variable holding the URL of the TZ data file that is
 # downloaded and forwarded to SPFRx by the UpdateTZData command.
 TZ_DATA_URL_ENV_VAR = "TZ_DATA_URL"
@@ -39,3 +35,8 @@ MAX_AZIMUTH = 270.0
 MIN_AZIMUTH = -270.0
 
 OPERATOR_TAG = {"user": "operator"}
+
+# SPFRx ConfigureBand timeouts
+SPFRX_CONFIG_WAIT_TIME = 12
+SPFRX_OPERATE_WAIT_TIME = 12
+SPFRX_BAND_WAIT_TIME = 12

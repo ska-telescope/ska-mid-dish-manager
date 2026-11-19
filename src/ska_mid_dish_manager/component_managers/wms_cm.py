@@ -9,7 +9,7 @@ from typing import Any, Callable, List, Optional
 
 import tango
 from ska_control_model import CommunicationStatus
-from ska_control_model.future import AdminMode
+from ska_control_model.future import ControlMode
 from ska_tango_base.base import BaseComponentManager
 
 GROUP_REQUEST_TIMEOUT_MS = 3000
@@ -129,11 +129,11 @@ class WMSComponentManager(BaseComponentManager):
         """Start WMS Tango device monitoring of the weather station servers."""
         while not self._stop_monitoring_flag.wait(timeout=self._wms_polling_period):
             try:
-                self.write_wms_group_attribute_value("adminMode", AdminMode.ONLINE)
+                self.write_wms_group_attribute_value("controlMode", ControlMode.MONITOR_NO_CONTROL)
                 break
             except tango.DevFailed:
                 self.logger.error(
-                    "Failed to set WMS device(s) adminMode to ONLINE. One or more"
+                    "Failed to set WMS device(s) controlMode to MONITOR_NO_CONTROL. One or more"
                     " WMS device(s) may be unavailable. Retrying"
                 )
 
@@ -148,11 +148,11 @@ class WMSComponentManager(BaseComponentManager):
         self._wind_gust_buffer.clear()
 
         try:
-            self.write_wms_group_attribute_value("adminMode", AdminMode.ENGINEERING)
+            self.write_wms_group_attribute_value("controlMode", ControlMode.NO_MONITOR_NO_CONTROL)
             self._wms_device_group.remove_all()  # ty: ignore[unresolved-attribute]
         except tango.DevFailed:
             self.logger.error(
-                "Failed to set WMS device(s) adminMode to ENGINEERING. "
+                "Failed to set WMS device(s) controlMode to NO_MONITOR_NO_CONTROL. "
                 "One or more WMS device(s) may be unavailable"
             )
         self._update_communication_state(CommunicationStatus.DISABLED)

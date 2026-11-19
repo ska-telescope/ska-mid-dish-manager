@@ -7,6 +7,31 @@ from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
+@pytest.fixture
+def slow_spfrx_proxy(spfrx_device_proxy, event_store_class):
+    """Make the SPFRx configureband slower."""
+    # introduce a delay in SPFRx band configuration to simulate a
+    # long-running operation (10s before and 10s during configuration)
+    spfrx_device_proxy.configureBandStartDelay = 10
+    spfrx_device_proxy.configureModeDuration = 10
+
+    yield spfrx_device_proxy
+
+    event_store = event_store_class()
+
+    retry_interval = 1
+    timeout = 60
+
+    counter = 0
+    while spfrx_device_proxy.configureBandStartDelay != 0.5 and counter <= timeout:
+        counter += 1
+        try:
+            spfrx_device_proxy.configureBandStartDelay = 0.5
+            spfrx_device_proxy.configureModeDuration = 0.5
+        except Exception:
+            event_store.get_queue_values(timeout=retry_interval)
+
+
 @pytest.mark.acceptance
 def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager_proxy):
     """Test ConfigureBand2."""
@@ -46,19 +71,21 @@ def test_configure_band_a(monitor_tango_servers, event_store_class, dish_manager
 
     expected_progress_updates = [
         # ConfigureBand2
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+        "Running SetIndexPosition on device DS",
+        "SPFRX.ConfigureBand2 started",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-        "Awaiting configuredband change to B2",
-        "DS indexerposition changed to B2",
-        "DS.SetIndexPosition completed",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Awaiting SPFRX configuredband change to B2",
+        "Awaiting DS indexerposition change to B2",
         "SPFRX configuredband changed to B2",
-        "SPFRX.ConfigureBand2 completed",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand2: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand2 complete",
         "ConfigureBand2 complete. Triggering on success action.",
-        # Then SetOperateMode
+        # # Then SetOperateMode
         "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
         "DS operatingmode already POINT, not fanning out SetPointMode command",
-        "SetOperateMode completed",
+        "SetOperateMode completed.",
     ]
 
     events = progress_event_store.get_queue_values()
@@ -115,15 +142,15 @@ def test_configure_band_b(
     spfrx_config_band_cmd = f"SPFRX.{band_request}"
     if expected_band == Band.B5b:
         spfrx_config_band_cmd = "SPFRX.ConfigureBand1"
+        message_str = "B1"
 
     expected_progress_updates = [
-        f"Fanned out commands: DS.SetIndexPosition, {spfrx_config_band_cmd}",
-        f"Awaiting configuredband change to {message_str}",
-        f"{band_request} complete",
+        f"{spfrx_config_band_cmd} started",
+        "Running SetIndexPosition on device DS",
+        f"Running {spfrx_config_band_cmd.replace('SPFRX.', '')} on device SPFRX",
+        f"Awaiting SPFRX configuredband change to {message_str}",
     ]
-    events = progress_event_store.wait_for_progress_update(
-        expected_progress_updates[-1], timeout=6
-    )
+    events = progress_event_store.wait_for_progress_update(f"{band_request} complete", timeout=6)
     events_string = "".join([str(event.attr_value.value) for event in events])
 
     # Check that all the expected progress messages appeared
@@ -180,15 +207,34 @@ def test_configure_band_2_from_stow(
     config_band_event_store.wait_for_value(Band.B2, timeout=30)
 
     expected_progress_updates = [
-        # ConfigureBand2
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand2",
+        "Stow called, monitor dishmode for LRC completed",
+        "ConfigureBand2 started",
+        "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
-        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-        "Awaiting configuredband change to B2",
-        "DS indexerposition changed to B2",
-        "DS.SetIndexPosition completed",
+        "Running SetIndexPosition on device DS",
+        "SetIndexPosition on DS timeout is 0",
+        "SPFRX.ConfigureBand2 started",
+        "Running ConfigureBand2 on device SPFRX",
+        "ConfigureBand2 on SPFRX timeout is 0",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand2: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand2: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "Awaiting SPFRX configuredband change to B2",
+        "Running Wait for configuredband 2 on device SPFRX",
+        "Awaiting SPFRX configuredband change to B2",
         "SPFRX configuredband changed to B2",
-        "SPFRX.ConfigureBand2 completed",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand2: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand2 completed.",
     ]
 
     events = progress_event_store.get_queue_values(timeout=0)
@@ -270,14 +316,40 @@ def test_configure_band_json(
 
     expected_progress_updates = [
         # ConfigureBand
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand",
+        "ConfigureBand started",
+        "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
+        "Running SetIndexPosition on device DS",
+        "SetIndexPosition on DS timeout is 0",
+        "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-        "Awaiting configuredband change to B2",
-        "DS indexerposition changed to B2",
-        "DS.SetIndexPosition completed",
+        "Running ConfigureBand on device SPFRX",
+        "ConfigureBand on SPFRX timeout is 0",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "Awaiting SPFRX configuredband change to B2",
+        "Running Wait for configuredband 2 on device SPFRX",
+        "Awaiting SPFRX configuredband change to B2",
         "SPFRX configuredband changed to B2",
-        "SPFRX.ConfigureBand completed",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
     ]
 
     events = progress_event_store.get_queue_values(timeout=0)
@@ -299,11 +371,36 @@ def test_configure_band_json(
     dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
 
     expected_progress_updates = [
-        "Fanned out commands: SPFRX.ConfigureBand",
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
-        "Awaiting configuredband change to B2",
+        "Running ConfigureBand on device SPFRX",
+        "ConfigureBand on SPFRX timeout is 0",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "Awaiting SPFRX configuredband change to B2",
+        "Running Wait for configuredband 2 on device SPFRX",
+        "Awaiting SPFRX configuredband change to B2",
         "SPFRX configuredband changed to B2",
-        "SPFRX.ConfigureBand completed",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
     ]
 
     events = progress_event_store.get_queue_values(timeout=0)
@@ -403,14 +500,32 @@ def test_configure_band_json_with_b5dc_fanout(
     )
 
     expected_status_updates = [
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand, B5DC.SetFrequency",
-        "Awaiting DS indexerposition change to B5b",
-        "Awaiting SPFRX configuredband, operatingmode change to B1, OPERATE",
-        "Awaiting B5DC rfcmfrequency change to 11.1",
-        "Awaiting configuredband change to B5b",
-        "DS indexerposition changed to B5b",
-        "SPFRX configuredband changed to B1",
-        "B5DC rfcmfrequency changed to 11.1",
+        "ConfigureBand started",
+        "DS.SetIndexPosition started",
+        "Awaiting DS indexerposition change to B2",
+        "Running SetIndexPosition on device DS",
+        "SetIndexPosition on DS timeout is 0",
+        "SPFRX.ConfigureBand started",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Running ConfigureBand on device SPFRX",
+        "ConfigureBand on SPFRX timeout is 0",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "Awaiting SPFRX configuredband change to B2",
+        "Running Wait for configuredband 2 on device SPFRX",
+        "Awaiting SPFRX configuredband change to B2",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.Wait for configuredband 2 completed",
     ]
 
     events = progress_event_store.get_queue_values(timeout=0)
@@ -485,5 +600,178 @@ def test_configure_band_6_from_stow(
 
     assert dish_manager_proxy.configuredBand == Band.B6
     assert dish_manager_proxy.dishMode == DishMode.STOW
+
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+def test_slow_spfrx_configure_band(
+    monitor_tango_servers, event_store_class, dish_manager_proxy, slow_spfrx_proxy
+):
+    """Test ConfigureBand with JSON string with a slow SPFRx."""
+    assert slow_spfrx_proxy.configureBandStartDelay == 10
+    assert slow_spfrx_proxy.configureModeDuration == 10
+    dm_event_store = event_store_class()
+    result_event_store = event_store_class()
+    status_event_store = event_store_class()
+
+    attr_cb_mapping = {
+        "dishMode": dm_event_store,
+        "Status": status_event_store,
+        "lrcFinished": result_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    json_payload_1 = """
+    {
+        "dish": {
+            "receiver_band": "1",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    # make sure configuredBand is not B2
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert dish_manager_proxy.configuredBand == Band.B1
+
+    result_event_store.clear_queue()
+    status_event_store.clear_queue()
+    dm_event_store.clear_queue()
+
+    json_payload_2 = """
+    {
+        "dish": {
+            "receiver_band": "2",
+            "spfrx_processing_parameters": [
+                {
+                    "dishes": ["all"],
+                    "sync_pps": true
+                }
+            ]
+        }
+    }
+    """
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+    assert dish_manager_proxy.configuredBand == Band.B2
+    events = status_event_store.get_queue_values(timeout=0)
+
+    expected_progress_updates = (
+        "ConfigureBand started",
+        "DS.SetIndexPosition started",
+        "Awaiting DS indexerposition change to B2",
+        "Running SetIndexPosition on device DS",
+        "SetIndexPosition on DS timeout is 0",
+        "SPFRX.ConfigureBand started",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Running ConfigureBand on device SPFRX",
+        "ConfigureBand on SPFRX timeout is 0",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "Awaiting SPFRX configuredband change to B2",
+        "Running Wait for configuredband 2 on device SPFRX",
+        "Awaiting SPFRX configuredband change to B2",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand complete. Triggering on success action.",
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
+    )
+
+    events_string = " ".join([str(attr_value) for _, attr_value in events])
+    for message in expected_progress_updates:
+        assert message in events_string
+
+    # Do it again to check result
+    result_event_store.clear_queue()
+    status_event_store.clear_queue()
+    dm_event_store.clear_queue()
+    # Check that dish manager allows configure band when already in requested band
+    # but does not set the indexer position again.
+    [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_2)
+    result_event = result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+
+    config_event = dm_event_store.wait_for_value(DishMode.CONFIG, timeout=20)
+    operate_event = dm_event_store.wait_for_value(DishMode.OPERATE, timeout=20)
+    assert dish_manager_proxy.configuredBand == Band.B2
+
+    # Check that the LRC finishes AFTER all the mode transitions
+    assert result_event.reception_date.totime() > config_event.reception_date.totime()
+    assert result_event.reception_date.totime() > operate_event.reception_date.totime()
+
+    # Check that we go CONFIG -> OPERATE
+    assert operate_event.reception_date.totime() > config_event.reception_date.totime()
+
+    expected_progress_updates = [
+        # ConfigureBand action
+        "ConfigureBand started",
+        "SPFRX.ConfigureBand started",
+        "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
+        "Running ConfigureBand on device SPFRX",
+        "ConfigureBand on SPFRX timeout is 0",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
+        "SPFRX.Wait for operatingMode.CONFIGURE completed",
+        "ConfigureBand: Wait for operatingMode.CONFIGURE on device SPFRX completed",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "Running Wait for operatingMode.OPERATE on device SPFRX",
+        "Awaiting SPFRX operatingmode change to OPERATE",
+        "SPFRX operatingmode changed to OPERATE",
+        "SPFRX.Wait for operatingMode.OPERATE completed",
+        "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
+        "Awaiting SPFRX configuredband change to B2",
+        "Running Wait for configuredband 2 on device SPFRX",
+        "Awaiting SPFRX configuredband change to B2",
+        "SPFRX configuredband changed to B2",
+        "SPFRX.Wait for configuredband 2 completed",
+        "ConfigureBand: Wait for configuredband 2 on device SPFRX completed",
+        "ConfigureBand complete. Triggering on success action.",
+        # SetOperateMode action
+        "SetOperateMode started",
+        "SPF operatingmode already OPERATE, not fanning out SetOperateMode command",
+        "DS operatingmode already POINT, not fanning out SetPointMode command",
+        "Fanned out commands: None",
+        "Awaiting dishmode change to OPERATE",
+        "SetOperateMode completed.",
+    ]
+
+    events = status_event_store.get_queue_values(timeout=0)
+
+    events_string = "".join([str(attr_value) for _, attr_value in events])
+    for message in expected_progress_updates:
+        assert message in events_string
 
     remove_subscriptions(subscriptions)

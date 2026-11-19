@@ -1,10 +1,13 @@
 """Fixtures for running ska-mid-dish-manager acceptance tests."""
 
+import asyncio
 import logging
 import os
+import time
 
 import pytest
 import tango
+from aiokatcp import Client
 from ska_ser_logging import configure_logging
 
 from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
@@ -17,6 +20,8 @@ from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup
 
 configure_logging()
 logger = logging.getLogger(__name__)
+
+DEFAULT_MK_WEATHER_SIMULATOR_PORT = "7147"
 
 
 @pytest.fixture(scope="function", autouse=True)
@@ -91,6 +96,93 @@ def spfrx_device_proxy(spfrx_device_fqdn):
 @pytest.fixture(scope="package")
 def wms_device_proxy(wms_device_fqdn):
     return tango.DeviceProxy(wms_device_fqdn)
+
+
+def pytest_addoption(parser):
+    """Register the KATCP weather simulator endpoint."""
+    default_mk_wms_svc_name = "katcp-wms-sim-s1-svc"
+    namespace = os.environ.get("KUBE_NAMESPACE", "")
+    cluster_domain = os.environ.get("CLUSTER_DOMAIN", "")
+
+    if namespace and cluster_domain:
+        default_endpoint = (
+            f"{default_mk_wms_svc_name}.{namespace}.svc.{cluster_domain}:"
+            f"{DEFAULT_MK_WEATHER_SIMULATOR_PORT}"
+        )
+    else:
+        default_endpoint = f"{default_mk_wms_svc_name}:{DEFAULT_MK_WEATHER_SIMULATOR_PORT}"
+
+    parser.addoption(
+        "--weather-simulator-endpoint",
+        action="store",
+        default=default_endpoint,
+        help="Endpoint for the KATCP weather simulator",
+    )
+
+
+@pytest.fixture(scope="session")
+def weather_simulator_endpoint(request):
+    """Retrieve the KATCP weather simulator endpoint."""
+    return request.config.getoption("--weather-simulator-endpoint")
+
+
+@pytest.fixture(scope="package")
+def trigger_weather_sensor(weather_simulator_endpoint):
+    """Trigger a weather sensor on the KATCP weather simulator."""
+
+    def trigger(sensor, value, duration):
+        async def _trigger():
+            host, port = weather_simulator_endpoint.rsplit(":", 1)
+            port = int(port)
+
+            logger.info(
+                "Connecting to weather simulator at %s:%s",
+                host,
+                port,
+            )
+
+            try:
+                client = await asyncio.wait_for(
+                    Client.connect(host, port),
+                    timeout=10,
+                )
+            except asyncio.TimeoutError as exc:
+                raise TimeoutError(
+                    f"Timed out connecting to weather simulator at {host}:{port}"
+                ) from exc
+
+            try:
+                logger.info(
+                    "Triggering sensor=%s, value=%s, duration=%s",
+                    sensor,
+                    value,
+                    duration,
+                )
+
+                result = await asyncio.wait_for(
+                    client.request(
+                        "trigger-weather-sensor",
+                        sensor,
+                        str(value),
+                        str(duration),
+                    ),
+                    timeout=10,
+                )
+
+                logger.info("Weather sensor trigger response: %s", result)
+                return result
+
+            except asyncio.TimeoutError as exc:
+                raise TimeoutError(
+                    f"Timed out triggering sensor {sensor!r} at {host}:{port}"
+                ) from exc
+
+            finally:
+                client.close()
+
+        return asyncio.run(_trigger())
+
+    return trigger
 
 
 @pytest.fixture
@@ -170,14 +262,28 @@ def reset_dish_to_standby(
     op_mode_events = event_store_class()
     power_state_events = event_store_class()
     dish_mode_events = event_store_class()
+    lrc_finished_events = event_store_class()
 
-    lrc_executing = dish_manager_proxy.lrcExecuting
+    # A command left running by the previous test keeps waiting on the sub devices we are
+    # about to reset, and blocks the queue for the next test. Let it finish first, aborting
+    # is a last resort as sub device commands already in flight still land after an abort.
+    deadline = time.time() + DEFAULT_ACTION_TIMEOUT_S
+    while dish_manager_proxy.lrcExecuting or dish_manager_proxy.lrcQueue:
+        if time.time() > deadline:
+            break
+        time.sleep(0.5)
 
-    if len(lrc_executing) > 0:
-        # this wait is very important for our AUTOMATED tests!!!
-        # wait for task status updates to finish before resetting the
-        # sub devices to a clean state for the next test.
-        op_mode_events.get_queue_events(timeout=5)
+    if dish_manager_proxy.lrcExecuting or dish_manager_proxy.lrcQueue:
+        abort_subscriptions = setup_subscriptions(
+            dish_manager_proxy, {"lrcFinished": lrc_finished_events}
+        )
+        try:
+            [[_], [unique_id]] = dish_manager_proxy.Abort()
+            lrc_finished_events.wait_for_finished_command_result(
+                unique_id, '[0, "Abort sequence completed"]', timeout=30
+            )
+        finally:
+            remove_subscriptions(abort_subscriptions)
 
     subscriptions = {}
     subscriptions.update(

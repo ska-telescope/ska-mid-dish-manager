@@ -6,11 +6,11 @@ from threading import Event
 from typing import Any, Callable, Dict, Optional
 
 import tango
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.models.constants import (
     DEVICE_PROXY_TIMEOUT_MS,
     OPERATOR_TAG,
-    SLOW_DEVICE_PROXY_TIMEOUT_MS,
 )
 
 
@@ -95,10 +95,12 @@ class DeviceProxyManager:
         self,
         logger: Optional[logging.Logger] = None,
         thread_event: Event | None = None,
+        device_proxy_timeout: int = DEVICE_PROXY_TIMEOUT_MS,
     ):
         self._device_proxies: Dict[str, tango.DeviceProxy] = {}
         self.logger = logger or logging.getLogger(__name__)
         self.event_signal = thread_event or Event()
+        self.device_proxy_timeout = device_proxy_timeout
 
     def __del__(self) -> None:
         """Remove all device proxies when the object is deleted."""
@@ -118,14 +120,52 @@ class DeviceProxyManager:
                 raise
             self._device_proxies[trl] = device_proxy
 
-        if not self._is_tango_device_running(device_proxy):
+        is_device_running = self._is_tango_device_running(device_proxy)
+        if not is_device_running:
             try:
                 self.wait_for_device(device_proxy)
+                is_device_running = True
             except (tango.DevFailed, RuntimeError):
                 self.logger.warning("Device at %s is unresponsive.", trl, extra=OPERATOR_TAG)
 
-        device_proxy.set_timeout_millis(DEVICE_PROXY_TIMEOUT_MS)
+        # Only configure the control mode once the device is known to be running, so an
+        # unresponsive device doesn't raise here and is configured on a later call instead
+        if is_device_running:
+            self._configure_control_mode(device_proxy, trl)
+
+        device_proxy.set_timeout_millis(self.device_proxy_timeout)
         return device_proxy
+
+    def _configure_control_mode(self, tango_device_proxy: tango.DeviceProxy, trl: str) -> None:
+        """Set controlMode to MONITOR_AND_CONTROL on devices that expose it.
+
+        The current value is read first, so the attribute is only written when it differs,
+        for example after the device has restarted. If the check or the write fails, it is
+        tried again on the next call.
+
+        :param tango_device_proxy: a client to the device
+        :type tango_device_proxy: tango.DeviceProxy
+        :param trl: the address of the device
+        :type trl: str
+        """
+        try:
+            if "controlMode" not in tango_device_proxy.get_attribute_list():
+                return
+            if tango_device_proxy.controlMode == ControlMode.MONITOR_AND_CONTROL:
+                return
+
+            tango_device_proxy.write_attribute("controlMode", ControlMode.MONITOR_AND_CONTROL)
+        except tango.DevFailed:
+            self.logger.warning(
+                "Failed to set controlMode for device at %s, will retry on next access.",
+                trl,
+                extra=OPERATOR_TAG,
+            )
+            return
+
+        self.logger.debug(
+            "Set controlMode to MONITOR_AND_CONTROL for device at %s", trl, extra=OPERATOR_TAG
+        )
 
     def _is_tango_device_running(self, tango_device_proxy: tango.DeviceProxy) -> bool:
         """Checks if the TANGO device is running.
@@ -184,12 +224,3 @@ class DeviceProxyManager:
     def factory_reset(self) -> Any:
         """Remove device proxy references to the devices."""
         self._device_proxies.clear()
-
-
-class SlowDeviceProxyManager(DeviceProxyManager):
-    """DeviceProxyManager with a timeout of SLOW_DEVICE_PROXY_TIMEOUT_MS."""
-
-    def __call__(self, *args, **kwargs) -> Any:
-        device_proxy = super().__call__(*args, **kwargs)
-        device_proxy.set_timeout_millis(SLOW_DEVICE_PROXY_TIMEOUT_MS)
-        return device_proxy

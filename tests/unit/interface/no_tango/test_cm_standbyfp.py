@@ -13,6 +13,7 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSPowerState,
     SPFOperatingMode,
 )
+from tests.utils import progress_call
 
 
 @pytest.mark.unit
@@ -29,47 +30,48 @@ def test_set_standbyfp_handler(
     """
     component_state_cb = callbacks["comp_state_cb"]
     task_cb = callbacks["task_cb"]
+    ds_cm = component_manager.sub_component_managers["DS"]
+    spf_cm = component_manager.sub_component_managers["SPF"]
 
-    threading.Thread(
+    command_thread = threading.Thread(
         target=component_manager.set_standby_fp_mode,
         args=(),
         kwargs={"task_callback": task_cb, "task_abort_event": task_abort_event},
         daemon=True,
-    ).start()
-    # wait a bit for the lrc updates to come through
-    component_state_cb.get_queue_values(timeout=1)
+    )
+    command_thread.start()
 
-    component_manager.sub_component_managers["DS"]._update_component_state(
+    ds_cm._update_component_state(
         operatingmode=DSOperatingMode.STANDBY, powerstate=DSPowerState.FULL_POWER
     )
-    component_manager.sub_component_managers["SPF"]._update_component_state(
-        operatingmode=SPFOperatingMode.OPERATE
-    )
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
 
     # check that the component state reports the requested command
-    received_updates = component_state_cb.get_queue_values()
-    last_update = received_updates[-1]
-    assert last_update == {"dishmode": DishMode.STANDBY_FP}
+    component_state_cb.wait_for_value("dishmode", DishMode.STANDBY_FP)
 
+    # wait for all the updates to be processed by the command thread
+    command_thread.join(timeout=30)
+    assert not command_thread.is_alive(), "SetStandbyFPMode did not finish in time"
     # check that the updates come through
     assert task_cb.call_args_list == [
         call(status=TaskStatus.IN_PROGRESS),
-        call(progress=None, progress_info="Awaiting DS operatingmode change to STANDBY"),
-        call(progress=None, progress_info="Awaiting DS powerstate change to FULL_POWER"),
-        call(progress=None, progress_info="Awaiting SPF operatingmode change to OPERATE"),
-        call(
-            progress=None,
-            progress_info=(
-                "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode, SPF.SetOperateMode"
-            ),
+        progress_call("SetStandbyFPMode started"),
+        progress_call("DS.SetStandbyMode started"),
+        progress_call("Awaiting DS operatingmode change to STANDBY"),
+        progress_call("DS.SetPowerMode started"),
+        progress_call("Awaiting DS powerstate change to FULL_POWER"),
+        progress_call("SPF.SetOperateMode started"),
+        progress_call("Awaiting SPF operatingmode change to OPERATE"),
+        progress_call(
+            "Fanned out commands: DS.SetStandbyMode, DS.SetPowerMode, SPF.SetOperateMode"
         ),
-        call(progress=None, progress_info="Awaiting dishmode change to STANDBY_FP"),
-        call(progress=None, progress_info="DS operatingmode changed to STANDBY"),
-        call(progress=None, progress_info="DS.SetStandbyMode completed"),
-        call(progress=None, progress_info="DS powerstate changed to FULL_POWER"),
-        call(progress=None, progress_info="DS.SetPowerMode completed"),
-        call(progress=None, progress_info="SPF operatingmode changed to OPERATE"),
-        call(progress=None, progress_info="SPF.SetOperateMode completed"),
-        call(progress=None, progress_info="SetStandbyFPMode completed."),
+        progress_call("Awaiting dishmode change to STANDBY_FP"),
+        progress_call("DS operatingmode changed to STANDBY"),
+        progress_call("DS.SetStandbyMode completed"),
+        progress_call("DS powerstate changed to FULL_POWER"),
+        progress_call("DS.SetPowerMode completed"),
+        progress_call("SPF operatingmode changed to OPERATE"),
+        progress_call("SPF.SetOperateMode completed"),
+        progress_call("SetStandbyFPMode completed."),
         call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetStandbyFPMode completed.")),
     ]

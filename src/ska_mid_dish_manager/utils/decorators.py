@@ -42,6 +42,9 @@ def record_command(record_mode: bool | Callable[..., Any] = False) -> Callable[.
         @record_command          # records only 'lastcommandinvoked'
         @record_command(True)    # records both 'lastcommandinvoked' and 'lastcommandedmode'
 
+    The values are emitted on the device's `_last_command_invoked` and `_last_commanded_mode`
+    signals.
+
     :param record_mode: Whether to also record 'lastcommandedmode'. Defaults to False.
     """
 
@@ -49,15 +52,12 @@ def record_command(record_mode: bool | Callable[..., Any] = False) -> Callable[.
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             device_instance = args[0]
-            component_manager = device_instance.component_manager
             command_and_time = (str(time.time()), func.__name__)  # ty: ignore[unresolved-attribute]
+            # setting a Signal emits the value on the device's shared signal bus
+            device_instance._last_command_invoked = command_and_time
+            # record both if True
             if record_mode is True:
-                component_manager._update_component_state(
-                    lastcommandinvoked=command_and_time,
-                    lastcommandedmode=command_and_time,
-                )
-            else:
-                component_manager._update_component_state(lastcommandinvoked=command_and_time)
+                device_instance._last_commanded_mode = command_and_time
             return func(*args, **kwargs)
 
         return wrapper

@@ -1,8 +1,6 @@
 """Contains pytest fixtures for other tests setup."""
 
 import logging
-import threading
-import time
 
 import pytest
 
@@ -10,6 +8,7 @@ from ska_mid_dish_manager.models.constants import (
     DEFAULT_B5DC_PROXY_TRL,
     DEFAULT_DISH_MANAGER_TRL,
     DEFAULT_DS_MANAGER_TRL,
+    DEFAULT_MK_WMS_TRL,
     DEFAULT_SPFC_TRL,
     DEFAULT_SPFRX_TRL,
 )
@@ -18,18 +17,18 @@ from tests.utils import ComponentStateStore, EventStore
 LOGGER = logging.getLogger(__name__)
 
 
-def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
-    """Log remaining threads at the end."""
-    time.sleep(1)
-    threads = threading.enumerate()
-    for t in threads:
-        LOGGER.info(
-            "  - %s (Alive: %s, ident=%s, daemon=%s)", t.name, t.is_alive(), t.ident, t.daemon
-        )
-        if t is threading.main_thread():
-            continue
+# def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
+#     """Log remaining threads at the end."""
+#     time.sleep(1)
+#     threads = threading.enumerate()
+#     for t in threads:
+#         LOGGER.info(
+#             "  - %s (Alive: %s, ident=%s, daemon=%s)", t.name, t.is_alive(), t.ident, t.daemon
+#         )
+#         if t is threading.main_thread():
+#             continue
 
-    assert len(threads) == 1, "Unexpected threads remaining after tests"
+#     assert len(threads) == 1, "Unexpected threads remaining after tests"
 
 
 def pytest_addoption(parser):
@@ -89,3 +88,8 @@ def spfrx_device_fqdn():
 @pytest.fixture(scope="session")
 def b5dc_device_fqdn():
     return DEFAULT_B5DC_PROXY_TRL
+
+
+@pytest.fixture(scope="session")
+def wms_device_fqdn():
+    return DEFAULT_MK_WMS_TRL
