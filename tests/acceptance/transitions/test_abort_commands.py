@@ -38,24 +38,22 @@ def test_abort_commands(
         "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    dish_manager_proxy.SetStandbyFPMode()
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
+    dish_manager_proxy.SetStowMode()
+    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=30)
 
-    dish_manager_proxy.ConfigureBand1(True)
+    dish_manager_proxy.ConfigureBand3(True)
 
     [[_], [unique_id]] = dish_manager_proxy.Abort()
-    # Confirm Dish Manager aborted the request on the Configure action
+    # confirm Dish Manager aborted the request on the Configure action
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
-    progress_event_store.wait_for_progress_update("ConfigureBand1 aborted", timeout=30)
+    progress_event_store.wait_for_progress_update("ConfigureBand3 aborted", timeout=30)
 
-    # Confirm that abort finished and the queue is cleared
+    # confirm that abort finished and the queue is cleared
     cmds_in_queue_store.wait_for_value((), timeout=30)
-
-    # Check that the Dish Manager transitioned to FP as part of the Abort sequence
-    dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=30)
-    assert dish_manager_proxy.dishMode == DishMode.STANDBY_FP
+    # check that the Dish Manager left the dish in STOW as part of the Abort sequence
+    assert dish_manager_proxy.dishMode == DishMode.STOW
 
     remove_subscriptions(subscriptions)
 
@@ -252,4 +250,34 @@ def test_abort_commands_during_stow(
     achieved_el = dish_manager_proxy.achievedPointing[2]
     assert achieved_el != pytest.approx(stow_el_position)
 
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.acceptance
+def test_abort_commands_in_maintenance_mode(
+    monitor_tango_servers,
+    event_store_class,
+    dish_manager_proxy,
+):
+    """Test that Abort only cancels LRC in maintenance mode."""
+    lrc_finished_events = event_store_class()
+    main_event_store = event_store_class()
+
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "lrcFinished": lrc_finished_events,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    if dish_manager_proxy.dishMode != DishMode.MAINTENANCE:
+        dish_manager_proxy.SetMaintenanceMode()
+        main_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=180)
+
+    [[_], [unique_id]] = dish_manager_proxy.Abort()
+    lrc_finished_events.wait_for_finished_command_result(
+        unique_id, '[0, "Abort completed OK"]', timeout=30
+    )
+
+    # check that the dish is in maintenance mode
+    assert dish_manager_proxy.dishMode == DishMode.MAINTENANCE
     remove_subscriptions(subscriptions)

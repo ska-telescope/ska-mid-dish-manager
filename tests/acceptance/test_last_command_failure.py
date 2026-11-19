@@ -19,7 +19,6 @@ def test_last_command_failure(
     assert dm_last_command_failure_value_1 == dm_last_command_failure_value_2
 
     # Unhappy Path: Run a command that fails - expect an updated DM lastCommandFailure
-    dish_manager_proxy.SetStowMode()
     dish_manager_proxy.Slew([45, 45])
     assert (
         "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"

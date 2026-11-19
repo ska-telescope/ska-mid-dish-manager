@@ -250,7 +250,7 @@ class EventStore:
                 component_states = proxy.GetComponentStates()
                 raise RuntimeError(
                     f"Never got an event with value [{value}] got [{ev_vals}]"
-                    f"with component states: [{component_states}]"
+                    f" with component states: [{component_states}]"
                 ) from err
             raise RuntimeError(f"Never got an event with value [{value}] got [{ev_vals}]") from err
 

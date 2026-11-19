@@ -2065,7 +2065,7 @@ class DishManager(
     @attribute(
         dtype=bool,
         access=AttrWriteType.READ_WRITE,
-        doc="Status of the SPFC LNA H & V polarization power state.",
+        doc="Status of the Band 5b SPFC LNA H & V polarization power state.",
     )
     def b5bLnaPowerState(self):
         """Return the Band 5b SPFC LNA H & V polarization power state."""
