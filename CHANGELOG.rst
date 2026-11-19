@@ -7,6 +7,7 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
+- Updated dcoker-compose to include Meerkat weather related code.
 - Added manual job to run lmc integration test prior to dish manager release (cascading pipeline)
 - Added custom sub component's values i.e DS Manager and Simulator to enable the projects to trigger Dish Manager's pipeline for early integration testing
  
