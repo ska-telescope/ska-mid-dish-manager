@@ -238,7 +238,6 @@ class TangoDeviceMonitor:
         # monitor all attributes in a thread
         self._attribute_subscription_thread.start()
 
-    # pylint:disable=too-many-arguments
     def _monitor_attributes_in_a_thread(self, exit_thread_event: Event) -> None:
         """Monitor all attributes.
 

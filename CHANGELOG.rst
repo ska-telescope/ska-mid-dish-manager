@@ -8,6 +8,30 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 ## unreleased
 *************
 - Updated dcoker-compose to include Meerkat weather related code.
+- Added manual job to run lmc integration test prior to dish manager release (cascading pipeline)
+- Added custom sub component's values i.e DS Manager and Simulator to enable the projects to trigger Dish Manager's pipeline for early integration testing
+ 
+Version 12.0.1
+**************
+- Updated ConfigureBand to address SKB-1594 by waiting for CONFIGURE and then OPERATE rather than a set timeout
+- DishManager automatically sets the controlMode to MONITOR_AND_CONTROL for sub-devices with a controlMode attribute.
+- Upgraded ska-mid-dish-b5dc-proxy chart to v1.0.1
+
+  - Configured alarm events.
+  - Upgraded ska-tango-util to v1.3.1
+  - Upgraded ska-tango-base to v1.3.1
+  - Upgraded ska-tango-dsconfig to v1.9.2
+  - Updated Dockerfile to use new base images
+  - Added retry on B5dcDeviceFrequencyException and B5dcDeviceAttenuationException for SetFrequency and SetAttenuation commands.
+  - Set controlMode attribute to MONITOR_AND_CONTROL on deployment.
+  - Upgraded base classes to v1.7.0
+  - Uses the new future device interfaces and handles monitoring and control from ControlMode attribute.
+  - communicationState is renamed to connectionState
+
+- Updated state transition rules to use `feedIndexerMoving` attribute from DSManager to determine if the feed indexer is moving.
+- Upgraded ska-mid-dish-ds-manager chart to v9.4.1
+
+  - FeedIndexerMoving attribute added to DSManager component manager to reflect the state of the feed indexer.
 
 Version 12.0.0
 **************
@@ -15,9 +39,13 @@ Version 12.0.0
 - Updated ska-tango-base to v1.7.0
 - Updated base images to 1.1.4
 - Workaround for SKB-1594
+
   - Give the SPFRx 12s to start CONFIG
+
 - Resolved SKB-1677
+
   - Replaced `spfcb3HealthState`, `spfcb4HealthState`, `spfcb5<a,b>HealthState` with `spfcB345HealthState`
+
 - Running fanned out tango commands now read their awaited attributes off the device on every progress check.
 - Using signals for `lastCommandInvoked` and `lastCommandedMode` updates so it does not block via the component state update.
 
@@ -30,8 +58,7 @@ Version 11.1.0
 
 Version 11.0.1
 **************
-- Tidied up the command fan-out classes and documented them under
-  Developer Guide > Command Fan-out > Actions and Handlers.
+- Tidied up the command fan-out classes and documented them under Developer Guide > Command Fan-out > Actions and Handlers.
 - Fixed exception being raised in event handler when tango sub-devices are not available and set to ignored.
 - Extended SPFRx command timeout, SKB-1593
 
@@ -125,13 +152,14 @@ Version 9.5.0-rc.1
 
 - Upgraded ska-mid-dish-simulators to v5.9.2.
 
-    - Updated healthstate to match the ICD.
-      - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
-    - Aligned the spectrumSample attribute implementation with the SPFRx hardware behavior.
-    - Added attribute 'spectrumSample' to SPFRx simulator
-    - Implemented ReTakeAuth command on DSC simulator.
-    - Updated TakeAuth command arguments to include immutable user ID on DSC simulator.
-    - Updated DSC simulator AxisSelect node to match ICD.
+  - Updated healthstate to match the ICD.
+
+    - Now [`UNKNOWN`, `NORMAL`, `DEGRADED`, `FAILED`]
+  - Aligned the spectrumSample attribute implementation with the SPFRx hardware behavior.
+  - Added attribute 'spectrumSample' to SPFRx simulator
+  - Implemented ReTakeAuth command on DSC simulator.
+  - Updated TakeAuth command arguments to include immutable user ID on DSC simulator.
+  - Updated DSC simulator AxisSelect node to match ICD.
 
 - Upgraded ska-tango-base to v1.1.1
 - Upgraded ska-tango-util to v1.1.1
