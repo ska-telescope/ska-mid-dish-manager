@@ -3,9 +3,30 @@
 from unittest.mock import Mock, patch
 
 import pytest
+from ska_control_model import CommunicationStatus
 from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+@pytest.mark.parametrize(
+    "communication_state",
+    [CommunicationStatus.NOT_ESTABLISHED, CommunicationStatus.DISABLED],
+)
+def test_ap_manager_communication_state_updates_connection_state(
+    dish_manager_resources_with_ap_manager,
+    communication_state,
+):
+    """Test APManager comm loss is reflected in the connectionstate comp state entry."""
+    _, dish_manager_cm = dish_manager_resources_with_ap_manager
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+
+    ds_cm._update_component_state(connectionstate=CommunicationStatus.ESTABLISHED)
+    ds_cm._update_communication_state(communication_state)
+
+    assert ds_cm.component_state["connectionstate"] == communication_state
 
 
 @pytest.mark.unit

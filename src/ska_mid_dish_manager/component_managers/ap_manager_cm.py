@@ -135,6 +135,16 @@ class APComponentManager(TangoDeviceComponentManager):
         prev_comm_state = self.communication_state
         super()._update_communication_state(communication_state)
 
+        # Mirror the APManager disconnection on the dscConnectionState attr
+        if self._communication_state in (
+            CommunicationStatus.NOT_ESTABLISHED,
+            CommunicationStatus.DISABLED,
+        ):
+            self._update_component_state(connectionstate=self._communication_state)
+
+        # If the prev communicationState was ESTABLISHED and the communicationState
+        # changes, do nothing, else, if the comms state is transitioning to ESTABLISHED
+        # set the APManager control mode to MONITOR_AND_CONTROL
         if (
             communication_state != CommunicationStatus.ESTABLISHED
             or prev_comm_state == CommunicationStatus.ESTABLISHED
