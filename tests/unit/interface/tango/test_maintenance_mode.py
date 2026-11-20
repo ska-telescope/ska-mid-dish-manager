@@ -5,7 +5,7 @@ from unittest.mock import call
 
 import pytest
 import tango
-from ska_control_model import TaskStatus
+from ska_control_model import ResultCode, TaskStatus
 
 from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
 from ska_mid_dish_manager.models.dish_enums import (
@@ -66,6 +66,21 @@ def test_happy_case_with_ap_manager(dish_manager_resources_with_ap_manager, even
 
     assert isinstance(ds_cm, APComponentManager)
 
+    # Ensure lrcFinished returns the completed APMaintenance result
+    # when attr value read by the action handler
+    command_id = "ap_maintenance_command_id"
+    ds_cm.execute_command.return_value = (TaskStatus.IN_PROGRESS, command_id)
+    ds_cm.read_attribute_value.return_value = (
+        json.dumps(
+            {
+                "uid": command_id,
+                "name": "APMaintenance",
+                "status": TaskStatus.COMPLETED.name,
+                "result": [int(ResultCode.OK), "AP maintenance completed"],
+            }
+        ),
+    )
+
     status_event_store = event_store_class()
     setup_subscriptions(
         device_proxy,
@@ -81,7 +96,7 @@ def test_happy_case_with_ap_manager(dish_manager_resources_with_ap_manager, even
 
     status_event_store.wait_for_progress_update(
         "SetMaintenanceMode completed",
-        timeout=60,
+        timeout=10,
     )
 
     ds_cm.execute_command.assert_called_once_with("APMaintenance", None)
