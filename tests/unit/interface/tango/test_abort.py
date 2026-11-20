@@ -1,5 +1,6 @@
 """Unit tests for Abort command."""
 
+import json
 import logging
 from unittest.mock import Mock
 
@@ -201,8 +202,8 @@ def test_abort_sends_lrc_update_after_abort_sequence_finishes(
     with pytest.raises(RuntimeError):
         lrc_result_event_store.wait_for_command_id(abort_unique_id, timeout=5)
 
-    command_status = device_proxy.CheckLongRunningCommandStatus(abort_unique_id)
-    assert command_status == "IN_PROGRESS"
+    executing_uids = [json.loads(command)["uid"] for command in device_proxy.lrcExecuting]
+    assert abort_unique_id in executing_uids
 
     ds_cm._update_component_state(
         **{
@@ -214,6 +215,9 @@ def test_abort_sends_lrc_update_after_abort_sequence_finishes(
 
     # check that an update has been sent to the lrc_result only after abort sequence finished
     assert lrc_result_event_store.wait_for_command_id(abort_unique_id, timeout=5)
-    command_status = device_proxy.CheckLongRunningCommandStatus(abort_unique_id)
-    assert command_status == "COMPLETED"
+    finished_commands = {
+        json.loads(command)["uid"]: json.loads(command)["status"]
+        for command in device_proxy.lrcFinished
+    }
+    assert finished_commands[abort_unique_id] == "COMPLETED"
     assert device_proxy.dishMode == DishMode.STANDBY_FP
