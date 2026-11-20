@@ -4,6 +4,7 @@ import logging
 from threading import Lock
 from typing import Any, Callable, Optional, Tuple, override
 
+import tango
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
 from ska_control_model.future import ControlMode
 
@@ -167,16 +168,23 @@ class APComponentManager(TangoDeviceComponentManager):
         method is executed which would ordinarily prevent attr writes, therefore,
         this method bypasses the check_communicating decorator.
         """
-        if not self._dp_factory_signal.is_set():
+        apm_device_proxy = self._device_proxy_factory.get_cached_proxy(self._tango_device_fqdn)
+        if apm_device_proxy is not None:
             try:
-                self._write_attribute_value(
-                    "controlMode",
-                    ControlMode.NO_MONITOR_NO_CONTROL,
-                )
+                with tango.EnsureOmniThread():
+                    apm_device_proxy.write_attribute(
+                        "controlMode",
+                        ControlMode.NO_MONITOR_NO_CONTROL,
+                    )
             except Exception:
                 self.logger.exception(
                     "Failed to set AP Manager controlMode to NO_MONITOR_NO_CONTROL"
                 )
+        else:
+            self.logger.warning(
+                "Cannot set AP Manager controlMode to NO_MONITOR_NO_CONTROL, the "
+                "device proxy is not available."
+            )
 
         super().stop_communicating()
 
