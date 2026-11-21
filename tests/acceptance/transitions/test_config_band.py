@@ -613,11 +613,11 @@ def test_slow_spfrx_configure_band(
     assert slow_spfrx_proxy.configureModeDuration == 10
     dm_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
 
     attr_cb_mapping = {
         "dishMode": dm_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -645,7 +645,7 @@ def test_slow_spfrx_configure_band(
     assert dish_manager_proxy.configuredBand == Band.B1
 
     result_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
     dm_event_store.clear_queue()
 
     json_payload_2 = """
@@ -668,7 +668,7 @@ def test_slow_spfrx_configure_band(
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
     assert dish_manager_proxy.configuredBand == Band.B2
-    events = status_event_store.get_queue_values(timeout=0)
+    events = progress_event_store.get_queue_values(timeout=0)
 
     expected_progress_updates = (
         "ConfigureBand started",
@@ -713,7 +713,7 @@ def test_slow_spfrx_configure_band(
 
     # Do it again to check result
     result_event_store.clear_queue()
-    status_event_store.clear_queue()
+    progress_event_store.clear_queue()
     dm_event_store.clear_queue()
     # Check that dish manager allows configure band when already in requested band
     # but does not set the indexer position again.
@@ -768,7 +768,7 @@ def test_slow_spfrx_configure_band(
         "SetOperateMode completed.",
     ]
 
-    events = status_event_store.get_queue_values(timeout=0)
+    events = progress_event_store.get_queue_values(timeout=0)
 
     events_string = "".join([str(attr_value) for _, attr_value in events])
     for message in expected_progress_updates:

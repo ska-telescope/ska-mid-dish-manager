@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import os
+import time
 
 import pytest
 import tango
@@ -313,7 +314,11 @@ def reset_dish_to_standby(
             power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=20)
             update_messages.append("Got DS to FP")
 
-        if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
+        # The dish mode passes through transient modes (e.g. UNKNOWN) while the sub-devices
+        # settle after the changes above, and SetStandbyFPMode is rejected in those modes.
+        # So wait for a mode it is allowed from before requesting it.
+        dish_mode = _wait_for_settled_dish_mode(dish_manager_proxy, timeout=60)
+        if dish_mode != DishMode.STANDBY_FP:
             dish_manager_proxy.SetStandbyFPMode()
             dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
 
@@ -329,3 +334,32 @@ def reset_dish_to_standby(
         remove_subscriptions(subscriptions)
 
     yield
+
+
+# Dish modes SetStandbyFPMode is accepted from (including STANDBY_FP itself)
+_SETTLED_DISH_MODES = (
+    DishMode.STANDBY_LP,
+    DishMode.STANDBY_FP,
+    DishMode.STOW,
+    DishMode.OPERATE,
+)
+
+
+def _wait_for_settled_dish_mode(dish_manager_proxy, timeout: float = 60) -> DishMode:
+    """Wait for the dish mode to leave transient modes such as UNKNOWN and CONFIG.
+
+    :param dish_manager_proxy: proxy to the dish manager
+    :param timeout: how long to wait, in seconds
+    :raises RuntimeError: if the dish mode does not settle in time
+    :return: the settled dish mode
+    """
+    deadline = time.monotonic() + timeout
+    while True:
+        dish_mode = DishMode(dish_manager_proxy.dishMode)
+        if dish_mode in _SETTLED_DISH_MODES:
+            return dish_mode
+        if time.monotonic() > deadline:
+            raise RuntimeError(
+                f"Dish mode did not settle within {timeout}s, still {dish_mode.name}"
+            )
+        time.sleep(0.5)

@@ -6,8 +6,10 @@ import time
 from threading import Event
 
 import pytest
+from ska_control_model import ResultCode
 from ska_tango_base.executor import TaskAborted
 
+from ska_mid_dish_manager.models.action_handlers import SequentialActionHandler
 from ska_mid_dish_manager.models.command_actions import ActionHandler
 from ska_mid_dish_manager.models.fanned_out_command import FannedOutCommand
 from tests.utils import MethodCallsStore
@@ -329,3 +331,60 @@ class TestActionHandler:
         assert self.component_state["attr"] is False  # command completed execution
         progress_callback.wait_for_kwargs({"progress_info": "Awaiting attr change to True"})
         progress_callback.wait_for_kwargs({"progress_info": "HandlerX aborted"})
+
+
+@pytest.mark.unit
+class TestSequentialActionHandlerAwaitedState:
+    """Tests for the sequential handler waiting for the action's overall awaited state."""
+
+    @staticmethod
+    def _handler(component_state: dict, timeout_s: float) -> SequentialActionHandler:
+        step = FannedOutCommand(
+            LOGGER,
+            device="DeviceX",
+            command_name="CommandX",
+            command=lambda: ("OK", "msg"),
+            component_state=component_state,
+        )
+        return SequentialActionHandler(
+            LOGGER,
+            "ActionX",
+            [step],
+            component_state=component_state,
+            awaited_component_state={"dish_attr": True},
+            timeout_s=timeout_s,
+        )
+
+    def test_waits_for_awaited_state_before_success(self):
+        """Test success is only reported once the overall awaited state is reached."""
+        component_state = {"dish_attr": False}
+        handler = self._handler(component_state, timeout_s=5)
+
+        def set_awaited_state_later():
+            time.sleep(0.5)
+            component_state["dish_attr"] = True
+
+        threading.Thread(target=set_awaited_state_later, daemon=True).start()
+        start = time.monotonic()
+        result_code, _ = handler.execute(Event())
+
+        assert result_code == ResultCode.OK
+        assert time.monotonic() - start >= 0.5
+
+    def test_fails_when_awaited_state_is_not_reached(self):
+        """Test the action fails rather than succeeding before its awaited state."""
+        handler = self._handler({"dish_attr": False}, timeout_s=0.5)
+
+        result_code, message = handler.execute(Event())
+
+        assert result_code == ResultCode.FAILED
+        assert message == "Action 'ActionX' timed out waiting for {'dish_attr': True}"
+
+    def test_abort_while_waiting_for_awaited_state(self):
+        """Test an abort while waiting for the awaited state aborts the action."""
+        handler = self._handler({"dish_attr": False}, timeout_s=5)
+        abort_event = Event()
+        threading.Timer(0.3, abort_event.set).start()
+
+        with pytest.raises(TaskAborted):
+            handler.execute(abort_event)

@@ -51,7 +51,7 @@ def test_action_timeout(
         # Check lrcFinished event for the ConfigureBand1 command timeout
         result_event_store.wait_for_finished_command_result(
             configure_unique_id,
-            '[3, "Action SetOperateMode timed out. Fanned out commands:"]',
+            "[3, \"Action 'SetOperateMode' timed out. Fanned out commands:\"]",
             timeout=30,
         )
 
@@ -74,16 +74,19 @@ def test_action_timeout(
 
         # Wait for time out
         result_event_store.wait_for_finished_command_result(
-            configure_unique_id, '[3, "SetStandbyFPMode failed"]', timeout=DEFAULT_ACTION_TIMEOUT_S
+            configure_unique_id,
+            "[3, \"Action 'SetStandbyFPMode'\"]",
+            timeout=DEFAULT_ACTION_TIMEOUT_S,
         )
     except RuntimeError:
-        # Call Abort on DishManager if anything goes wrong so the LRCs aren't stuck
-        # IN_PROGRESS
-        [[_], [unique_id]] = dish_manager_proxy.Abort()
-        result_event_store.wait_for_finished_command_result(
-            unique_id, '[0, "Abort completed OK"]', timeout=30
-        )
-        dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+        # Abort only cancels the LRCs. AbortScan also returns the dish to STANDBY_FP, so the
+        # following tests start from a known state. The original failure is still raised.
+        dish_manager_proxy.AbortScan()
+        try:
+            dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+        except RuntimeError:
+            pass
+        raise
     finally:
         remove_subscriptions(subscriptions)
         dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S

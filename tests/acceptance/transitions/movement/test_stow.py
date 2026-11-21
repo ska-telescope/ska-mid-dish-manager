@@ -23,7 +23,7 @@ def test_stow_transition(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     expected_progress_update = (
-        "Stow called on Dish Structure, monitor achievedPointing and dishmode",
+        "Stow called on Dish Structure, monitor achievedPointing and dishmode"
     )
 
     if dish_manager_proxy.dishMode == DishMode.STOW:

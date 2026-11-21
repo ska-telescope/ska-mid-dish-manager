@@ -210,6 +210,8 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                # The mock doesn't aggregate sub-device states, so set the dish level band too
+                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
 
             if progress_info == "Awaiting DS operatingmode change to POINT":
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -308,6 +310,8 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                # The mock doesn't aggregate sub-device states, so set the dish level band too
+                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
 
             if progress_info == "Awaiting DS operatingmode change to POINT":
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[
@@ -412,6 +416,8 @@ class TestCommandActions:
                 self.dish_manager_cm_mock.sub_component_managers["SPFRX"]._component_state[
                     "configuredband"
                 ] = Band.B2
+                # The mock doesn't aggregate sub-device states, so set the dish level band too
+                self.dish_manager_cm_mock._component_state["configuredband"] = Band.B2
 
             if progress_info == "Awaiting DS operatingmode change to POINT":
                 self.dish_manager_cm_mock.sub_component_managers["DS"]._component_state[

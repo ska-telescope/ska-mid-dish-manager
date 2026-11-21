@@ -26,7 +26,9 @@ def reset_band_health_states_to_normal(
         for band in band_health_states:
             spf_device_proxy.write_attribute(band, SPFHealthState.NORMAL)
 
-        health_state_events.wait_for_value(HealthState.OK, timeout=7)
+        # Pass the proxy so a failure reports the sub-device component states, which show
+        # which sub-device is keeping the dish healthState from returning to OK
+        health_state_events.wait_for_value(HealthState.OK, timeout=7, proxy=dish_manager_proxy)
 
     finally:
         dish_manager_proxy.unsubscribe_event(sub_id)

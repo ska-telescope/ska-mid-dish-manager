@@ -73,10 +73,17 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     assert device_proxy.dishMode == DishMode.STANDBY_FP
 
     [[_], [unique_id]] = device_proxy.command_inout(command, True)
-    # wait a bit before forcing the updates on the subcomponents
-    main_event_store.get_queue_values()
 
+    # The SPFRx waits poll the component state, so CONFIGURE must be held until the command
+    # has seen it. Otherwise a quick CONFIGURE -> OPERATE change is missed and the wait times
+    # out. The progress events are kept, since the waits below take them off the queue.
+    events = progress_event_store.wait_for_progress_update(
+        "Running Wait for operatingMode.CONFIGURE on device SPFRX", timeout=40
+    )
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.CONFIGURE)
+    events += progress_event_store.wait_for_progress_update(
+        "SPFRX operatingmode changed to CONFIGURE", timeout=40
+    )
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
     spfrx_cm._update_component_state(configuredband=Band[band_number])
     ds_cm._update_component_state(
@@ -127,7 +134,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         f"{command} complete. Triggering on success action.",
     ]
 
-    events = progress_event_store.wait_for_progress_update(
+    events += progress_event_store.wait_for_progress_update(
         expected_progress_updates[-1], timeout=40
     )
 

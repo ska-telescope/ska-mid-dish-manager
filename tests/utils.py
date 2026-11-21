@@ -395,6 +395,9 @@ class EventStore:
                     if str(received_result) == command_result:
                         return event
 
+                    if _result_matches_prefix(received_result, expected_obj):
+                        return event
+
                     continue
 
         except queue.Empty as err:
@@ -1200,3 +1203,30 @@ def wait_for_progress(task_cb: MagicMock, progress_info: str, timeout: float = 5
 def progress_call(info: str) -> Any:
     """Helper function to create a progress call for task callback."""
     return call(progress=None, progress_info=info)
+
+
+def _result_matches_prefix(received_result: Any, expected_result: Any) -> bool:
+    """Check whether an LRC result matches an expected [result code, message prefix].
+
+    Failure messages often end with details that change between runs (e.g. sub-device
+    statuses or exception text), so tests give only the start of the message.
+
+    :param received_result: The result reported in lrcFinished
+    :param expected_result: The expected [result code, message prefix]
+    :return: True if the result codes are equal and the message starts with the prefix
+    """
+    if isinstance(received_result, str):
+        try:
+            received_result = json.loads(received_result)
+        except json.JSONDecodeError:
+            return False
+    if not (
+        isinstance(received_result, (list, tuple))
+        and isinstance(expected_result, (list, tuple))
+        and len(received_result) == 2
+        and len(expected_result) == 2
+    ):
+        return False
+    return received_result[0] == expected_result[0] and str(received_result[1]).startswith(
+        str(expected_result[1])
+    )

@@ -29,12 +29,15 @@ def test_set_operate(
     # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
+    # ConfigureBand runs its steps in sequence, then triggers SetOperateMode. The final
+    # message ends with a full stop, so it doesn't match "SPF.SetOperateMode completed".
     expected_progress_updates = [
-        "Fanned out commands: DS.SetIndexPosition, SPFRX.ConfigureBand1",
+        "ConfigureBand1 started",
+        "Running ConfigureBand1 on device SPFRX",
         "ConfigureBand1 complete. Triggering on success action.",
-        "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
+        "SetOperateMode started",
         "Awaiting dishmode change to OPERATE",
-        "SetOperateMode completed",
+        "SetOperateMode completed.",
     ]
 
     events = progress_event_store.wait_for_progress_update(
