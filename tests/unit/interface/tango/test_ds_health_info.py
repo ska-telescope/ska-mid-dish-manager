@@ -15,7 +15,6 @@ def _make_baseline_healthy(dish_manager_cm) -> None:
     sub_component_managers["DS"]._update_component_state(healthstate=HealthState.OK, healthinfo=[])
 
 
-@pytest.mark.skip(reason="Skipping until healthInfo implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_ignoring_spfrx_handles_raw_healthstate_during_sync(dish_manager_resources):
@@ -42,7 +41,6 @@ def test_ignoring_spfrx_handles_raw_healthstate_during_sync(dish_manager_resourc
     assert dish_manager_cm.component_state["healthinfo"] == []
 
 
-@pytest.mark.skip(reason="Skipping until healthInfo implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_healthinfo_reports_ds_reasons(dish_manager_resources, event_store_class):
@@ -68,7 +66,6 @@ def test_healthinfo_reports_ds_reasons(dish_manager_resources, event_store_class
     event_store.wait_for_value(())
 
 
-@pytest.mark.skip(reason="Skipping until healthInfo implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_healthinfo_reports_ds_reasons_without_healthstate_change(
@@ -94,7 +91,6 @@ def test_healthinfo_reports_ds_reasons_without_healthstate_change(
     )
 
 
-@pytest.mark.skip(reason="Skipping until healthInfo implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_healthinfo_reports_multiple_ds_reasons(dish_manager_resources, event_store_class):
@@ -129,7 +125,6 @@ def test_healthinfo_reports_multiple_ds_reasons(dish_manager_resources, event_st
     )
 
 
-@pytest.mark.skip(reason="Skipping until healthInfo implementation is complete")
 @pytest.mark.unit
 @pytest.mark.forked
 def test_healthinfo_falls_back_to_placeholder_when_ds_reports_no_reasons(

@@ -21,6 +21,7 @@ from ska_mid_dish_manager.models.fanned_out_command import (
 )
 from ska_mid_dish_manager.utils.action_helpers import (
     check_component_state_matches_awaited,
+    convert_enums_to_names,
     report_awaited_attributes,
 )
 
@@ -442,4 +443,44 @@ class SequentialActionHandler(ActionHandler):
                 f"{self.action_name}: {cmd.command_name} on device {cmd.device} timed out",
             )
 
+        # The steps only wait on their own device, so also wait for the action's overall state
+        # (e.g. the dish level configuredband, which needs the DS indexer to arrive too) before
+        # reporting success or starting a chained action that depends on it.
+        if not self._wait_for_awaited_component_state(task_abort_event):
+            awaited = dict(
+                zip(
+                    self.awaited_component_state.keys(),
+                    convert_enums_to_names(list(self.awaited_component_state.values())),
+                )
+            )
+            message = f"Action '{self.action_name}' timed out waiting for {awaited}"
+            self._trigger_failure(task_abort_event, message)
+            return ResultCode.FAILED, message
+
         return self._trigger_success(task_abort_event, completed_response_msg)
+
+    def _wait_for_awaited_component_state(self, task_abort_event: Any) -> bool:
+        """Wait for the component state to match the action's awaited component state.
+
+        :param task_abort_event: Event or flag used to signal task abortion.
+        :type task_abort_event: Any
+        :raises TaskAborted: If the task is aborted while waiting.
+        :return: True if the awaited state was reached (or there is nothing to wait for).
+        :rtype: bool
+        """
+        if not self.awaited_component_state or self.timeout_s <= 0:
+            return True
+
+        deadline = time.time() + self.timeout_s
+        while not check_component_state_matches_awaited(
+            self.component_state, self.awaited_component_state
+        ):
+            if task_abort_event.is_set():
+                self._handle_abort()
+                raise TaskAborted()
+            if time.time() > deadline:
+                return False
+            if self.waiting_callback:
+                self.waiting_callback()
+            task_abort_event.wait(timeout=0.1)
+        return True

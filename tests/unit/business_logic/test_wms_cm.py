@@ -7,7 +7,7 @@ import time
 from collections import deque
 from functools import partial
 from unittest import mock
-from unittest.mock import MagicMock, Mock
+from unittest.mock import MagicMock, Mock, call
 
 import pytest
 from ska_control_model import CommunicationStatus
@@ -56,13 +56,24 @@ def test_wms_group_activation_and_polling_starts(mock_tango_group):
     for device_name in test_wms_device_names:
         assert device_name in tango_group_device_list
 
-    wait_event = threading.Event()
-    wait_event.wait(timeout=wms._wms_polling_period)
+    # controlMode is written after the first polling period, so wait for the write itself
+    # rather than for a fixed period, which races with it
+    expected_call = call("controlMode", ControlMode.MONITOR_NO_CONTROL)
+    polling_period = wms._wms_polling_period
+    assert polling_period is not None
+    deadline = time.time() + polling_period + 5
+    while (
+        expected_call not in wms.write_wms_group_attribute_value.call_args_list
+        or not wms._run_wms_group_polling.called
+    ) and time.time() < deadline:
+        time.sleep(0.05)
 
     wms.write_wms_group_attribute_value.assert_called_with(
         "controlMode", ControlMode.MONITOR_NO_CONTROL
     )
     wms._run_wms_group_polling.assert_called()
+
+    wms.stop_communicating()
 
 
 @mock.patch("ska_mid_dish_manager.component_managers.wms_cm.tango.Group")

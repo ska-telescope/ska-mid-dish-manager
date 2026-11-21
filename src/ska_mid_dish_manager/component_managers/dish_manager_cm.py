@@ -862,11 +862,16 @@ class DishManagerComponentManager(BaseComponentManager):
             b5dc_component_state_dict.get("connectionstate", CommunicationStatus.DISABLED),
         )
 
-        new_health_info = self.generate_healthinfo() or ["reason unknown"]
+        new_health_info = self.generate_healthinfo()
+        self.report_health(new_health_state, new_health_info)
+
+    def report_health(self, health_state: HealthState, health_info: list[str]) -> None:
+        """Report the current health state of the dish manager."""
         if self._health_report_callback is not None:
-            if new_health_state == HealthState.UNKNOWN:
-                new_health_state = HealthState.FAILED
-            self._health_report_callback(new_health_state, new_health_info)
+            if health_state == HealthState.UNKNOWN:
+                health_state = HealthState.FAILED
+            health_info = health_info or ["reason unknown"]
+            self._health_report_callback(health_state, health_info)
 
     def record_command(self, command: str, record_mode: bool = False) -> None:
         """Record a command issued to the dish manager."""
