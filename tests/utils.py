@@ -1194,7 +1194,7 @@ def wait_for_progress(task_cb: MagicMock, progress_info: str, timeout: float = 5
         if expected in task_cb.call_args_list:
             return
         time.sleep(0.05)
-    pytest.fail(f"Timed out waiting for progress: {progress_info!r}")
+    pytest.fail(f"Timed out waiting for progress: {progress_info}")
 
 
 def progress_call(info: str) -> Any:

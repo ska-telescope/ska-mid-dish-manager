@@ -263,73 +263,69 @@ def reset_dish_to_standby(
     # sub devices to a clean state for the next test.
     # this will also cancel any action whose timeout has not
     # expired before the test wait_for_value assertion fails
-    if dish_manager_proxy.lrcExecuting or dish_manager_proxy.lrcQueue:
-        lrc_finished_events = event_store_class()
-        abort_subscriptions = setup_subscriptions(
-            dish_manager_proxy, {"lrcFinished": lrc_finished_events}
+    lrc_finished_events = event_store_class()
+    abort_subscriptions = setup_subscriptions(
+        dish_manager_proxy, {"lrcFinished": lrc_finished_events}
+    )
+    [[_], [uid]] = dish_manager_proxy.Abort()
+    try:
+        lrc_finished_events.wait_for_finished_command_result(
+            uid, '[0, "Abort completed OK"]', timeout=15
         )
-        [[_], [uid]] = dish_manager_proxy.Abort()
-        try:
-            lrc_finished_events.wait_for_finished_command_result(
-                uid, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
-            )
-        finally:
-            remove_subscriptions(abort_subscriptions)
+    finally:
+        remove_subscriptions(abort_subscriptions)
 
-    if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
-        subscriptions = {}
-        op_mode_events = event_store_class()
-        power_state_events = event_store_class()
-        dish_mode_events = event_store_class()
-        subscriptions.update(
-            setup_subscriptions(
-                ds_device_proxy,
-                {"operatingMode": op_mode_events, "powerState": power_state_events},
-            )
+    subscriptions = {}
+    op_mode_events = event_store_class()
+    power_state_events = event_store_class()
+    dish_mode_events = event_store_class()
+    subscriptions.update(
+        setup_subscriptions(
+            ds_device_proxy,
+            {"operatingMode": op_mode_events, "powerState": power_state_events},
         )
-        subscriptions.update(
-            setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events})
+    )
+    subscriptions.update(setup_subscriptions(dish_manager_proxy, {"dishMode": dish_mode_events}))
+
+    # reset the simulated devices
+    spfrx_device_proxy.ResetToDefault()
+    spf_device_proxy.ResetToDefault()
+
+    update_messages = []
+
+    try:
+        if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
+            ds_device_proxy.TakeAuthority()
+            # wait 10s for the horn to go off
+            dish_mode_events.get_queue_values(timeout=10)
+            dish_manager_proxy.SetStowMode()
+            dish_mode_events.wait_for_value(DishMode.STOW, timeout=120)
+            update_messages.append("Got dishmode out of MAINTENANCE into STOW")
+
+        if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY:
+            ds_device_proxy.SetStandbyMode()
+            op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=60)
+            update_messages.append("DS not in standby, got it into STANDBY")
+
+        # go to FP
+        if ds_device_proxy.powerState != DSPowerState.FULL_POWER:
+            ds_device_proxy.SetPowerMode([0.0, 14.7])
+            power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=20)
+            update_messages.append("Got DS to FP")
+
+        if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
+            dish_manager_proxy.SetStandbyFPMode()
+            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+
+    except (RuntimeError, tango.DevFailed, AssertionError):
+        logger.exception(
+            "Failed to get to known state. Successfully completed: %s", update_messages
         )
-
-        # reset the simulated devices
-        spfrx_device_proxy.ResetToDefault()
-        spf_device_proxy.ResetToDefault()
-
-        update_messages = []
-
-        try:
-            if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
-                ds_device_proxy.TakeAuthority()
-                # wait 10s for the horn to go off
-                dish_mode_events.get_queue_values(timeout=10)
-                dish_manager_proxy.SetStowMode()
-                dish_mode_events.wait_for_value(DishMode.STOW, timeout=120)
-                update_messages.append("Got dishmode out of MAINTENANCE into STOW")
-
-            if ds_device_proxy.operatingMode != DSOperatingMode.STANDBY:
-                ds_device_proxy.SetStandbyMode()
-                op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=60)
-                update_messages.append("DS not in standby, got it into STANDBY")
-
-            # go to FP
-            if ds_device_proxy.powerState != DSPowerState.FULL_POWER:
-                ds_device_proxy.SetPowerMode([0.0, 14.7])
-                power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=20)
-                update_messages.append("Got DS to FP")
-
-            if dish_manager_proxy.dishMode != DishMode.STANDBY_FP:
-                dish_manager_proxy.SetStandbyFPMode()
-                dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
-
-        except (RuntimeError, tango.DevFailed, AssertionError):
-            logger.exception(
-                "Failed to get to known state. Successfully completed: %s", update_messages
-            )
-            logger.error("DishManager status: %s", dish_manager_proxy.status())
-            logger.error("DSManager status: %s", ds_device_proxy.status())
-            logger.error("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
-            raise
-        finally:
-            remove_subscriptions(subscriptions)
+        logger.error("DishManager status: %s", dish_manager_proxy.status())
+        logger.error("DSManager status: %s", ds_device_proxy.status())
+        logger.error("\n\nDM component state: %s\n\n", dish_manager_proxy.GetComponentStates())
+        raise
+    finally:
+        remove_subscriptions(subscriptions)
 
     yield

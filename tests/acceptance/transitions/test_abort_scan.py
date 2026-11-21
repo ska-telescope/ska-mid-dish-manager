@@ -43,7 +43,7 @@ def test_abort_commands(
 
     dish_manager_proxy.ConfigureBand3(True)
 
-    [[_], [unique_id]] = dish_manager_proxy.Abort()
+    [[_], [unique_id]] = dish_manager_proxy.AbortScan()
     # confirm Dish Manager aborted the request on the Configure action
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
@@ -147,7 +147,7 @@ def test_abort_commands_during_track(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     # Call Abort on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.Abort()
+    [[_], [unique_id]] = dish_manager_proxy.AbortScan()
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
@@ -189,7 +189,7 @@ def test_abort_commands_during_slew(
     pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=30)
 
     # Call Abort on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.Abort()
+    [[_], [unique_id]] = dish_manager_proxy.AbortScan()
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
@@ -237,7 +237,7 @@ def test_abort_commands_during_stow(
     main_event_store.wait_for_value(PointingState.SLEW, timeout=30)
 
     # Call Abort on DishManager
-    [[_], [unique_id]] = dish_manager_proxy.Abort()
+    [[_], [unique_id]] = dish_manager_proxy.AbortScan()
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
@@ -273,7 +273,7 @@ def test_abort_commands_in_maintenance_mode(
         dish_manager_proxy.SetMaintenanceMode()
         main_event_store.wait_for_value(DishMode.MAINTENANCE, timeout=180)
 
-    [[_], [unique_id]] = dish_manager_proxy.Abort()
+    [[_], [unique_id]] = dish_manager_proxy.AbortScan()
     lrc_finished_events.wait_for_finished_command_result(
         unique_id, '[0, "Abort completed OK"]', timeout=30
     )

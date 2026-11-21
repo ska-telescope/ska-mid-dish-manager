@@ -150,6 +150,9 @@ class DeviceProxyManager:
         :param trl: the address of the device
         :type trl: str
         """
+        if "ds" in trl:
+            # TODO remove this after DS Manager device is migrated
+            return
         try:
             if "controlMode" not in tango_device_proxy.get_attribute_list():
                 return

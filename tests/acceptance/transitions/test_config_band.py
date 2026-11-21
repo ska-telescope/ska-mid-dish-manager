@@ -207,7 +207,7 @@ def test_configure_band_2_from_stow(
     config_band_event_store.wait_for_value(Band.B2, timeout=30)
 
     expected_progress_updates = [
-        "Stow called, monitor dishmode for LRC completed",
+        "Stow called on Dish Structure, monitor achievedPointing and dishmode",
         "ConfigureBand2 started",
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",

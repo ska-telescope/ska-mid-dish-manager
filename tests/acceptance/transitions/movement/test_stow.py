@@ -26,7 +26,9 @@ def test_stow_transition(
         "lrcFinished": lrc_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-    expected_progress_update = "Stow called, monitor achievedPointing and dishmode"
+    expected_progress_update = (
+        "Stow called on Dish Structure, monitor achievedPointing and dishmode",
+    )
 
     if dish_manager_proxy.dishMode == DishMode.STOW:
         dish_manager_proxy.setstandbylpmode()
@@ -40,7 +42,9 @@ def test_stow_transition(
     [[result_code], [command_message]] = dish_manager_proxy.SetStowMode()
 
     assert ResultCode(result_code) == ResultCode.STARTED
-    assert command_message == "Stow called on Dish Structure, monitor dishmode for STOW"
+    assert (
+        command_message == "Stow called on Dish Structure, monitor achievedPointing and dishmode"
+    )
 
     [event] = lrc_event_store.wait_for_n_events(1, timeout=200)
     event_json = json.loads(event.attr_value.value[0])

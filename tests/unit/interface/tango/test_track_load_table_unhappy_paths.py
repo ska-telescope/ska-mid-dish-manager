@@ -5,7 +5,8 @@ from typing import Any
 import numpy
 import pytest
 from mock import Mock, patch
-from ska_control_model import TaskStatus
+from ska_control_model import ResultCode, TaskStatus
+from ska_tango_base import faults
 from tango import DeviceProxy
 
 
@@ -21,15 +22,15 @@ def test_track_load_table_unhappy_paths(
     # Mock out the `track_load_table` call in the `programTrackTable` since this test focuses on
     # the behavior of `get_current_tai_offset_from_dsc_with_manual_fallback`
     mock_track_load_table = Mock()
-    mock_track_load_table.return_value = TaskStatus.IN_PROGRESS, ""
+    mock_track_load_table.return_value = ResultCode.OK, ""
     dish_manager_cm.track_load_table = mock_track_load_table
 
     # Test that programTrackTable still works if the `execute_command` of
-    # `get_current_tai_offset_from_dsc_with_manual_fallback` raises a DevFailed error
+    # `get_current_tai_offset_from_dsc_with_manual_fallback` raises a RuntimeError
     with patch.object(  # ty: ignore[unresolved-attribute]
         dish_manager_cm.sub_component_managers["DS"], "execute_command"
     ) as mock_execute_command:
-        mock_execute_command.side_effect = KeyError("Command failed")
+        mock_execute_command.side_effect = RuntimeError("Command failed")
         dish_manager_cm.sub_component_managers["DS"].execute_command = mock_execute_command
 
         test_table = [1, 2, 3]
@@ -41,7 +42,7 @@ def test_track_load_table_unhappy_paths(
     with patch.object(  # ty: ignore[unresolved-attribute]
         dish_manager_cm.sub_component_managers["DS"], "execute_command"
     ) as mock_execute_command:
-        mock_execute_command.side_effect = ConnectionError("Command failed")
+        mock_execute_command.side_effect = faults.StateModelError("Command failed")
         dish_manager_cm.sub_component_managers["DS"].execute_command = mock_execute_command
 
         test_table = [4, 5, 6]

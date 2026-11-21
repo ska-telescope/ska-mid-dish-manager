@@ -6,8 +6,7 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import ResultCode, TaskStatus
-from ska_control_model.future import AdminMode
+from ska_control_model import AdminMode, ResultCode, TaskStatus
 
 from ska_mid_dish_manager.models.command_actions import (
     ConfigureBandActionSequence,
@@ -67,7 +66,7 @@ class TestCommandActions:
                 _component_state={
                     "configuredband": Band.B1,
                     "operatingmode": SPFRxOperatingMode.STANDBY,
-                    "adminmode": AdminMode.ENGINEERING,
+                    "adminmode": AdminMode.OFFLINE,
                 },
                 execute_command=mock.MagicMock(return_value=(None, None)),
             ),

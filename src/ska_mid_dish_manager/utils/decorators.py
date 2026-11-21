@@ -153,21 +153,17 @@ def last_command_failure_decorator(func: Any) -> Any:
                         ResultCode.UNKNOWN,
                     )
                 if status in failure_states:
-                    device_instance._update_component_state(
-                        lastcommandfailure=(
-                            str(time.time()),
-                            func.__name__,
-                            str(reason),
-                        )
+                    device_instance._last_command_failure = (
+                        str(time.time()),
+                        func.__name__,
+                        str(reason),
                     )
             return result
         except Exception as ex:
-            device_instance._update_component_state(
-                lastcommandfailure=(
-                    str(time.time()),
-                    func.__name__,
-                    str(ex),
-                )
+            device_instance._last_command_failure = (
+                str(time.time()),
+                func.__name__,
+                str(ex),
             )
             raise
 

@@ -26,11 +26,11 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
     # update the execute_command mock to return IN_PROGRESS and a timestamp
     ds_cm.execute_command = Mock(return_value=(TaskStatus.IN_PROGRESS, 1234567890.0))
 
-    [[result_code], [_]] = device_proxy.Abort()
+    [[result_code], [_]] = device_proxy.AbortScan()
     assert result_code == ResultCode.STARTED
 
     # check that second abort trigger is rejected
-    [[result_code], [_]] = device_proxy.Abort()
+    [[result_code], [_]] = device_proxy.AbortScan()
     assert result_code == ResultCode.REJECTED
 
 
@@ -55,10 +55,10 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
     dish_mode_event_store.wait_for_value(DishMode.MAINTENANCE)
     assert device_proxy.dishMode == DishMode.MAINTENANCE
 
-    [[result_code], [_]] = device_proxy.Abort()
+    [[result_code], [_]] = device_proxy.AbortScan()
     assert result_code == ResultCode.STARTED
 
-    assert "Dish is in MAINTENANCE mode: abort will only cancel LRCs." in caplog.text
+    assert "Dish is in MAINTENANCE mode: AbortScan will only cancel LRCs." in caplog.text
     assert "[...]" not in caplog.text
     assert "<- DishManager.Abort" in caplog.text
 
@@ -122,7 +122,7 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
     ds_cm._update_component_state(pointingstate=pointing_state)
 
     # Abort the LRC
-    [[_], [unique_id]] = device_proxy.Abort()
+    [[_], [unique_id]] = device_proxy.AbortScan()
     ds_cm._update_component_state(
         **{
             "pointingstate": PointingState.READY,
@@ -173,7 +173,7 @@ def test_abort_sends_lrc_update_after_abort_sequence_finishes(
     ds_cm._update_component_state(pointingstate=PointingState.SLEW)
 
     # Abort the LRC
-    [[result_code], [abort_unique_id]] = device_proxy.Abort()
+    [[result_code], [abort_unique_id]] = device_proxy.AbortScan()
     assert result_code == ResultCode.STARTED
     assert device_proxy.dishMode == DishMode.OPERATE
 

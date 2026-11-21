@@ -25,12 +25,10 @@ POINTING_TOLERANCE_DEG = 0.1
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
     main_event_store = event_store_class()
-    band_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "configuredBand": band_event_store,
         "achievedPointing": achieved_pointing_event_store,
         "pointingstate": pointing_state_event_store,
     }
@@ -38,10 +36,9 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
 
     dish_manager_proxy.ConfigureBand1(True)
     main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
-    band_event_store.wait_for_value(Band.B1, timeout=10)
-
     # Await auto transition to OPERATE following band config
     main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
+    assert dish_manager_proxy.configuredband == Band.B1
 
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 

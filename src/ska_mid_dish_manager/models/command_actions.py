@@ -5,8 +5,7 @@ import logging
 from typing import Callable, Optional, Tuple
 
 import tango
-from ska_control_model import ResultCode
-from ska_control_model.future import AdminMode
+from ska_control_model import AdminMode, ResultCode
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.action_handlers import (
@@ -123,9 +122,9 @@ class SetStandbyLPModeAction(Action):
     ) -> Tuple[ResultCode, str]:
         if not self.dish_manager_cm.is_device_ignored("SPFRX"):
             spfrx_cm = self.dish_manager_cm.sub_component_managers["SPFRX"]
-            if spfrx_cm._component_state["adminmode"] == AdminMode.ENGINEERING:
+            if spfrx_cm._component_state["adminmode"] == AdminMode.ENGINEERING:  # ty: ignore[deprecated]
                 try:
-                    spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)
+                    spfrx_cm.write_attribute_value("adminmode", AdminMode.ONLINE)  # ty: ignore[deprecated]
                 except tango.DevFailed:
                     self._handler._trigger_failure(
                         task_abort_event,
@@ -341,6 +340,8 @@ class CompleteMaintenanceModeAction(Action):
         component_manager._update_component_state(dishmode=DishMode.MAINTENANCE)
         final_message = "SetMaintenanceMode completed."
         self.logger.info(final_message)
+        if self.progress_callback:
+            self.progress_callback(progress_info=final_message)
         return ResultCode.OK, final_message
 
 

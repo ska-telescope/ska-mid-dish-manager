@@ -136,23 +136,12 @@ class DishManager(
         default_value=DEFAULT_ACTION_TIMEOUT_S,
     )
 
-    # lastCommandInvoked and lastCommandedMode are enqueued on the shared bus.
+    # attrs enqueued on the shared bus.
     _last_command_invoked = Signal[tuple[str, str]](initial_value=("0.0", ""))
     _last_commanded_mode = Signal[tuple[str, str]](initial_value=("0.0", ""))
-
-    def _record_command(self, command_name: str, record_mode: bool = False) -> None:
-        """Record the last command invoked and, optionally, the last commanded mode.
-
-        Used by the component manager for commands it triggers itself (e.g. WindStow,
-        HeartbeatStow). Tango commands are recorded by the `record_command` decorator.
-
-        :param command_name: the name of the command (or trigger source) to record
-        :param record_mode: if True also record it as the last commanded mode
-        """
-        command_and_time = (str(time.time()), command_name)
-        self._last_command_invoked = command_and_time
-        if record_mode:
-            self._last_commanded_mode = command_and_time
+    _last_command_failure = Signal[tuple[str, str, str]](initial_value=("0.0", "", ""))
+    _last_tango_event_error = Signal[tuple[str, str, str, str]](initial_value=("0.0", "", "", ""))
+    _last_commanded_pointing_params = Signal[str](initial_value="")
 
     @override
     def init_device(self):
@@ -181,7 +170,6 @@ class DishManager(
         self._track_interpolation_mode = TrackInterpolationMode.SPLINE
         self._track_program_mode = TrackProgramMode.TABLEA
         self._track_table_load_mode = TrackTableLoadMode.APPEND
-        self._last_commanded_pointing_params = ""
         self._release_info = ReleaseInfo(
             ds_manager_address=self.DSDeviceFqdn,
             spfc_address=self.SPFDeviceFqdn,
@@ -252,8 +240,6 @@ class DishManager(
             "meanwindspeed": "meanWindSpeed",
             "windgust": "windGust",
             "autowindstowenabled": "autoWindStowEnabled",
-            "lastcommandfailure": "lastCommandFailure",
-            "lasttangoeventerror": "lastTangoEventError",
             "dscctrlstate": "dscCtrlState",
             "actiontimeoutseconds": "actionTimeoutSeconds",
             "b1lnahpowerstate": "b1LnaHPowerState",
@@ -328,7 +314,6 @@ class DishManager(
             "polyTrack",
             "trackProgramMode",
             "trackTableLoadMode",
-            "lastCommandedPointingParams",
         ):
             self.set_change_event(attr, True, False)
             self.set_archive_event(attr, True, False)
@@ -341,6 +326,26 @@ class DishManager(
         self.instances[self.get_name()] = self
         self.init_completed()
         self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)
+
+    def _record_command(self, command_name: str, record_mode: bool = False) -> None:
+        """Record the last command invoked and, optionally, the last commanded mode.
+
+        Used by the component manager for commands it triggers itself (e.g. WindStow,
+        HeartbeatStow). Tango commands are recorded by the `record_command` decorator.
+
+        :param command_name: the name of the command (or trigger source) to record
+        :param record_mode: if True also record it as the last commanded mode
+        """
+        command_and_time = (str(time.time()), command_name)
+        self._last_command_invoked = command_and_time
+        if record_mode:
+            self._last_commanded_mode = command_and_time
+
+    def _update_last_tango_event_error(
+        self, timestamp: str, device_name: str, attribute_name: str, reason: str
+    ) -> None:
+        """Update the last tango event error signal."""
+        self._last_tango_event_error = (timestamp, device_name, attribute_name, reason)
 
     @override
     def delete_device(self):
@@ -372,48 +377,57 @@ class DishManager(
         # TODO: what more should happen here
         self.logger.error("Unhandled exception occurred during task execution: %s", str(exception))
 
-    @override
-    def execute_Abort(self) -> DevVarLongStringArrayType:
-        """Execute the Abort command.
+    def execute_AbortScan(self) -> DevVarLongStringArrayType:
+        """Execute the AbortScan command.
 
         Cancels all queued and running long running commands. Unless the dish is in
         MAINTENANCE mode, it then runs the abort sequence (stopping dish movement and
-        transitioning to STANDBY_FP) once the cancellation completes. The Abort command
-        completes when all of its work is done. Only one Abort can run at a time.
+        transitioning to STANDBY_FP) once the cancellation completes. The command
+        completes when all of its work is done. Only one AbortScan can run at a time.
 
         :return: ResultCode.STARTED and the command ID, or ResultCode.REJECTED if an
-            Abort is already in progress.
+            AbortScan is already in progress.
         """
         if self.component_manager.abort_sequence_in_progress:
-            return ([ResultCode.REJECTED], ["Abort scan already in progress."])
+            return ([ResultCode.REJECTED], ["AbortScan already in progress."])
 
-        command_id, task_callback = self.allocate_lrc("Abort")
+        command_id, task_callback = self.allocate_lrc("AbortScan")
         self.component_manager.abort_sequence_in_progress = True
 
-        # clear the flag once the whole Abort has finished, whatever the outcome
-        def abort_task_callback(**kwargs: Any) -> None:
-            task_callback(**kwargs)
-            if kwargs.get("status") in FINAL_TASK_STATUSES:
-                self.component_manager.abort_sequence_in_progress = False
+        # clear the flag once the whole AbortScan has finished, whatever the outcome
+        def abort_scan_task_callback(**kwargs: Any) -> None:
+            try:
+                task_callback(**kwargs)
+            finally:
+                if kwargs.get("status") in FINAL_TASK_STATUSES:
+                    self.component_manager.abort_sequence_in_progress = False
 
-        aggregator = AbortCallbackAggregator(cast(TaskCallbackType, abort_task_callback))
+        aggregator = AbortCallbackAggregator(cast(TaskCallbackType, abort_scan_task_callback))
 
         if self.component_manager.component_state.get("dishmode") == DishMode.MAINTENANCE:
-            self.logger.info("Dish is in MAINTENANCE mode: abort will only cancel LRCs.")
+            self.logger.info("Dish is in MAINTENANCE mode: AbortScan will only cancel LRCs.")
             abort_lrc_callback = aggregator.new_callback()
         else:
             abort_sequence_callback = aggregator.new_callback()
 
             def commence_abort_sequence() -> None:
                 abort_sequence_handler = AbortSequenceCommandHandler(self.component_manager)
-                self.task_executor.submit(
+                status, message = self.task_executor.submit(
                     abort_sequence_handler.complete_abort_sequence,
                     task_callback=abort_sequence_callback,
                 )
+                if status == TaskStatus.REJECTED:
+                    abort_sequence_callback(
+                        status=TaskStatus.REJECTED, result=(ResultCode.REJECTED, message)
+                    )
 
             abort_lrc_callback = aggregator.new_callback(on_completed=commence_abort_sequence)
 
-        status, _ = self.schedule_abort_task(abort_lrc_callback)
+        try:
+            status, _ = self.schedule_abort_task(abort_lrc_callback)
+        except Exception:
+            self.component_manager.abort_sequence_in_progress = False
+            raise
         assert status == TaskStatus.IN_PROGRESS
         return ([ResultCode.STARTED], [command_id])
 
@@ -442,7 +456,8 @@ class DishManager(
                 command_name, component_state=self.component_manager.component_state
             )
         except (faults.StateModelError, CommandNotAllowedError, ValueError) as exc:
-            # TODO send error information to last command failure attribute
+            failure = (str(time.time()), command_name, str(exc))  # time, command, reason
+            self._last_command_failure = failure
             self.logger.warning("Command %s is not allowed: %s", command_name, exc)
             raise
 
@@ -488,12 +503,16 @@ class DishManager(
             communication_state_callback=self._communication_state_changed,
             component_state_callback=self._component_state_changed,
             wms_device_names=self.WMSDeviceNames,
-            wind_stow_callback=self._wind_stow_inform,
-            clear_scan_id_callback=self._clear_scan_id,
             default_watchdog_timeout=self.DefaultWatchdogTimeout,
             default_mean_wind_speed_threshold=self.MeanWindSpeedThreshold,
             default_wind_gust_threshold=self.WindGustThreshold,
+            wind_stow_callback=self._wind_stow_inform,
+            check_component_controlled=self.check_component_controlled,
+            clear_scan_id_callback=self._clear_scan_id,
             record_command_callback=self._record_command,
+            last_tango_event_error_callback=self._update_last_tango_event_error,
+            abort_lrc_callback=self.execute_Abort,
+            health_report_callback=self.report_health,
         )
 
     # ---------
@@ -639,22 +658,16 @@ class DishManager(
         doc="Stores the name and timestamp (in UNIX UTC format) of the last invoked command.",
     )
 
-    @attribute(
-        dtype=(str, str, str),
+    lastCommandFailure = attribute_from_signal(  # noqa: N815
+        _last_command_failure,
+        dtype=(str,),
         max_dim_x=3,
         access=AttrWriteType.READ,
-        doc=(
-            "The returned tuple contains:"
-            "- Timestamp of the failure (UNIX UTC format)"
-            "- Command name (Triggered on DishManager)"
-            "- Reason for failure (as returned by the command)"
-        ),
+        doc="Stores the timestamp, command name, and reason for the last command failure.",
     )
-    def lastCommandFailure(self) -> tuple[str, str, str]:
-        """Return the last command failure on DM."""
-        return self.component_manager.component_state["lastcommandfailure"]
 
-    @attribute(
+    lastTangoEventError = attribute_from_signal(  # noqa: N815
+        _last_tango_event_error,
         dtype=(str, str, str, str),
         max_dim_x=4,
         access=AttrWriteType.READ,
@@ -667,11 +680,17 @@ class DishManager(
             "- Reason for the error (as reported by tango)"
         ),
     )
-    def lastTangoEventError(self) -> tuple[str, str, str, str]:
-        """Return the last tango error reported by a subservient device."""
-        return self.component_manager.component_state["lasttangoeventerror"]
 
-    # pylint: disable=invalid-name
+    lastCommandedPointingParams = attribute_from_signal(  # noqa: N815
+        _last_commanded_pointing_params,
+        dtype=str,
+        access=AttrWriteType.READ,
+        doc=(
+            "Default empty string when not set, and is a JSON string "
+            "of the last requested global pointing model when set."
+        ),
+    )
+
     @attribute(
         dtype=CommunicationStatus,
         access=AttrWriteType.READ,
@@ -1413,7 +1432,7 @@ class DishManager(
             raise ve
 
         length_of_table = len(table)
-        sequence_length = length_of_table / 3
+        sequence_length = length_of_table // 3
 
         result_code, msg = self.component_manager.track_load_table(
             sequence_length, table, self._track_table_load_mode
@@ -1775,21 +1794,6 @@ class DishManager(
         """Set the status of the SPFRx spectralInversion attribute."""
         spfrx_com_man = self.component_manager.sub_component_managers["SPFRX"]
         spfrx_com_man.write_attribute_value("spectralInversion", value)
-
-    @attribute(
-        dtype=str,
-        access=AttrWriteType.READ,
-        doc=(
-            "Default empty string when not set, and is a JSON string"
-            "of the last requested global pointing model when set."
-        ),
-    )
-    def lastCommandedPointingParams(self) -> str:
-        """Tango string attribute that returns the
-        last JSON input passed to the ApplyPointingModel command.
-        Defaults to an empty string.
-        """
-        return self._last_commanded_pointing_params
 
     @attribute(
         dtype=float,
@@ -2266,25 +2270,44 @@ class DishManager(
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @command(
-        doc_in="Abort currently executing long running command(s) on "
-        "DishManager including stopping dish movement and transitioning "
-        "dishMode to StandbyFP. For details consult DishManager documentation",
+        doc_in="Abort currently executing long running command(s) on DishManager and empty "
+        "the queue. Use AbortScan to also stop dish movement and transition dishMode to "
+        "STANDBY_FP. For details consult DishManager documentation",
         doc_out="[ResultCode.STARTED][Command ID]",
         display_level=DispLevel.OPERATOR,
         dtype_out="DevVarLongStringArray",
         fisallowed="_AbstractLRCMixin__is_Abort_allowed",
     )
     def Abort(self) -> DevVarLongStringArrayType:
-        """Abort any executing long running command(s), empty the queue and start abort sequence.
+        """Abort any executing long running command(s) and empty the queue.
 
         Abort is itself a long running command that is executed immediately.
-
-        Subclasses should override :meth:`~.AbstractLRCMixin.execute_Abort` to change
-        the behaviour of this command.
 
         :return: A tuple containing ResultCode.STARTED and the unique ID of the command
         """
         return self.execute_Abort()
+
+    @record_command
+    @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
+    @log_tango_command()
+    @command(
+        doc_in="Abort currently executing long running command(s) on DishManager, then stop "
+        "dish movement and transition dishMode to STANDBY_FP. In MAINTENANCE mode, only the "
+        "long running commands are aborted. For details consult DishManager documentation",
+        doc_out="[ResultCode.STARTED][Command ID]",
+        display_level=DispLevel.OPERATOR,
+        dtype_out="DevVarLongStringArray",
+        fisallowed="_AbstractLRCMixin__is_Abort_allowed",
+    )
+    def AbortScan(self) -> DevVarLongStringArrayType:
+        """Abort any executing long running command(s), then run the abort sequence.
+
+        AbortScan is itself a long running command that is executed immediately.
+
+        :return: A tuple containing ResultCode.STARTED and the unique ID of the command,
+            or ResultCode.REJECTED if an AbortScan is already in progress.
+        """
+        return self.execute_AbortScan()
 
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
@@ -2920,12 +2943,7 @@ class DishManager(
         should be in range. Each time the command is called all parameters will get
         updated not just the ones that have been modified.
         """
-        # TODO send the updates to using the signal bus
-        # last_commanded_pointing_params = value
-        # self._last_commanded_pointing_params = last_commanded_pointing_params
-        # # Push change and archive events with the recorded value
-        # self.push_change_event("lastCommandedPointingParams", last_commanded_pointing_params)
-        # self.push_archive_event("lastCommandedPointingParams", last_commanded_pointing_params)
+        self._last_commanded_pointing_params = value
         result_code, msg = self.component_manager.apply_pointing_model(value)
         return ([result_code], [msg])
 
@@ -2963,11 +2981,11 @@ class DishManager(
             "Sync each subservient device componentstate with the dish manager component state."
         ),
     )
-    def SyncComponentStates(self) -> TaskFunctionType:
+    def SyncComponentStates(self):
         """Sync each subservient device component state with its tango device
         to refresh the dish manager component state.
         """
-        return self.component_manager.sync_component_states
+        self.component_manager.sync_component_states()
 
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)

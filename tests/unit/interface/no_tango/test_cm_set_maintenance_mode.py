@@ -97,5 +97,6 @@ def test_set_maintenance_mode_handler(
         progress_call("DS dsccmdauth changed to NO_AUTHORITY"),
         progress_call("DS dscctrlstate changed to NO_AUTHORITY"),
         progress_call("DS.ReleaseAuth completed"),
+        progress_call("SetMaintenanceMode completed."),
         call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetMaintenanceMode completed.")),
     ]

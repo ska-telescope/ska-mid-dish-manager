@@ -16,7 +16,6 @@ def test_action_timeout(
     event_store_class,
     dish_manager_proxy,
     ds_device_proxy,
-    spf_device_proxy,
     toggle_skip_attributes,
     restore_action_timeout,
 ):
@@ -80,7 +79,7 @@ def test_action_timeout(
         # IN_PROGRESS
         [[_], [unique_id]] = dish_manager_proxy.Abort()
         result_event_store.wait_for_finished_command_result(
-            unique_id, '[0, "Abort sequence completed"]', timeout=30
+            unique_id, '[0, "Abort completed OK"]', timeout=30
         )
         dish_mode_event_store.wait_for_value(DishMode.STANDBY_FP, timeout=60)
     finally:

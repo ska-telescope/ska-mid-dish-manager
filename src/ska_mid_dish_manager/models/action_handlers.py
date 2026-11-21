@@ -321,7 +321,7 @@ class ActionHandler:
             if self.waiting_callback:
                 self.waiting_callback()
 
-            task_abort_event.wait(timeout=1)
+            task_abort_event.wait(timeout=0.1)
 
         # update the component state from an attribute read before giving up
         # this is a fallback in case the change event subscriptions missed updates
@@ -414,7 +414,7 @@ class SequentialActionHandler(ActionHandler):
 
                 if cmd.failed or cmd.successful:
                     break
-                task_abort_event.wait(timeout=1)
+                task_abort_event.wait(timeout=0.1)
 
             # The deadline can pass between checks before the command has evaluated its own
             # timeout, so give it a final update to settle on its status, e.g. a wait that

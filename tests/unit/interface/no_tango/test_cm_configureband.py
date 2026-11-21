@@ -55,15 +55,19 @@ def test_configureband_handler(
     wait_for_progress(task_cb, "SPFRX operatingmode changed to CONFIGURE")
     component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
 
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
-
     ds_cm._update_component_state(indexerposition=IndexerPosition.B2)
     spfrx_cm._update_component_state(configuredband=Band.B2)
     spf_cm._update_component_state(bandinfocus=SPFBandInFocus.B2)
     component_state_cb.wait_for_value("configuredband", Band.B2)
+
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    # SetOperateMode skips SPF and DS if they're already in the target mode, so only move
+    # them once it has fanned out its commands
+    wait_for_progress(task_cb, "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode")
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
+
     # Verify apply_pointing_model was called
     component_manager.reapply_pointing_model.assert_called_once()
 
@@ -103,10 +107,16 @@ def test_configureband_handler(
         progress_call("ConfigureBand2: Wait for configuredband 2 on device SPFRX completed"),
         progress_call("ConfigureBand2 complete. Triggering on success action."),
         progress_call("SetOperateMode started"),
-        progress_call("SPF operatingmode already OPERATE, not fanning out SetOperateMode command"),
-        progress_call("DS operatingmode already POINT, not fanning out SetPointMode command"),
-        progress_call("Fanned out commands: None"),
+        progress_call("SPF.SetOperateMode started"),
+        progress_call("Awaiting SPF operatingmode change to OPERATE"),
+        progress_call("DS.SetPointMode started"),
+        progress_call("Awaiting DS operatingmode change to POINT"),
+        progress_call("Fanned out commands: SPF.SetOperateMode, DS.SetPointMode"),
         progress_call("Awaiting dishmode change to OPERATE"),
+        progress_call("SPF operatingmode changed to OPERATE"),
+        progress_call("SPF.SetOperateMode completed"),
+        progress_call("DS operatingmode changed to POINT"),
+        progress_call("DS.SetPointMode completed"),
         progress_call("SetOperateMode completed."),
         call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetOperateMode completed.")),
     ]
@@ -157,15 +167,18 @@ def test_configureband_json_handler_happy(
     wait_for_progress(task_cb, "SPFRX operatingmode changed to CONFIGURE")
     component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
 
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
-    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
-
     ds_cm._update_component_state(indexerposition=IndexerPosition.B1)
     spfrx_cm._update_component_state(configuredband=Band.B1)
     spf_cm._update_component_state(bandinfocus=SPFBandInFocus.B1)
     component_state_cb.wait_for_value("configuredband", Band.B1)
+
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    # SetOperateMode skips SPF and DS if they're already in the target mode, so only move
+    # them once it has fanned out its commands
+    wait_for_progress(task_cb, "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode")
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
     # Verify apply_pointing_model was called
     component_manager.reapply_pointing_model.assert_called_once()
 
@@ -204,10 +217,16 @@ def test_configureband_json_handler_happy(
         progress_call("ConfigureBand: Wait for configuredband 1 on device SPFRX completed"),
         progress_call("ConfigureBand complete. Triggering on success action."),
         progress_call("SetOperateMode started"),
-        progress_call("SPF operatingmode already OPERATE, not fanning out SetOperateMode command"),
-        progress_call("DS operatingmode already POINT, not fanning out SetPointMode command"),
-        progress_call("Fanned out commands: None"),
+        progress_call("SPF.SetOperateMode started"),
+        progress_call("Awaiting SPF operatingmode change to OPERATE"),
+        progress_call("DS.SetPointMode started"),
+        progress_call("Awaiting DS operatingmode change to POINT"),
+        progress_call("Fanned out commands: SPF.SetOperateMode, DS.SetPointMode"),
         progress_call("Awaiting dishmode change to OPERATE"),
+        progress_call("SPF operatingmode changed to OPERATE"),
+        progress_call("SPF.SetOperateMode completed"),
+        progress_call("DS operatingmode changed to POINT"),
+        progress_call("DS.SetPointMode completed"),
         progress_call("SetOperateMode completed."),
         call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetOperateMode completed.")),
     ]
@@ -447,22 +466,20 @@ def test_configureband_5b_with_subband(
     component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
 
     spfrx_cm._update_component_state(configuredband=Band.B1)
-    component_state_cb.wait_for_value("configuredband", Band.UNKNOWN)
-
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    component_state_cb.wait_for_value("dishmode", DishMode.UNKNOWN)
-
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spf_cm._update_component_state(bandinfocus=SPFBandInFocus.B5b)
-
     ds_cm._update_component_state(indexerposition=IndexerPosition.B5b)
     component_state_cb.wait_for_value("configuredband", Band.B5b)
 
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
-    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
-
     b5dc_cm._update_component_state(rfcmfrequency=sub_band_frequency)
     component_state_cb.wait_for_value("rfcmfrequency", sub_band_frequency)
+
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    # SetOperateMode skips SPF and DS if they're already in the target mode, so only move
+    # them once it has fanned out its commands
+    wait_for_progress(task_cb, "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode")
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
 
     # wait for all the updates to be processed by the command thread
     command_thread.join(timeout=30)
@@ -506,10 +523,16 @@ def test_configureband_5b_with_subband(
         progress_call("SetFrequency on B5DC timeout is 0"),
         progress_call("ConfigureBand complete. Triggering on success action."),
         progress_call("SetOperateMode started"),
-        progress_call("SPF operatingmode already OPERATE, not fanning out SetOperateMode command"),
-        progress_call("DS operatingmode already POINT, not fanning out SetPointMode command"),
-        progress_call("Fanned out commands: None"),
+        progress_call("SPF.SetOperateMode started"),
+        progress_call("Awaiting SPF operatingmode change to OPERATE"),
+        progress_call("DS.SetPointMode started"),
+        progress_call("Awaiting DS operatingmode change to POINT"),
+        progress_call("Fanned out commands: SPF.SetOperateMode, DS.SetPointMode"),
         progress_call("Awaiting dishmode change to OPERATE"),
+        progress_call("SPF operatingmode changed to OPERATE"),
+        progress_call("SPF.SetOperateMode completed"),
+        progress_call("DS operatingmode changed to POINT"),
+        progress_call("DS.SetPointMode completed"),
         progress_call("SetOperateMode completed."),
         call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetOperateMode completed.")),
     ]
@@ -561,17 +584,21 @@ def test_configureband_5b_with_subband_ignore_b5dc(
     wait_for_progress(task_cb, "Running Wait for operatingMode.CONFIGURE on device SPFRX")
     spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.CONFIGURE)
     wait_for_progress(task_cb, "SPFRX operatingmode changed to CONFIGURE")
+    component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
+
     spfrx_cm._update_component_state(configuredband=Band.B1)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-
-    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
     spf_cm._update_component_state(bandinfocus=SPFBandInFocus.B5b)
-
     ds_cm._update_component_state(indexerposition=IndexerPosition.B5b)
-    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
+    component_state_cb.wait_for_value("configuredband", Band.B5b)
 
-    # check that the component state reports the requested command
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+    # SetOperateMode skips SPF and DS if they're already in the target mode, so only move
+    # them once it has fanned out its commands
+    wait_for_progress(task_cb, "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode")
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.OPERATE)
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.POINT)
     component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
+
     # Verify apply_pointing_model was called
     component_manager.reapply_pointing_model.assert_called_once()
 
@@ -612,10 +639,16 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         progress_call("B5DC.SetFrequency ignored"),
         progress_call("ConfigureBand complete. Triggering on success action."),
         progress_call("SetOperateMode started"),
-        progress_call("SPF operatingmode already OPERATE, not fanning out SetOperateMode command"),
-        progress_call("DS operatingmode already POINT, not fanning out SetPointMode command"),
-        progress_call("Fanned out commands: None"),
+        progress_call("SPF.SetOperateMode started"),
+        progress_call("Awaiting SPF operatingmode change to OPERATE"),
+        progress_call("DS.SetPointMode started"),
+        progress_call("Awaiting DS operatingmode change to POINT"),
+        progress_call("Fanned out commands: SPF.SetOperateMode, DS.SetPointMode"),
         progress_call("Awaiting dishmode change to OPERATE"),
+        progress_call("SPF operatingmode changed to OPERATE"),
+        progress_call("SPF.SetOperateMode completed"),
+        progress_call("DS operatingmode changed to POINT"),
+        progress_call("DS.SetPointMode completed"),
         progress_call("SetOperateMode completed."),
         call(status=TaskStatus.COMPLETED, result=(ResultCode.OK, "SetOperateMode completed.")),
     ]

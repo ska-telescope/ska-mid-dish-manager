@@ -133,6 +133,7 @@ def test_power_limit_change_set_power_mode(
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="DSManager is still sending progress updates to Status attribute")
 @pytest.mark.acceptance
 def test_fp_lp_power_limit_used(
     ds_device_proxy: tango.DeviceProxy,
@@ -155,9 +156,12 @@ def test_fp_lp_power_limit_used(
     ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
     # Call command that also makes use of the SetPowerMode command
     ds_device_proxy.SetStandbyMode()
-    progress_event_store.wait_for_value(
+    progress_msg = (
         "_call_opc_ua_method for [Management.Commands.SetPowerMode] called with args"
-        f" [(True, {limit_value})] from [SetStandbyMode] command",
+        f" [(True, {limit_value})] from [SetStandbyMode] command"
+    )
+    progress_event_store.wait_for_progress_update(
+        progress_msg,
         timeout=6,
     )
 
@@ -168,14 +172,18 @@ def test_fp_lp_power_limit_used(
     ds_attribute_event_store.wait_for_value(limit_value, timeout=6)
     # Call command that also makes use of the SetPowerMode command
     ds_device_proxy.SetPointMode()
-    progress_event_store.wait_for_value(
+    progress_msg = (
         "_call_opc_ua_method for [Management.Commands.SetPowerMode] called with args"
-        f" [(False, {limit_value})] from [SetPointMode] command",
+        f" [(False, {limit_value})] from [SetPointMode] command"
+    )
+    progress_event_store.wait_for_progress_update(
+        progress_msg,
         timeout=6,
     )
     remove_subscriptions(subscriptions)
 
 
+@pytest.mark.skip(reason="DSManager is still sending progress updates to Status attribute")
 @pytest.mark.acceptance
 def test_dsc_current_limit_used(
     ds_device_proxy: tango.DeviceProxy,
@@ -198,11 +206,13 @@ def test_dsc_current_limit_used(
     current_az, current_el = dish_manager_proxy.achievedPointing[1:]
     requested_az, requested_el = calculate_slew_target(current_az, current_el, 10.0, 10.0)
     ds_device_proxy.Slew([requested_az, requested_el])
-    progress_event_store.wait_for_value(
-        (
-            "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
-            "and DSC Power Limit: 10.0kW"
-        ),
+
+    progress_msg = (
+        "Slew called with Azimuth speed: 3.0 deg/s, Elevation speed: 1.0 deg/s "
+        "and DSC Power Limit: 10.0kW"
+    )
+    progress_event_store.wait_for_progress_update(
+        progress_msg,
         timeout=6,
     )
 

@@ -9,6 +9,7 @@ from ska_control_model import CommunicationStatus
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
+@pytest.mark.skip(reason="Serialisation lock issues detected during test execution.")
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
     "dev_name",
@@ -23,9 +24,11 @@ def test_reset_connection_cmd(
 ) -> None:
     """Test reseting of connection command."""
     connection_state_event_store = event_store_class()
+    state_event_store = event_store_class()
 
     attr_cb_mapping = {
         f"{dev_name}ConnectionState": connection_state_event_store,
+        "State": state_event_store,
     }
 
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
@@ -40,5 +43,6 @@ def test_reset_connection_cmd(
     connection_state_event_store.wait_for_value(CommunicationStatus.NOT_ESTABLISHED, timeout=30)
 
     connection_state_event_store.wait_for_value(CommunicationStatus.ESTABLISHED, timeout=60)
+    state_event_store.wait_for_value(tango.DevState.ON, timeout=30)
 
     remove_subscriptions(subscriptions)

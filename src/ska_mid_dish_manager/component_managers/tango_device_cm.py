@@ -8,6 +8,7 @@ from typing import Any, Callable, Optional, Tuple
 import numpy as np
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
+from ska_tango_base import faults
 from ska_tango_base.base import BaseComponentManager
 from tango import DeviceAttribute
 
@@ -32,6 +33,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         quality_state_callback: Any = None,
         tango_error_callback: Any = None,
         quality_monitored_attributes: Tuple[str, ...] = (),
+        check_component_controlled: Optional[Callable] = None,
         **kwargs: Any,
     ):
         self._quality_state_callback = quality_state_callback
@@ -44,6 +46,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
         )
         self._active_attr_event_subscriptions: set[str] = set()
         self.logger = logger
+        self._check_component_controlled = check_component_controlled
         self._dp_factory_signal: Event = Event()
         self._event_consumer_thread: Optional[Thread] = None
         self._event_consumer_abort_event: Optional[Event] = None
@@ -370,6 +373,16 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
         Set `truncate_arg_in_logs` for commands whose argument is too large to log in full.
         """
+        try:
+            if self._check_component_controlled:
+                self._check_component_controlled()
+        except faults.StateModelError:
+            self.logger.error(
+                "Component is not in a controlled state on device [%s]",
+                self._tango_device_fqdn,
+            )
+            return TaskStatus.FAILED, "Component not in controlled state"
+
         arg_preview = command_arg
         if truncate_arg_in_logs:
             arg_preview = str(command_arg)
@@ -382,21 +395,31 @@ class TangoDeviceComponentManager(BaseComponentManager):
             arg_preview,
         )
         reply = None
-        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
 
-        with tango.EnsureOmniThread():
-            try:
+        try:
+            device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+            with tango.EnsureOmniThread():
                 reply = device_proxy.command_inout(command_name, command_arg)
-            except tango.DevFailed as err:
-                err_description = "".join([str(arg.desc) for arg in err.args])
-                self.logger.error(
-                    "Encountered an error executing [%s] with arg [%s] on [%s]: %s",
-                    command_name,
-                    arg_preview,
-                    self._tango_device_fqdn,
-                    err_description,
-                )
-                return TaskStatus.FAILED, err_description
+        except tango.DevFailed as err:
+            err_description = "".join([str(arg.desc) for arg in err.args])
+            self.logger.error(
+                "Encountered an error executing [%s] with arg [%s] on [%s]: %s",
+                command_name,
+                arg_preview,
+                self._tango_device_fqdn,
+                err_description,
+            )
+            return TaskStatus.FAILED, err_description
+        except RuntimeError as err:
+            err_description = str(err)
+            self.logger.error(
+                "Encountered an error executing [%s] with arg [%s] on [%s]: %s",
+                command_name,
+                arg_preview,
+                self._tango_device_fqdn,
+                err_description,
+            )
+            return TaskStatus.FAILED, err_description
 
         if not isinstance(reply, (list, tuple)):
             reply = reply or f"{command_name} successfully executed"
@@ -411,54 +434,64 @@ class TangoDeviceComponentManager(BaseComponentManager):
                 attribute_name,
                 self._tango_device_fqdn,
             )
-        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
-        with tango.EnsureOmniThread():
-            try:
+        try:
+            device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+            with tango.EnsureOmniThread():
                 device_attribute: DeviceAttribute = device_proxy.read_attribute(attribute_name)
-                result = device_attribute.value  # ty: ignore[unresolved-attribute]
-            except tango.DevFailed:
-                self.logger.exception(
-                    "Could not read attribute [%s] on [%s]",
-                    attribute_name,
-                    self._tango_device_fqdn,
-                )
-                raise
-            if log_read:
-                self.logger.debug(
-                    "Result of reading [%s] on [%s] is [%s]",
-                    attribute_name,
-                    self._tango_device_fqdn,
-                    result,
-                )
-            return result
+            result = device_attribute.value  # ty: ignore[unresolved-attribute]
+        except (tango.DevFailed, RuntimeError):
+            self.logger.exception(
+                "Could not read attribute [%s] on [%s]",
+                attribute_name,
+                self._tango_device_fqdn,
+            )
+            raise
+        if log_read:
+            self.logger.debug(
+                "Result of reading [%s] on [%s] is [%s]",
+                attribute_name,
+                self._tango_device_fqdn,
+                result,
+            )
+        return result
 
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
-        """Check the connection and write an attribute."""
+        """Check the connection and write an attribute.
+
+        Raises:
+            faults.StateModelError: If the component is not in a controlled state.
+            tango.DevFailed: If there is an error writing the attribute.
+            RuntimeError: If there is a runtime error during the write operation.
+
+        """
+        try:
+            if self._check_component_controlled:
+                self._check_component_controlled()
+        except faults.StateModelError:
+            self.logger.error(
+                "Component is not in a controlled state on device [%s]",
+                self._tango_device_fqdn,
+            )
+            raise
+
         self.logger.debug(
             "About to write attribute [%s] on device [%s]",
             attribute_name,
             self._tango_device_fqdn,
         )
-        device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
-        with tango.EnsureOmniThread():
-            result = None
-            try:
-                result = device_proxy.write_attribute(attribute_name, attribute_value)
-            except tango.DevFailed:
-                self.logger.exception(
-                    "Could not write to attribute [%s] with [%s] on [%s]",
-                    attribute_name,
-                    attribute_value,
-                    self._tango_device_fqdn,
-                )
-                raise
-            self.logger.debug(
-                "Result of writing [%s] on [%s] is [%s]",
+
+        try:
+            device_proxy = self._device_proxy_factory(self._tango_device_fqdn)
+            with tango.EnsureOmniThread():
+                device_proxy.write_attribute(attribute_name, attribute_value)
+        except (tango.DevFailed, RuntimeError):
+            self.logger.exception(
+                "Could not write to attribute [%s] with [%s] on [%s]",
                 attribute_name,
+                attribute_value,
                 self._tango_device_fqdn,
-                result,
             )
-            return result
+            raise
 
     def start_communicating(self) -> None:
         """Establish communication with the device."""

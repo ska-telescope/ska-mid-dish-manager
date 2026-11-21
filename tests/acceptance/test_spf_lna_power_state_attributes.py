@@ -97,20 +97,19 @@ def test_spf_lna_power_state_rejects_attribute_writes(
 
 @pytest.mark.acceptance
 @pytest.mark.parametrize(
-    "band, attribute_name",
+    "attribute_name",
     [
-        ("1", "b1LnaHPowerState"),
-        ("2", "b2LnaHPowerState"),
-        ("1", "b1LnaVPowerState"),
-        ("2", "b2LnaVPowerState"),
-        ("3", "b3LnaPowerState"),
-        ("4", "b4LnaPowerState"),
-        ("5a", "b5aLnaPowerState"),
-        ("5b", "b5bLnaPowerState"),
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_operate(
-    band: str,
     attribute_name: str,
     dish_manager_proxy: tango.DeviceProxy,
     event_store_class: Any,
@@ -128,12 +127,7 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
 
     try:
         if dish_manager_proxy.dishMode != DishMode.OPERATE:
-            [[_], [uid]] = dish_manager_proxy.Abort()
-            lrc_finished_events.wait_for_finished_command_result(
-                uid, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
-            )
-            configure_band_cmd = getattr(dish_manager_proxy, f"ConfigureBand{band}")
-            configure_band_cmd(True)
+            dish_manager_proxy.ConfigureBand1(True)
             dm_event_store.wait_for_value(DishMode.OPERATE, timeout=60)
         dish_manager_proxy.write_attribute(attribute_name, True)
         spf_lna_power_state_attr_event_store.wait_for_value(
@@ -141,6 +135,7 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
         )
 
     finally:
+        dish_manager_proxy.write_attribute(attribute_name, False)
         remove_subscriptions(subscriptions)
 
 
@@ -148,14 +143,14 @@ def test_spf_lna_power_state_change_on_dishmode_operate(
 @pytest.mark.parametrize(
     "attribute_name",
     [
-        "b1lnahpowerstate",
-        "b2lnahpowerstate",
-        "b1lnavpowerstate",
-        "b2lnavpowerstate",
-        "b3lnapowerstate",
-        "b4lnapowerstate",
-        "b5alnapowerstate",
-        "b5blnapowerstate",
+        "b1LnaHPowerState",
+        "b2LnaHPowerState",
+        "b1LnaVPowerState",
+        "b2LnaVPowerState",
+        "b3LnaPowerState",
+        "b4LnaPowerState",
+        "b5aLnaPowerState",
+        "b5bLnaPowerState",
     ],
 )
 def test_spf_lna_power_state_change_on_dishmode_maintenance(

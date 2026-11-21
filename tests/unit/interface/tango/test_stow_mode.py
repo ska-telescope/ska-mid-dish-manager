@@ -10,7 +10,7 @@ def test_stow_mode(dish_manager_resources):
     device_proxy, _ = dish_manager_resources
 
     [[result_code], [msg]] = device_proxy.SetStowMode()
-    assert result_code == ResultCode.OK
+    assert result_code == ResultCode.STARTED
 
-    expected_msg = "Stow called, monitor achievedPointing and dishmode"
+    expected_msg = "Stow called on Dish Structure, monitor achievedPointing and dishmode"
     assert msg == expected_msg

@@ -16,21 +16,15 @@ POINTING_TOLERANCE_DEG = 0.1
 @pytest.mark.acceptance
 def test_slew_rejected_in_wrong_dish_mode(event_store_class, dish_manager_proxy):
     """Test slew command rejected when not in OPERATE."""
-    result_event_store = event_store_class()
-
-    attr_cb_mapping = {
-        "lrcFinished": result_event_store,
-    }
-    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
-
     # Position must be in range but absolute not important
-    [[_], [unique_id]] = dish_manager_proxy.Slew([0.0, 50.0])
-    events = result_event_store.wait_for_command_id(unique_id, timeout=10)
-    event_payload_str = str(events[-1].attr_value.value)
-    assert unique_id in event_payload_str
-    assert "Command is not allowed" in event_payload_str
-    assert "REJECTED" in event_payload_str
-    remove_subscriptions(subscriptions)
+    error_msg = (
+        "CommandNotAllowedError: Slew command rejected for current dishMode. "
+        "Slew command is allowed for dishMode OPERATE"
+    )
+    with pytest.raises(tango.DevFailed) as exc_info:
+        dish_manager_proxy.Slew([0.0, 50.0])
+
+    assert error_msg in str(exc_info.value)
 
 
 @pytest.mark.movement
@@ -73,12 +67,22 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
 
 @pytest.mark.movement
 @pytest.mark.acceptance
-def test_slew_extra_arg_fails(dish_manager_proxy):
+def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     """Test that when given three arguments instead of two, the command is rejected."""
-    [[result_code], [message]] = dish_manager_proxy.Slew([100, 100, 100])
+    lrc_finished_event_store = event_store_class()
+    dish_manager_proxy.subscribe_event(
+        "lrcFinished",
+        tango.EventType.CHANGE_EVENT,
+        lrc_finished_event_store,
+    )
 
-    assert result_code == ResultCode.REJECTED
-    assert message == "Expected 2 arguments (az, el) but got 3 arg(s)."
+    [[_], [unique_id]] = dish_manager_proxy.Slew([100, 100, 100])
+
+    lrc_finished_event_store.wait_for_finished_command_result(
+        unique_id,
+        '[5, "Expected 2 arguments (az, el) but got 3 arg(s)."]',
+        ResultCode.REJECTED,
+    )
 
 
 @pytest.mark.movement

@@ -14,15 +14,16 @@ from typing import Callable, Dict, List, Optional, Tuple, cast
 import requests
 import tango
 from ska_control_model import (
+    AdminMode,  # ty: ignore[deprecated]
     CommunicationStatus,
     HealthState,
     ResultCode,
     TaskStatus,
 )
-from ska_control_model.future import AdminMode
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
+from ska_tango_base import faults
 from ska_tango_base.executor import TaskAborted, TaskExecutor
 from ska_tango_base.type_hints import ProgressCallbackType
 
@@ -118,8 +119,12 @@ class DishManagerComponentManager(BaseComponentManager):
         *args,
         wms_device_names: List[str] = [],
         wind_stow_callback: Optional[Callable] = None,
+        check_component_controlled: Optional[Callable] = None,
         clear_scan_id_callback: Optional[Callable] = None,
         record_command_callback: Optional[Callable[[str, bool], None]] = None,
+        last_tango_event_error_callback: Optional[Callable[[str, str, str, str], None]] = None,
+        abort_lrc_callback: Optional[Callable] = None,
+        health_report_callback: Optional[Callable[[HealthState, List[str]], None]] = None,
         **kwargs,
     ):
         self.logger = logger
@@ -154,7 +159,6 @@ class DishManagerComponentManager(BaseComponentManager):
             logger,
             *args,
             dishmode=default_dish_mode,
-            healthstate=HealthState.UNKNOWN,
             configuredband=Band.NONE,
             capturing=False,
             pointingstate=PointingState.UNKNOWN,
@@ -209,8 +213,6 @@ class DishManagerComponentManager(BaseComponentManager):
             autowindstowenabled=False,
             meanwindspeed=-1,
             windgust=-1,
-            lastcommandfailure=("0.0", "", ""),
-            lasttangoeventerror=("0.0", "", "", ""),
             dscctrlstate=DscCtrlState.NO_AUTHORITY,
             rfcmplllock=B5dcPllState.NOT_LOCKED,
             rfcmhattenuation=0.0,
@@ -237,7 +239,6 @@ class DishManagerComponentManager(BaseComponentManager):
             dscsafetystatus="OK",
             dscconnectionstate=CommunicationStatus.DISABLED,
             b5dcserverconnectionstate=CommunicationStatus.DISABLED,
-            healthinfo=[],
             b1healthstate=SPFHealthState.UNKNOWN,
             b2healthstate=SPFHealthState.UNKNOWN,
             b345healthstate=SPFHealthState.UNKNOWN,
@@ -246,8 +247,12 @@ class DishManagerComponentManager(BaseComponentManager):
         self._build_state_callback = build_state_callback
         self._quality_state_callback = quality_state_callback
         self._wind_stow_callback = wind_stow_callback
+        self._check_component_controlled = check_component_controlled
         self.clear_scan_id_callback = clear_scan_id_callback
         self._record_command_callback = record_command_callback
+        self._last_tango_event_error_callback = last_tango_event_error_callback
+        self._abort_lrc_callback = abort_lrc_callback
+        self._health_report_callback = health_report_callback
         self._state_transition = StateTransition()
         self._state_update_lock = Lock()
         self._stop_event = threading.Event()
@@ -297,6 +302,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
                 tango_error_callback=self._sub_device_tango_error_occurred,
+                check_component_controlled=self._check_component_controlled,
             ),
             "DS": DSComponentManager(
                 ds_device_fqdn,
@@ -340,6 +346,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
                 tango_error_callback=self._sub_device_tango_error_occurred,
+                check_component_controlled=self._check_component_controlled,
             ),
             "SPFRX": SPFRxComponentManager(
                 spfrx_device_fqdn,
@@ -365,7 +372,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 noisediodemode=NoiseDiodeMode.OFF,
                 periodicnoisediodepars=[0, 0, 0],
                 pseudorandomnoisediodepars=[0, 0, 0],
-                adminmode=AdminMode.ENGINEERING,
+                adminmode=AdminMode.OFFLINE,
                 communication_state_callback=partial(
                     self._sub_device_communication_state_changed, DishDevice.SPFRX
                 ),
@@ -374,6 +381,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 ),
                 quality_state_callback=self._quality_state_callback,
                 tango_error_callback=self._sub_device_tango_error_occurred,
+                check_component_controlled=self._check_component_controlled,
             ),
         }
 
@@ -416,6 +424,7 @@ class DishManagerComponentManager(BaseComponentManager):
                     self._sub_device_component_state_changed, DishDevice.B5DC
                 ),
                 tango_error_callback=self._sub_device_tango_error_occurred,
+                check_component_controlled=self._check_component_controlled,
             )
 
         self.direct_mapped_attrs = {
@@ -521,27 +530,6 @@ class DishManagerComponentManager(BaseComponentManager):
     # --------------
     # Helper methods
     # --------------
-    def publish_last_command_failure(self, command: str, reason: str | None = None) -> None:
-        """Update the last command failure attribute.
-
-        Constructs a `lastcommandfailure` record for a failed command and
-        publishes it via the component state callback.
-
-        :param command: The name of the command that failed.
-        :param status: The status returned by the command.
-        :param reason: The reason or failure message returned by the command.
-        """
-        # TODO put this on a queue to wait its turn for
-        # execution rather than immediately publishing the failure.
-        reason = reason or ""
-        failure = (
-            str(time.time()),
-            command,
-            reason,
-        )
-
-        self._update_component_state(lastcommandfailure=failure)
-
     def get_current_tai_offset_from_dsc_with_manual_fallback(self) -> float:
         """Try and get the TAI offset from the DSManager device.
         Or calulate it manually if that fails.
@@ -704,17 +692,23 @@ class DishManagerComponentManager(BaseComponentManager):
 
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
+            if self._abort_lrc_callback is not None:
+                self._abort_lrc_callback()
             self.logger.info(f"{trigger_source}: Dish is already in STOW mode, no action taken.")
             return
 
         retry_interval = 0.1
         self.logger.info(f"{trigger_source} transitioning dish to STOW.", extra=OPERATOR_TAG)
 
+        if self._abort_lrc_callback is not None:
+            self._abort_lrc_callback()
+
+        # Retry until the DS accepts Stow. set_stow_mode() returns STARTED once the command
+        # has been sent, and only FAILED needs another attempt.
         while not self._stop_event.is_set():
-            # TODO need to abort here
             result_code, _ = self.set_stow_mode()
 
-            if result_code == ResultCode.OK:
+            if result_code != ResultCode.FAILED:
                 break
             self._stop_event.wait(retry_interval)
 
@@ -792,7 +786,6 @@ class DishManagerComponentManager(BaseComponentManager):
 
     def _update_dish_health_state_and_info(self):
         """Compute dish health state and info following health or communication state update."""
-        return
         ds_component_state_dict = self.sub_component_managers["DS"].component_state
         spf_component_state_dict = self.sub_component_managers["SPF"].component_state
         spfrx_component_state_dict = self.sub_component_managers["SPFRX"].component_state
@@ -871,11 +864,11 @@ class DishManagerComponentManager(BaseComponentManager):
             b5dc_component_state_dict.get("connectionstate", CommunicationStatus.DISABLED),
         )
 
-        # TODO: Investigate double healthState change events
-        self._update_component_state(healthstate=new_health_state)
-
-        new_health_info = self.generate_healthinfo()
-        self._update_component_state(healthinfo=new_health_info)
+        new_health_info = self.generate_healthinfo() or ["reason unknown"]
+        if self._health_report_callback is not None:
+            if new_health_state == HealthState.UNKNOWN:
+                new_health_state = HealthState.FAILED
+            self._health_report_callback(new_health_state, new_health_info)
 
     # ---------
     # Callbacks
@@ -915,9 +908,10 @@ class DishManagerComponentManager(BaseComponentManager):
         :param attribute_name: name of the attribute the error event was emitted for
         :param reason: the reason reported on the tango error
         """
-        self._update_component_state(
-            lasttangoeventerror=(str(time.time()), device_name, attribute_name, reason)
-        )
+        if self._last_tango_event_error_callback is not None:
+            self._last_tango_event_error_callback(
+                str(time.time()), device_name, attribute_name, reason
+            )
 
     def _update_connection_state_attribute(
         self, device: str, connection_state: CommunicationStatus
@@ -1106,7 +1100,7 @@ class DishManagerComponentManager(BaseComponentManager):
             )
             try:
                 spf_component_manager.write_attribute_value("bandInFocus", band_in_focus)
-            except (tango.DevFailed, ConnectionError):
+            except (tango.DevFailed, RuntimeError, faults.StateModelError):
                 # this will impact configuredBand calculation on dish manager
                 pass
             else:
@@ -1493,7 +1487,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 DSComponentManager, self.sub_component_managers["DS"]
             )
             ds_com_man.write_attribute_value(attr, values)
-        except tango.DevFailed:
+        except (tango.DevFailed, RuntimeError, faults.StateModelError):
             raise
 
     @last_command_failure_decorator
@@ -1736,10 +1730,9 @@ class DishManagerComponentManager(BaseComponentManager):
         self.logger.info(
             "Updating dish manager dishmode to %s.", new_dish_mode, extra=OPERATOR_TAG
         )
-        # self._update_component_state(dishmode=new_dish_mode)
-        # TODO: send this update to the device interface without it blocking the command
-        # For now, we are directly updating the component state dictionary.
-        self._component_state["dishmode"] = new_dish_mode
+        # TODO: send this update to the device interface
+        # using Signal so that the command is not blocked
+        self._update_component_state(dishmode=new_dish_mode)
 
     @last_command_failure_decorator
     def set_stow_mode(self) -> Tuple[ResultCode, str]:
@@ -1749,7 +1742,10 @@ class DishManagerComponentManager(BaseComponentManager):
         if task_status == TaskStatus.FAILED:
             return ResultCode.FAILED, msg
 
-        return ResultCode.OK, "Stow called, monitor achievedPointing and dishmode"
+        return (
+            ResultCode.STARTED,
+            "Stow called on Dish Structure, monitor achievedPointing and dishmode",
+        )
 
     @last_command_failure_decorator
     @TaskExecutor.task
@@ -2068,7 +2064,7 @@ class DishManagerComponentManager(BaseComponentManager):
                 f"Successfully wrote the following values {coefficients} "
                 f"to band {band_value} on DS"
             )
-        except tango.DevFailed as err:
+        except (tango.DevFailed, RuntimeError, faults.StateModelError) as err:
             result_code = ResultCode.FAILED
             message = str(err)
 
@@ -2080,7 +2076,7 @@ class DishManagerComponentManager(BaseComponentManager):
         try:
             ds_cm.write_attribute_value("trackInterpolationMode", interpolation_mode)
             self.logger.debug("Successfully updated trackInterpolationMode on DSManager.")
-        except tango.DevFailed:
+        except (tango.DevFailed, RuntimeError, faults.StateModelError):
             raise
         return (ResultCode.OK, "Successfully updated trackInterpolationMode on DSManager")
 
@@ -2092,7 +2088,7 @@ class DishManagerComponentManager(BaseComponentManager):
         try:
             spfrx_cm.write_attribute_value("noiseDiodeMode", noise_diode_mode)
             self.logger.debug("Successfully updated noiseDiodeMode on SPFRx.")
-        except tango.DevFailed:
+        except (tango.DevFailed, RuntimeError, faults.StateModelError):
             raise
         return (ResultCode.OK, "Successfully updated noiseDiodeMode on SPFRx")
 
@@ -2114,7 +2110,7 @@ class DishManagerComponentManager(BaseComponentManager):
             try:
                 spfrx_cm.write_attribute_value("periodicNoiseDiodePars", values)
                 self.logger.debug("Successfully updated periodicNoiseDiodePars on SPFRx.")
-            except tango.DevFailed:
+            except (tango.DevFailed, RuntimeError, faults.StateModelError):
                 raise
         else:
             raise AssertionError(
@@ -2143,7 +2139,7 @@ class DishManagerComponentManager(BaseComponentManager):
             try:
                 spfrx_cm.write_attribute_value("pseudoRandomNoiseDiodePars", values)
                 self.logger.debug("Successfully updated pseudoRandomNoiseDiodePars on SPFRx.")
-            except tango.DevFailed:
+            except (tango.DevFailed, RuntimeError, faults.StateModelError):
                 raise
         else:
             raise AssertionError(
@@ -2161,7 +2157,7 @@ class DishManagerComponentManager(BaseComponentManager):
             ds_cm.write_attribute_value("dscPowerLimitKw", power_limit)
             self.logger.debug("Successfully updated dscPowerLimitKw on DS.")
             self._update_component_state(dscpowerlimitkw=power_limit)
-        except tango.DevFailed:
+        except (tango.DevFailed, RuntimeError, faults.StateModelError):
             raise
         return (ResultCode.OK, "Successfully updated dscPowerLimitKw on DS")
 
@@ -2177,14 +2173,14 @@ class DishManagerComponentManager(BaseComponentManager):
         reset_point = [timestamp, 0.0, 50.0] * sequence_length
         load_mode = TrackTableLoadMode.RESET
 
-        task_status, msg = self.track_load_table(sequence_length, reset_point, load_mode)
-        if task_status == TaskStatus.FAILED:
+        result_code, msg = self.track_load_table(sequence_length, reset_point, load_mode)
+        if result_code == ResultCode.FAILED:
             self.logger.debug(
                 "Failed to reset programTrackTable with message: %s",
                 msg,
             )
-            return ResultCode.FAILED, msg
-        return ResultCode.OK, reset_point
+            return (result_code, msg)
+        return (result_code, reset_point)
 
     @last_command_failure_decorator
     def set_h_pol_attenuation(self, value: int) -> Tuple[ResultCode, str]:

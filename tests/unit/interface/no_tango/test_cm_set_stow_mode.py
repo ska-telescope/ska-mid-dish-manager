@@ -16,5 +16,5 @@ def test_set_stow_mode_handler(
     """
     result_code, msg = component_manager.set_stow_mode()
 
-    assert result_code == ResultCode.OK
-    assert msg == "Stow called, monitor achievedPointing and dishmode"
+    assert result_code == ResultCode.STARTED
+    assert msg == "Stow called on Dish Structure, monitor achievedPointing and dishmode"
