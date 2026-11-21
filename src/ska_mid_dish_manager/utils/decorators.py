@@ -133,7 +133,7 @@ def last_command_failure_decorator(func: Any) -> Any:
 
     @functools.wraps(func)
     def last_command_failure_wrapper(*args: Any, **kwargs: Any) -> Any:
-        device_instance = args[0]
+        component_manager = args[0]
         try:
             result = func(*args, **kwargs)
             if isinstance(result, tuple):
@@ -153,17 +153,13 @@ def last_command_failure_decorator(func: Any) -> Any:
                         ResultCode.UNKNOWN,
                     )
                 if status in failure_states:
-                    device_instance._last_command_failure = (
-                        str(time.time()),
-                        func.__name__,
-                        str(reason),
+                    component_manager.record_last_command_failure(
+                        (str(time.time()), func.__name__, str(reason))
                     )
             return result
         except Exception as ex:
-            device_instance._last_command_failure = (
-                str(time.time()),
-                func.__name__,
-                str(ex),
+            component_manager.record_last_command_failure(
+                (str(time.time()), func.__name__, str(ex))
             )
             raise
 

@@ -431,6 +431,10 @@ class DishManager(
         assert status == TaskStatus.IN_PROGRESS
         return ([ResultCode.STARTED], [command_id])
 
+    def _record_last_command_failure(self, failure: tuple[str, str, str]) -> None:
+        """Publish the latest command failure through the device signal."""
+        self._last_command_failure = failure
+
     def is_command_allowed(self, command_name: str) -> bool:
         """Check whether a command is allowed in the current state of the dish.
 
@@ -457,7 +461,7 @@ class DishManager(
             )
         except (faults.StateModelError, CommandNotAllowedError, ValueError) as exc:
             failure = (str(time.time()), command_name, str(exc))  # time, command, reason
-            self._last_command_failure = failure
+            self._record_last_command_failure(failure)
             self.logger.warning("Command %s is not allowed: %s", command_name, exc)
             raise
 
@@ -511,6 +515,7 @@ class DishManager(
             clear_scan_id_callback=self._clear_scan_id,
             record_command_callback=self._record_command,
             last_tango_event_error_callback=self._update_last_tango_event_error,
+            last_command_failure_callback=self._record_last_command_failure,
             abort_lrc_callback=self.execute_Abort,
             health_report_callback=self.report_health,
         )
@@ -2700,8 +2705,7 @@ class DishManager(
         result_code, message = self.component_manager.set_stow_mode()
 
         # cancel any LRCs
-        _, task_callback = self.allocate_lrc("stow.cancel_lrcs")
-        self.task_executor.abort(task_callback)
+        self.execute_Abort()
 
         return ([result_code], [message])
 

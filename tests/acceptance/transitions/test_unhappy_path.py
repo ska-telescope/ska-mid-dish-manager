@@ -55,7 +55,7 @@ def test_dish_handles_unhappy_path_in_command_execution(
     progress_msg = "SetStandbyLPMode failed Exception:"
     progress_event_store.wait_for_progress_update(progress_msg, timeout=5)
 
-    expected_result = '[3, "SetStandbyLPMode failed"]'
+    expected_result = '[3, "SetStandbyLPMode failed Exception:"]'
     result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
 
     # check that the mode transition to LP mode did not happen on dish manager, spf and spfrx

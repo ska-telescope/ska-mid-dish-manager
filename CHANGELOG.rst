@@ -10,6 +10,11 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 - Updated docker-compose deployment to include Meerkat weather related code.
 - Added manual job to run lmc integration test prior to dish manager release (cascading pipeline)
 - Added custom sub component's values i.e DS Manager and Simulator to enable the projects to trigger Dish Manager's pipeline for early integration testing
+- Migrated DishManager to the ska-tango-base future device interfaces (LRCMixin, ComponentManagerMixin, ControlModeMixin, ControllerInterface).
+- Abort now only cancels long running commands. Added the AbortScan command, which cancels long running commands and then runs the abort sequence 
+
+  - Clients relying on Abort to stop the dish should use AbortScan.
+
  
 Version 12.0.1
 **************

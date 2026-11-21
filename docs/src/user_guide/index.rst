@@ -7,7 +7,7 @@ User Guide
 
    Getting Started<getting_started>
    How To<how_to>
-   Abort on DishManager<abort>
+   Abort and AbortScan<abort>
    Apply Pointing Model<apply_pointing_model>
    Update SPFRx timezone data<update_tz_data>
    Tracking<tracking>

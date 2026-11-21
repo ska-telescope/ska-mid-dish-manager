@@ -122,6 +122,7 @@ class DishManagerComponentManager(BaseComponentManager):
         check_component_controlled: Optional[Callable] = None,
         clear_scan_id_callback: Optional[Callable] = None,
         record_command_callback: Optional[Callable[[str, bool], None]] = None,
+        last_command_failure_callback: Optional[Callable[[tuple[str, str, str]], None]] = None,
         last_tango_event_error_callback: Optional[Callable[[str, str, str, str], None]] = None,
         abort_lrc_callback: Optional[Callable] = None,
         health_report_callback: Optional[Callable[[HealthState, List[str]], None]] = None,
@@ -250,6 +251,7 @@ class DishManagerComponentManager(BaseComponentManager):
         self._check_component_controlled = check_component_controlled
         self.clear_scan_id_callback = clear_scan_id_callback
         self._record_command_callback = record_command_callback
+        self._last_command_failure_callback = last_command_failure_callback
         self._last_tango_event_error_callback = last_tango_event_error_callback
         self._abort_lrc_callback = abort_lrc_callback
         self._health_report_callback = health_report_callback
@@ -687,9 +689,7 @@ class DishManagerComponentManager(BaseComponentManager):
         :param: trigger_source: The event requesting the dish to stow.
                  It can be due to either a wind condition or communication loss from client.
         """
-        if self._record_command_callback is not None:
-            self._record_command_callback(trigger_source, True)
-
+        self.record_command(trigger_source, True)
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
             if self._abort_lrc_callback is not None:
@@ -703,8 +703,6 @@ class DishManagerComponentManager(BaseComponentManager):
         if self._abort_lrc_callback is not None:
             self._abort_lrc_callback()
 
-        # Retry until the DS accepts Stow. set_stow_mode() returns STARTED once the command
-        # has been sent, and only FAILED needs another attempt.
         while not self._stop_event.is_set():
             result_code, _ = self.set_stow_mode()
 
@@ -870,6 +868,21 @@ class DishManagerComponentManager(BaseComponentManager):
                 new_health_state = HealthState.FAILED
             self._health_report_callback(new_health_state, new_health_info)
 
+    def record_command(self, command: str, record_mode: bool = False) -> None:
+        """Record a command issued to the dish manager."""
+        if self._record_command_callback is not None:
+            self._record_command_callback(command, record_mode)
+
+    def record_last_command_failure(self, failure: Tuple[str, str, str]) -> None:
+        """Forward command failures to the owning Tango device signal."""
+        if self._last_command_failure_callback is not None:
+            self._last_command_failure_callback(failure)
+
+    def record_last_tango_event_error(self, error: Tuple[str, str, str, str]) -> None:
+        """Forward last Tango event errors to the owning Tango device signal."""
+        if self._last_tango_event_error_callback is not None:
+            self._last_tango_event_error_callback(*error)
+
     # ---------
     # Callbacks
     # ---------
@@ -908,10 +921,7 @@ class DishManagerComponentManager(BaseComponentManager):
         :param attribute_name: name of the attribute the error event was emitted for
         :param reason: the reason reported on the tango error
         """
-        if self._last_tango_event_error_callback is not None:
-            self._last_tango_event_error_callback(
-                str(time.time()), device_name, attribute_name, reason
-            )
+        self.record_last_tango_event_error((str(time.time()), device_name, attribute_name, reason))
 
     def _update_connection_state_attribute(
         self, device: str, connection_state: CommunicationStatus

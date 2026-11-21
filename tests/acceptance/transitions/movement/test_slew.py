@@ -52,6 +52,7 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
     dish_manager_proxy.ConfigureBand1(True)
     # Await auto transition to OPERATE following band config
     dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
+
     dish_manager_proxy.Slew([100, 91])
 
     lrc_events = ds_lrc_finished_event_store.get_queue_values()
@@ -70,11 +71,17 @@ def test_slew_outside_bounds_rejected(event_store_class, dish_manager_proxy, ds_
 def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
     """Test that when given three arguments instead of two, the command is rejected."""
     lrc_finished_event_store = event_store_class()
-    dish_manager_proxy.subscribe_event(
-        "lrcFinished",
-        tango.EventType.CHANGE_EVENT,
-        lrc_finished_event_store,
-    )
+    main_event_store = event_store_class()
+    attr_cb_mapping = {
+        "dishMode": main_event_store,
+        "lrcFinished": lrc_finished_event_store,
+    }
+    subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
+
+    # Set mode to Operate to accept Slew command
+    dish_manager_proxy.ConfigureBand1(True)
+    # Await auto transition to OPERATE following band config
+    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
     [[_], [unique_id]] = dish_manager_proxy.Slew([100, 100, 100])
 
@@ -83,6 +90,8 @@ def test_slew_extra_arg_fails(event_store_class, dish_manager_proxy):
         '[5, "Expected 2 arguments (az, el) but got 3 arg(s)."]',
         ResultCode.REJECTED,
     )
+
+    remove_subscriptions(subscriptions)
 
 
 @pytest.mark.movement

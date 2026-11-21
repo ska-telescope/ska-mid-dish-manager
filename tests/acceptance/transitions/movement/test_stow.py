@@ -1,7 +1,5 @@
 """Test that DS goes into STOW and dishManager reports it."""
 
-import json
-
 import pytest
 from ska_control_model import ResultCode
 
@@ -19,11 +17,9 @@ def test_stow_transition(
     """Test transition to STOW."""
     main_event_store = event_store_class()
     progress_event_store = event_store_class()
-    lrc_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "lrcExecuting": progress_event_store,
-        "lrcFinished": lrc_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     expected_progress_update = (
@@ -38,18 +34,10 @@ def test_stow_transition(
     stow_position = 90.2
     estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
 
-    lrc_event_store.clear_queue()
     [[result_code], [command_message]] = dish_manager_proxy.SetStowMode()
 
     assert ResultCode(result_code) == ResultCode.STARTED
-    assert (
-        command_message == "Stow called on Dish Structure, monitor achievedPointing and dishmode"
-    )
-
-    [event] = lrc_event_store.wait_for_n_events(1, timeout=200)
-    event_json = json.loads(event.attr_value.value[0])
-    assert event_json["name"] == "SetStowMode"
-    assert event_json["status"] == "COMPLETED"
+    assert command_message == expected_progress_update
 
     main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 60)
 

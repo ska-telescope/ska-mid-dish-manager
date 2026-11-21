@@ -50,7 +50,9 @@ def test_action_timeout(
 
         # Check lrcFinished event for the ConfigureBand1 command timeout
         result_event_store.wait_for_finished_command_result(
-            configure_unique_id, '[3, "SetOperateMode failed"]', timeout=30
+            configure_unique_id,
+            '[3, "Action SetOperateMode timed out. Fanned out commands:"]',
+            timeout=30,
         )
 
         dish_manager_proxy.actionTimeoutSeconds = DEFAULT_ACTION_TIMEOUT_S

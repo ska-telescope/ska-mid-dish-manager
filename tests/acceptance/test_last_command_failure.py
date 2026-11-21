@@ -20,8 +20,7 @@ def test_last_command_failure(
 
     # Unhappy Path: Run a command that fails - expect an updated DM lastCommandFailure
     error_msg = (
-        "CommandNotAllowedError: Slew command rejected for current dishMode. "
-        "Slew command is allowed for dishMode OPERATE"
+        "Slew command rejected for current dishMode. Slew command is allowed for dishMode OPERATE"
     )
     with pytest.raises(tango.DevFailed):
         dish_manager_proxy.Slew([0.0, 50.0])
