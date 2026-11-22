@@ -2,7 +2,7 @@
 
 import pytest
 import tango
-from ska_control_model import HealthState
+from ska_control_model import CommunicationStatus, HealthState
 
 from ska_mid_dish_manager.models.dish_enums import SPFHealthState
 
@@ -12,17 +12,23 @@ def _make_baseline_healthy(dish_manager_cm) -> None:
     sub_component_managers = dish_manager_cm.sub_component_managers
     sub_component_managers["SPF"]._update_component_state(healthstate=SPFHealthState.NORMAL)
     sub_component_managers["SPFRX"]._update_component_state(healthstate=HealthState.OK)
-    sub_component_managers["DS"]._update_component_state(healthstate=HealthState.OK, healthinfo=[])
+    sub_component_managers["DS"]._update_component_state(
+        healthstate=HealthState.OK,
+        healthinfo=[],
+        # DS's own connection to the DSC also feeds the dish healthState
+        connectionstate=CommunicationStatus.ESTABLISHED,
+    )
 
 
 @pytest.mark.unit
 @pytest.mark.forked
 def test_ignoring_spfrx_handles_raw_healthstate_during_sync(dish_manager_resources):
     """A cached health state during synchronisation does not fail the write."""
-    _, dish_manager_cm = dish_manager_resources
+    device_proxy, dish_manager_cm = dish_manager_resources
     sub_component_managers = dish_manager_cm.sub_component_managers
     spf_cm = sub_component_managers["SPF"]
     ds_cm = sub_component_managers["DS"]
+    spfrx_fqdn = sub_component_managers["SPFRX"]._tango_device_fqdn
 
     assert dish_manager_cm.component_state["ignorespfrx"] is False
 
@@ -38,7 +44,8 @@ def test_ignoring_spfrx_handles_raw_healthstate_during_sync(dish_manager_resourc
     assert type(spf_cm.component_state["healthstate"]) is int
     spf_cm.update_state_from_monitored_attributes.assert_called_with()
     ds_cm.update_state_from_monitored_attributes.assert_called_with()
-    assert dish_manager_cm.component_state["healthinfo"] == []
+    # healthInfo is reported through the base class, and an ignored SPFRx is left out of it
+    assert not any(spfrx_fqdn in reason for reason in (device_proxy.healthInfo or ()))
 
 
 @pytest.mark.unit
@@ -89,6 +96,9 @@ def test_healthinfo_reports_ds_reasons_without_healthstate_change(
     event_store.wait_for_value(
         (f'{ds_fqdn}: HealthState.OK, ["DSC safety status: E-stop pressed Pedestal"]',)
     )
+    # healthInfo must be empty when healthState is OK, so a reason from a sub-device that
+    # still reports OK makes the dish DEGRADED
+    assert device_proxy.healthState == HealthState.DEGRADED
 
 
 @pytest.mark.unit
@@ -142,3 +152,27 @@ def test_healthinfo_falls_back_to_placeholder_when_ds_reports_no_reasons(
 
     ds_cm._update_component_state(healthstate=HealthState.FAILED, healthinfo=[])
     event_store.wait_for_value((f'{ds_fqdn}: HealthState.FAILED, ["Unknown failure reason"]',))
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_healthinfo_reports_lost_connection(dish_manager_resources, event_store_class):
+    """HealthInfo names a sub-device whose connection is lost instead of its stale health."""
+    device_proxy, dish_manager_cm = dish_manager_resources
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+    spfrx_fqdn = spfrx_cm._tango_device_fqdn
+    _make_baseline_healthy(dish_manager_cm)
+
+    event_store = event_store_class()
+    device_proxy.subscribe_event("healthInfo", tango.EventType.CHANGE_EVENT, event_store)
+    event_store.wait_for_value(())
+
+    spfrx_cm._update_communication_state(CommunicationStatus.NOT_ESTABLISHED)
+    event_store.wait_for_value(
+        (f'{spfrx_fqdn}: CommunicationStatus.NOT_ESTABLISHED, ["Connection lost"]',)
+    )
+    assert device_proxy.healthState == HealthState.FAILED
+
+    spfrx_cm._update_communication_state(CommunicationStatus.ESTABLISHED)
+    event_store.wait_for_value(())
+    assert device_proxy.healthState == HealthState.OK

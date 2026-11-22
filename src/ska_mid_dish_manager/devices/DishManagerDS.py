@@ -190,7 +190,6 @@ class DishManager(
             "achievedtargetlock": "achievedTargetLock",
             "dsccmdauth": "dscCmdAuth",
             "configuretargetlock": "configureTargetLock",
-            "healthstate": "healthState",
             "b1capabilitystate": "b1CapabilityState",
             "b2capabilitystate": "b2CapabilityState",
             "b3capabilitystate": "b3CapabilityState",
@@ -264,7 +263,6 @@ class DishManager(
             "dscerrorstatus": "dscErrorStatuses",
             "dscwarningstatus": "dscWarningStatuses",
             "dscsafetystatus": "dscSafetyStatuses",
-            "healthinfo": "healthInfo",
             "b1healthstate": "spfcB1HealthState",
             "b2healthstate": "spfcB2HealthState",
             "b345healthstate": "spfcB345HealthState",
@@ -517,7 +515,7 @@ class DishManager(
             last_tango_event_error_callback=self._update_last_tango_event_error,
             last_command_failure_callback=self._record_last_command_failure,
             abort_lrc_callback=self.execute_Abort,
-            health_report_callback=self.report_health,
+            health_report_callback=self._report_health_from_component_manager,
         )
 
     # ---------
@@ -561,6 +559,26 @@ class DishManager(
                     attribute_object.set_value(attr_value)
                     attribute_object.set_quality(new_attribute_quality, True)
 
+    def _report_health_from_component_manager(
+        self, health_state: HealthState, health_info: list[str]
+    ) -> None:
+        """Report the health computed by the component manager.
+
+        healthState and healthInfo are signals that can only be updated through
+        report_health(). While controlMode is NO_MONITOR_NO_CONTROL the base class marks
+        the health as unknown and report_health() raises, so late sub-device updates
+        (e.g. while communication is being stopped) are dropped.
+
+        :param health_state: the dish health state
+        :param health_info: the reasons for the health state
+        """
+        if self.is_component_marked_unknown():
+            self.logger.debug(
+                "Health is marked unknown, not reporting %s %s", health_state, health_info
+            )
+            return
+        self.report_health(health_state, health_info)
+
     def _communication_state_changed(self, communication_state: CommunicationStatus) -> None:
         if self.component_manager.wind_stow_active:
             return
@@ -575,11 +593,11 @@ class DishManager(
                 if state == CommunicationStatus.NOT_ESTABLISHED
             )
             message = f"Connection lost to: {', '.join(lost)}"
-            self.report_health(HealthState.FAILED, [message])
+            # healthState and healthInfo are reported by the component manager, which
+            # recomputes them from the sub-device states right after this callback
             self.set_state(DevState.ALARM)
             self.set_status(message)
         elif communication_state == CommunicationStatus.ESTABLISHED:
-            self.report_health(HealthState.OK, [])
             self.set_state(DevState.ON)
             self.set_status("Connection to all sub-devices is established")
         elif communication_state == CommunicationStatus.DISABLED:
@@ -2228,16 +2246,6 @@ class DishManager(
     def dscErrorStatuses(self):
         """Return the aggregated error statuses from the DSC."""
         return self.component_manager.component_state.get("dscerrorstatus", "")
-
-    @attribute(
-        dtype=[str],
-        max_dim_x=256,
-        access=AttrWriteType.READ,
-        doc="Report the reason for healthstate failures.",
-    )
-    def healthInfo(self):
-        """Report the reason for healthstate failures."""
-        return self.component_manager.component_state.get("healthinfo", [])
 
     @attribute(
         dtype=SPFHealthState,

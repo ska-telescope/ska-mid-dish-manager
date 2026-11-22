@@ -6,8 +6,10 @@ from threading import Event
 from unittest import mock
 
 import pytest
-from ska_control_model import TaskStatus
-from ska_control_model.future import AdminMode
+from ska_control_model import (
+    AdminMode,  # ty: ignore[deprecated]
+    TaskStatus,
+)
 
 from ska_mid_dish_manager.component_managers.dish_manager_cm import (
     DishManagerComponentManager,

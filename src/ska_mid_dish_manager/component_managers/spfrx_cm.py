@@ -5,8 +5,10 @@ import threading
 from typing import Any, Callable, Optional
 
 import tango
-from ska_control_model import HealthState
-from ska_control_model.future import AdminMode
+from ska_control_model import (
+    AdminMode,  # ty: ignore[deprecated]
+    HealthState,
+)
 
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager

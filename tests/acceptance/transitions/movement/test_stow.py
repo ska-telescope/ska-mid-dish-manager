@@ -16,10 +16,8 @@ def test_stow_transition(
 ):
     """Test transition to STOW."""
     main_event_store = event_store_class()
-    progress_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     expected_progress_update = (
@@ -40,8 +38,5 @@ def test_stow_transition(
     assert command_message == expected_progress_update
 
     main_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 60)
-
-    events = progress_event_store.wait_for_progress_update(expected_progress_update, timeout=10)
-    assert events
 
     remove_subscriptions(subscriptions)

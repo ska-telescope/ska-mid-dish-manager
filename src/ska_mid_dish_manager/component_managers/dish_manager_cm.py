@@ -763,11 +763,18 @@ class DishManagerComponentManager(BaseComponentManager):
         health_info = []
 
         for key, com_man in self.get_active_sub_component_managers().items():
+            fqdn = com_man._tango_device_fqdn
+            # a lost connection makes the cached health state stale, so report the connection
+            if com_man.communication_state == CommunicationStatus.NOT_ESTABLISHED:
+                health_info.append(
+                    f'{fqdn}: CommunicationStatus.NOT_ESTABLISHED, ["Connection lost"]'
+                )
+                continue
+
             health_state = com_man.component_state.get("healthstate")
             if not isinstance(health_state, IntEnum):
                 continue
 
-            fqdn = com_man._tango_device_fqdn
             state_label = f"{type(health_state).__name__}.{health_state.name}"
 
             if key == "DS" and com_man.component_state.get("healthinfo"):
@@ -866,12 +873,25 @@ class DishManagerComponentManager(BaseComponentManager):
         self.report_health(new_health_state, new_health_info)
 
     def report_health(self, health_state: HealthState, health_info: list[str]) -> None:
-        """Report the current health state of the dish manager."""
-        if self._health_report_callback is not None:
-            if health_state == HealthState.UNKNOWN:
-                health_state = HealthState.FAILED
-            health_info = health_info or ["reason unknown"]
-            self._health_report_callback(health_state, health_info)
+        """Report the current health state of the dish manager.
+
+         Adapts the computed health to what the base class report_health() accepts: it
+        rejects UNKNOWN, requires an empty info list for OK and a non-empty one otherwise.
+        OK with sub-device reasons (e.g. DS reporting a DSC safety status while its own
+        healthState is OK) is reported as DEGRADED, so those reasons stay visible.
+        :param health_state: the health state computed from the sub-devices
+        :param health_info: the reasons reported by the sub-devices
+        """
+        if self._health_report_callback is None:
+            return
+        if health_state == HealthState.UNKNOWN:
+            health_state = HealthState.FAILED
+        if health_state == HealthState.OK:
+            if not health_info:
+                self._health_report_callback(HealthState.OK, [])
+                return
+            health_state = HealthState.DEGRADED
+        self._health_report_callback(health_state, health_info or ["reason unknown"])
 
     def record_command(self, command: str, record_mode: bool = False) -> None:
         """Record a command issued to the dish manager."""
