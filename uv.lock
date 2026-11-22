@@ -675,15 +675,6 @@ wheels = [
 ]
 
 [[package]]
-name = "networkx"
-version = "2.8.8"
-source = { registry = "https://pypi.org/simple/" }
-sdist = { url = "https://files.pythonhosted.org/packages/cd/16/c44e8550012735b8f21b3df7f39e8ba5a987fb764ac017ad5f3589735889/networkx-2.8.8.tar.gz", hash = "sha256:230d388117af870fce5647a3c52401fcf753e94720e6ea6b4197a5355648885e", size = 1960828, upload-time = "2022-11-01T20:31:52.02Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/42/31/d2f89f1ae42718f8c8a9e440ebe38d7d5fe1e0d9eb9178ce779e365b3ab0/networkx-2.8.8-py3-none-any.whl", hash = "sha256:e435dfa75b1d7195c7b8378c3859f0445cd88c6b0375c181ed66823a9ceb7524", size = 2025192, upload-time = "2022-11-01T20:31:49.035Z" },
-]
-
-[[package]]
 name = "nodeenv"
 version = "1.11.0"
 source = { registry = "https://pypi.org/simple/" }
@@ -1261,7 +1252,6 @@ version = "12.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "astropy" },
-    { name = "networkx" },
     { name = "numpy" },
     { name = "pytango" },
     { name = "requests" },
@@ -1314,7 +1304,6 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "astropy", specifier = ">=6.0.1" },
-    { name = "networkx", specifier = ">=2.6.3,<3.0.0" },
     { name = "numpy", specifier = ">=2.3" },
     { name = "pytango", specifier = ">=10.3.1,<11.0.0" },
     { name = "requests", specifier = ">=2.34.2,<3.0.0" },

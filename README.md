@@ -131,18 +131,26 @@ To test the auto doc generation for the tango interface run
 tangodocgen --auto -o docs/src/api/devices
 ```
 
-Use the code below to generate the mode transition graph:
+Use the code below to generate the mode transition graph. networkx is not a dependency of
+the dish manager, so add it when running the snippet, for example with
+``uv run --with networkx --with matplotlib python``:
+
 ```python
-import networkx as nx
 import matplotlib.pyplot as plt
+import networkx as nx
+
 from ska_mid_dish_manager.models.dish_mode_model import DishModeModel
 
-dm_graph = DishModeModel().dishmode_graph
+model = DishModeModel()
+dm_graph = nx.DiGraph()
+dm_graph.add_nodes_from(model.dish_modes)
+dm_graph.add_edges_from(model.transitions)
 
 pos = nx.spring_layout(dm_graph)
 
+nx.draw_networkx_nodes(dm_graph, pos)
 nx.draw_networkx_labels(dm_graph, pos)
-nx.draw_networkx_edges(dm_graph, pos)
+nx.draw_networkx_edges(dm_graph, pos, arrows=True)
 
 plt.show()
 ```

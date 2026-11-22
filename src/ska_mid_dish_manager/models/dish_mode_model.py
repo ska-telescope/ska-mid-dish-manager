@@ -11,8 +11,6 @@ command (for example SetStowMode while already in STOW) succeeds instead of bein
 from collections.abc import Callable
 from typing import Any, Dict
 
-import networkx as nx
-
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
 CONFIG_COMMANDS = (
@@ -43,12 +41,54 @@ class CommandNotAllowedError(Exception):
     """Raised when a command is not allowed in the current state of the dish."""
 
 
+def _build_transitions() -> dict[tuple[str, str], tuple[str, ...]]:
+    """Build the commanded dish mode transitions.
+
+    :return: The commands that move the dish between two modes, keyed by
+        (from mode, to mode). An empty tuple is a transition no command triggers yet.
+    """
+    transitions: dict[tuple[str, str], tuple[str, ...]] = {
+        # From Standby_LP to other modes
+        ("STANDBY_LP", "STANDBY_FP"): ("SetStandbyFPMode",),
+        ("STANDBY_LP", "CONFIG"): CONFIG_COMMANDS,
+        # From Standby_FP to other modes
+        ("STANDBY_FP", "STANDBY_LP"): ("SetStandbyLPMode",),
+        ("STANDBY_FP", "CONFIG"): CONFIG_COMMANDS,
+        # From Operate to other modes
+        ("OPERATE", "STANDBY_FP"): ("SetStandbyFPMode",),
+        ("OPERATE", "STANDBY_LP"): ("SetStandbyLPMode",),
+        ("OPERATE", "CONFIG"): CONFIG_COMMANDS,
+        # From Stow to other modes
+        ("STOW", "STANDBY_FP"): ("SetStandbyFPMode",),
+        ("STOW", "STANDBY_LP"): ("SetStandbyLPMode",),
+        ("STOW", "CONFIG"): CONFIG_COMMANDS,
+        ("STOW", "MAINTENANCE"): ("SetMaintenanceMode",),
+    }
+
+    # From any mode to Stow
+    for mode in DISH_MODE_NODES:
+        if mode != "STOW":
+            transitions[(mode, "STOW")] = ("SetStowMode",)
+
+    # From any mode to Shutdown
+    # TODO: The shutdown command is not currently defined. Add it here once implemented
+    for mode in DISH_MODE_NODES:
+        if mode != "SHUTDOWN":
+            transitions[(mode, "SHUTDOWN")] = ()
+
+    return transitions
+
+
+DISH_MODE_TRANSITIONS = _build_transitions()
+
+
 class DishModeModel:
     """Representation of the mode transition diagram, depicting commanded transitions."""
 
     def __init__(self) -> None:
-        self.dishmode_graph = self._build_model()
-        self._allowed_commands_by_dish_mode = self._build_allowed_commands(self.dishmode_graph)
+        self.dish_modes = DISH_MODE_NODES
+        self.transitions = DISH_MODE_TRANSITIONS
+        self._allowed_commands_by_dish_mode = self._build_allowed_commands(self.transitions)
         self._command_other_state_check_mapping: dict[str, Callable[[Dict], None]] = {
             "SetOperateMode": self._is_set_operate_mode_allowed,
             "Slew": self._is_slew_allowed,
@@ -56,66 +96,25 @@ class DishModeModel:
             "TrackStop": self._is_track_stop_allowed,
         }
 
-    @classmethod
-    def _build_model(cls) -> nx.DiGraph:
-        dishmode_graph = nx.DiGraph()
-        for node in DISH_MODE_NODES:
-            dishmode_graph.add_node(node)
-
-        # From Standby_LP to other modes
-        dishmode_graph.add_edge("STANDBY_LP", "STANDBY_FP", commands=["SetStandbyFPMode"])
-        dishmode_graph.add_edge("STANDBY_LP", "CONFIG", commands=CONFIG_COMMANDS)
-
-        # From Standby_FP to other modes
-        dishmode_graph.add_edge("STANDBY_FP", "STANDBY_LP", commands=["SetStandbyLPMode"])
-        dishmode_graph.add_edge("STANDBY_FP", "CONFIG", commands=CONFIG_COMMANDS)
-
-        # From Operate to other modes
-        dishmode_graph.add_edge("OPERATE", "STANDBY_FP", commands=["SetStandbyFPMode"])
-        dishmode_graph.add_edge("OPERATE", "STANDBY_LP", commands=["SetStandbyLPMode"])
-        dishmode_graph.add_edge("OPERATE", "CONFIG", commands=CONFIG_COMMANDS)
-
-        # From Stow to other modes
-        dishmode_graph.add_edge("STOW", "STANDBY_FP", commands=["SetStandbyFPMode"])
-        dishmode_graph.add_edge("STOW", "STANDBY_LP", commands=["SetStandbyLPMode"])
-        dishmode_graph.add_edge("STOW", "CONFIG", commands=CONFIG_COMMANDS)
-        dishmode_graph.add_edge("STOW", "MAINTENANCE", commands=["SetMaintenanceMode"])
-
-        # From any mode to Stow
-        for node in DISH_MODE_NODES:
-            if node == "STOW":
-                continue
-            dishmode_graph.add_edge(node, "STOW", commands=["SetStowMode"])
-
-        # From any mode to Shutdown
-        # TODO: The shutdown command is not currently defined. Add it here
-        # once implemented
-        for node in DISH_MODE_NODES:
-            if node == "SHUTDOWN":
-                continue
-            dishmode_graph.add_edge(node, "SHUTDOWN")
-
-        return dishmode_graph
-
     @staticmethod
-    def _build_allowed_commands(dishmode_graph: nx.DiGraph) -> dict[str, frozenset[str]]:
+    def _build_allowed_commands(
+        transitions: dict[tuple[str, str], tuple[str, ...]],
+    ) -> dict[str, frozenset[str]]:
         """Precompute the commands allowed from each dish mode.
 
         A command is allowed in a mode if it leads out of that mode, or if it leads into
-        that mode (so the dish is already where the command would take it).
+        that mode (so the dish is already where the command would take it). CONFIG is a
+        transient mode, so commands leading into it are not allowed while in it.
 
-        :param dishmode_graph: The dish mode transition graph.
+        :param transitions: The commanded transitions, keyed by (from mode, to mode).
         :return: The set of allowed commands, keyed by dish mode name.
         """
         allowed_commands_by_mode: dict[str, frozenset[str]] = {}
-        for mode in dishmode_graph.nodes:
-            edges = list(dishmode_graph.out_edges(mode, data=True))
-            if mode != "CONFIG":
-                edges += dishmode_graph.in_edges(mode, data=True)
-
+        for mode in DISH_MODE_NODES:
             commands: set[str] = set()
-            for _, _, edge_data in edges:
-                commands.update(edge_data.get("commands", ()))
+            for (from_mode, to_mode), transition_commands in transitions.items():
+                if from_mode == mode or (to_mode == mode and mode != "CONFIG"):
+                    commands.update(transition_commands)
             allowed_commands_by_mode[mode] = frozenset(commands)
         return allowed_commands_by_mode
 

@@ -13,12 +13,16 @@ def dish_mode_model():
 
 @pytest.mark.unit
 def test_model_node_matches_dish_mode_enums(dish_mode_model):
-    assert dish_mode_model.dishmode_graph.number_of_nodes() == len(DishMode), (
-        "Nodes on DishMode model are not equal to DishMode enums"
+    assert sorted(dish_mode_model.dish_modes) == sorted(mode.name for mode in DishMode), (
+        "Modes on DishMode model are not equal to DishMode enums"
     )
 
-    for dish_mode_enum in DishMode:
-        assert dish_mode_enum.name in dish_mode_model.dishmode_graph.nodes
+
+@pytest.mark.unit
+def test_model_transitions_only_use_known_modes(dish_mode_model):
+    for from_mode, to_mode in dish_mode_model.transitions:
+        assert from_mode in dish_mode_model.dish_modes
+        assert to_mode in dish_mode_model.dish_modes
 
 
 @pytest.mark.unit
