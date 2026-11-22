@@ -1,6 +1,7 @@
 """Test ConfigureBand2."""
 
 import pytest
+from ska_control_model import ResultCode
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
@@ -123,11 +124,13 @@ def test_configure_band_b(
         pytest.skip(f"Already in band {expected_band}")  # ty: ignore[too-many-positional-arguments]
 
     main_event_store = event_store_class()
+    dish_mode_event_store = event_store_class()
     result_event_store = event_store_class()
     progress_event_store = event_store_class()
 
     attr_cb_mapping = {
         "configuredBand": main_event_store,
+        "dishMode": dish_mode_event_store,
         "lrcExecuting": progress_event_store,
         "lrcFinished": result_event_store,
     }
@@ -136,6 +139,7 @@ def test_configure_band_b(
     res = dish_manager_proxy.command_inout(band_request, True)
     assert res
     assert len(res) == 2
+    [_], [unique_id] = res
     main_event_store.wait_for_value(expected_band, timeout=15)
     assert dish_manager_proxy.configuredBand == expected_band
 
@@ -157,6 +161,14 @@ def test_configure_band_b(
     # in the event store.
     for message in expected_progress_updates:
         assert message in events_string
+
+    # "<band_request> complete" is reported before the final SetOperateMode step, so wait for
+    # the command to finish and the dish to settle in OPERATE. Otherwise the next test can
+    # command the dish while it is still changing band and its dishMode is UNKNOWN.
+    result_event_store.wait_for_finished_command_result(
+        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+    )
+    dish_mode_event_store.wait_for_value(DishMode.OPERATE, timeout=30)
 
     remove_subscriptions(subscriptions)
 
@@ -197,7 +209,10 @@ def test_configure_band_2_from_stow(
     current_el = dish_manager_proxy.achievedPointing[2]
     stow_position = 90.2
     estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
-    dish_manager_proxy.SetStowMode()
+    [[result_code], [message]] = dish_manager_proxy.SetStowMode()
+    # SetStowMode is a fast command: its message is the command reply, not an LRC progress update
+    assert result_code == ResultCode.STARTED
+    assert message == "Stow called on Dish Structure, monitor achievedPointing and dishmode"
     dm_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
 
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand2(True)
@@ -207,7 +222,6 @@ def test_configure_band_2_from_stow(
     config_band_event_store.wait_for_value(Band.B2, timeout=30)
 
     expected_progress_updates = [
-        "Stow called on Dish Structure, monitor achievedPointing and dishmode",
         "ConfigureBand2 started",
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
