@@ -151,17 +151,9 @@ class TestCommandActionsIgnoringDevices:
         )
 
         expected_progress_updates = [
-            "ConfigureBand2 started",
-            "DS.SetIndexPosition started",
-            "SPFRX.ConfigureBand2 ignored",
-            "SPFRX.Wait for operatingMode.CONFIGURE ignored",
-            "SPFRX.Wait for operatingMode.OPERATE ignored",
-            "SPFRX.Wait for configuredband 2 ignored",
-            "ConfigureBand2 complete. Triggering on success action.",
-            "SetOperateMode started",
-            "Fanned out commands: SPF.SetOperateMode, DS.SetPointMode",
-            "Awaiting dishmode change to OPERATE",
-            "SetOperateMode completed.",
+            "Fanned out commands: SPF.SetStandbyLPMode, DS.SetStandbyMode",
+            "Awaiting dishmode change to STANDBY_LP",
+            "SetStandbyLPMode completed.",
         ]
 
         for msg in expected_progress_updates:
