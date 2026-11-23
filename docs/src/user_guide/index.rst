@@ -14,3 +14,4 @@ User Guide
    Troubleshooting<troubleshooting>
    Aggregation Rules<aggregation_rules/aggregation_rules>
    Alarms<alarms>
+   Migrating clients<client_migration>

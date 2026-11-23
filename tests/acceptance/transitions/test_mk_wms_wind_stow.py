@@ -1,5 +1,6 @@
 import pytest
 from ska_control_model import CommunicationStatus
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.models.constants import WIND_GUST_THRESHOLD_MPS
 from ska_mid_dish_manager.models.dish_enums import DishMode
@@ -31,7 +32,7 @@ def test_mk_wms_wind_stow(
     try:
         assert dish_manager_proxy.wmsConnectionState == CommunicationStatus.ESTABLISHED
         # Set the control mode (control & monitor)
-        wms_device_proxy.controlMode = 1
+        wms_device_proxy.controlMode = ControlMode.MONITOR_NO_CONTROL
 
         # Enable automatic wind stow
         dish_manager_proxy.autoWindStowEnabled = True
@@ -84,7 +85,7 @@ def test_mk_wms_no_wind_stow(
         assert dish_manager_proxy.wmsConnectionState == CommunicationStatus.ESTABLISHED
 
         # Set the control mode (control & monitor)
-        wms_device_proxy.controlMode = 1
+        wms_device_proxy.controlMode = ControlMode.MONITOR_NO_CONTROL
 
         # Disable automatic wind stow
         dish_manager_proxy.autoWindStowEnabled = False

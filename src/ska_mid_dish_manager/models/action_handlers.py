@@ -70,7 +70,7 @@ class Action(ABC):
         self.action_on_success = action_on_success
         self.action_on_failure = action_on_failure
         self.waiting_callback = waiting_callback
-        self.progress_callback = progress_callback
+        self.progress_callback = progress_callback or (lambda **kwargs: None)
         self._handler: Optional["ActionHandler"] = None
 
     @property

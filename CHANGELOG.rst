@@ -15,7 +15,9 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
   - Clients relying on Abort to stop the dish should use AbortScan.
 
- 
+- Added a migration guide for DishManager clients (User Guide > Migrating clients).
+
+
 Version 12.0.1
 **************
 - Updated ConfigureBand to address SKB-1594 by waiting for CONFIGURE and then OPERATE rather than a set timeout

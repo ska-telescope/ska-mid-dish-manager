@@ -19,7 +19,7 @@ from tests.utils import calculate_slew_target, remove_subscriptions, setup_subsc
 
 
 @pytest.mark.acceptance
-def test_abort_commands(
+def test_abort_scan(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -130,7 +130,7 @@ def track_a_sample(
 
 
 @pytest.mark.acceptance
-def test_abort_commands_during_track(
+def test_abort_scan_during_track(
     monitor_tango_servers,
     track_a_sample,
     event_store_class,
@@ -159,7 +159,7 @@ def test_abort_commands_during_track(
 
 
 @pytest.mark.acceptance
-def test_abort_commands_during_slew(
+def test_abort_scan_during_slew(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -206,7 +206,7 @@ def test_abort_commands_during_slew(
 
 
 @pytest.mark.acceptance
-def test_abort_commands_during_stow(
+def test_abort_scan_during_stow(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
@@ -254,7 +254,7 @@ def test_abort_commands_during_stow(
 
 
 @pytest.mark.acceptance
-def test_abort_commands_in_maintenance_mode(
+def test_abort_scan_in_maintenance_mode(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,

@@ -150,7 +150,7 @@ class DeviceProxyManager:
         :param trl: the address of the device
         :type trl: str
         """
-        if "ds" in trl:
+        if "ds-manager" in trl:
             # TODO remove this after DS Manager device is migrated
             return
         try:

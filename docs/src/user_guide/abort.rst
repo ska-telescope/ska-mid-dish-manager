@@ -55,7 +55,7 @@ Guarantees and Caveats
 
 * While the abort sequence is running, other long running commands are rejected. SetStowMode is still accepted, and cancels the abort sequence when it runs.
 
-* In MAINTENANCE mode, AbortScan only cancels LRCs; the abort sequence is not run.
+* In MAINTENANCE mode, or when controlMode is not MONITOR_AND_CONTROL, AbortScan only cancels LRCs; the abort sequence is not run.
 
 * A dish in STOW mode is left in STOW: TrackStop and the transition to STANDBY-FP are skipped.
 

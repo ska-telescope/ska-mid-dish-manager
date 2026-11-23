@@ -13,6 +13,7 @@ from functools import partial, reduce
 from typing import Any, Literal, cast, override
 
 from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_control_model.future import ControlMode
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import (
     B5dcPllState,
 )
@@ -71,6 +72,8 @@ from ska_mid_dish_manager.models.dish_enums import (
 from ska_mid_dish_manager.models.dish_mode_model import CommandNotAllowedError, DishModeModel
 from ska_mid_dish_manager.release import ReleaseInfo
 from ska_mid_dish_manager.utils.decorators import (
+    controlled_write,
+    fast_command,
     log_tango_attr_write,
     log_tango_command,
     record_command,
@@ -86,7 +89,6 @@ from ska_mid_dish_manager.utils.schedulers import WatchdogTimerInactiveError
 # Used for input validation. Input samples to tracktable that is less that
 # TRACK_LOAD_FUTURE_THRESHOLD_SEC in the future are logged
 TRACK_LOAD_FUTURE_THRESHOLD_SEC = 5
-COMMANDS_ALLOWED_DURING_ABORT = ("SetStowMode",)
 FINAL_TASK_STATUSES = [
     TaskStatus.COMPLETED,
     TaskStatus.FAILED,
@@ -378,10 +380,10 @@ class DishManager(
     def execute_AbortScan(self) -> DevVarLongStringArrayType:
         """Execute the AbortScan command.
 
-        Cancels all queued and running long running commands. Unless the dish is in
-        MAINTENANCE mode, it then runs the abort sequence (stopping dish movement and
-        transitioning to STANDBY_FP) once the cancellation completes. The command
-        completes when all of its work is done. Only one AbortScan can run at a time.
+        Cancels all queued and running long running commands. Then, unless the dish is in
+        MAINTENANCE mode or controlMode is not MONITOR_AND_CONTROL, it runs the abort sequence
+        (stopping dish movement and transitioning to STANDBY_FP) once the cancellation completes.
+        The command completes when all of its work is done. Only one AbortScan can run at a time.
 
         :return: ResultCode.STARTED and the command ID, or ResultCode.REJECTED if an
             AbortScan is already in progress.
@@ -404,6 +406,12 @@ class DishManager(
 
         if self.component_manager.component_state.get("dishmode") == DishMode.MAINTENANCE:
             self.logger.info("Dish is in MAINTENANCE mode: AbortScan will only cancel LRCs.")
+            abort_lrc_callback = aggregator.new_callback()
+        elif self._control_mode != ControlMode.MONITOR_AND_CONTROL:
+            self.logger.info(
+                "controlMode is %s: AbortScan will only cancel LRCs.",
+                ControlMode(self._control_mode).name,
+            )
             abort_lrc_callback = aggregator.new_callback()
         else:
             abort_sequence_callback = aggregator.new_callback()
@@ -433,35 +441,92 @@ class DishManager(
         """Publish the latest command failure through the device signal."""
         self._last_command_failure = failure
 
-    def is_command_allowed(self, command_name: str) -> bool:
-        """Check whether a command is allowed in the current state of the dish.
+    def is_command_allowed(self, command_name: str, check_dish_mode: bool = True) -> bool:
+        """Check whether a long running command is allowed in the current state of the dish.
 
         :param command_name: Name of the Tango command to check.
+        :param check_dish_mode: Whether to check the command against the dish mode model.
+            False for commands the model has no rule for; the controlMode and abort checks
+            always apply.
 
         :raises StateModelError: If control is disabled.
-        :raises CommandNotAllowedError: If the abort sequence is in progress, or the command
-            is not allowed in the current state.
-        :raises ValueError: If the command has no rule, or the dish mode is unknown to the model.
+        :raises CommandNotAllowedError: If the abort sequence is in progress, or the dish mode
+            model does not allow the command (including commands it has no rule for).
+        :raises ValueError: If the dish mode is unknown to the model.
 
         :return: True if the command is allowed.
         """
         try:
             self.check_component_controlled()
-            if (
-                self.component_manager.abort_sequence_in_progress
-                and command_name not in COMMANDS_ALLOWED_DURING_ABORT
-            ):
+            if self.component_manager.abort_sequence_in_progress:
                 raise CommandNotAllowedError(
                     f"{command_name} not allowed while the abort sequence is in progress."
                 )
+            if not check_dish_mode:
+                return True
             return self._dish_mode_model.is_command_allowed(
                 command_name, component_state=self.component_manager.component_state
             )
         except (faults.StateModelError, CommandNotAllowedError, ValueError) as exc:
-            failure = (str(time.time()), command_name, str(exc))  # time, command, reason
-            self._record_last_command_failure(failure)
-            self.logger.warning("Command %s is not allowed: %s", command_name, exc)
+            self._propagate_rejection(command_name, exc)
             raise
+
+    def is_fast_command_allowed(self, command_name: str, requires_control: bool = True) -> bool:
+        """Check whether a fast command is allowed by the current controlMode.
+
+        :param command_name: Name of the Tango command to check.
+        :param requires_control: True if the command needs MONITOR_AND_CONTROL. False if it
+            only needs monitoring (MONITOR_NO_CONTROL or MONITOR_AND_CONTROL).
+
+        :raises StateModelError: If the controlMode does not allow the command.
+
+        :return: True if the command is allowed.
+        """
+        try:
+            self._check_control_mode(requires_control)
+            return True
+        except faults.StateModelError as exc:
+            self._propagate_rejection(command_name, exc)
+            raise
+
+    def check_attribute_write_allowed(self, attribute_name: str, requires_control: bool) -> None:
+        """Check whether an attribute write is allowed by the current controlMode.
+
+        :param attribute_name: Name of the Tango attribute being written.
+        :param requires_control: True if the write needs MONITOR_AND_CONTROL. False if it
+            only needs monitoring (MONITOR_NO_CONTROL or MONITOR_AND_CONTROL).
+
+        :raises StateModelError: If the controlMode does not allow the write.
+        """
+        try:
+            self._check_control_mode(requires_control)
+        except faults.StateModelError as exc:
+            self.logger.warning("Write to %s is not allowed: %s", attribute_name, exc)
+            raise
+
+    def _check_control_mode(self, requires_control: bool) -> None:
+        """Raise if the current controlMode does not allow the requested access.
+
+        :param requires_control: True if MONITOR_AND_CONTROL is needed. False if
+            monitoring is enough.
+
+        :raises StateModelError: If the controlMode does not allow it.
+        """
+        if requires_control:
+            self.check_component_controlled()
+        elif self._control_mode == ControlMode.NO_MONITOR_NO_CONTROL:
+            control_mode = ControlMode(self._control_mode).name
+            raise faults.StateModelError(f"Monitoring is disabled: controlMode is {control_mode}")
+
+    def _propagate_rejection(self, command_name: str, exc: Exception) -> None:
+        """Record and log a rejected command.
+
+        :param command_name: Name of the rejected Tango command.
+        :param exc: The reason the command was rejected.
+        """
+        failure = (str(time.time()), command_name, str(exc))  # time, command, reason
+        self._record_last_command_failure(failure)
+        self.logger.warning("Command %s is not allowed: %s", command_name, exc)
 
     def _clear_scan_id(self):
         # TODO use attribute from signal approach
@@ -850,6 +915,7 @@ class DishManager(
         return self.component_manager.component_state.get("attenuation1polhx", 0.0)
 
     @attenuation1PolHX.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def attenuation1PolHX(self, value):
@@ -868,6 +934,7 @@ class DishManager(
         return self.component_manager.component_state.get("attenuation1polvy", 0.0)
 
     @attenuation1PolVY.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def attenuation1PolVY(self, value):
@@ -886,6 +953,7 @@ class DishManager(
         return self.component_manager.component_state.get("attenuation2polhx", 0.0)
 
     @attenuation2PolHX.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def attenuation2PolHX(self, value):
@@ -904,6 +972,7 @@ class DishManager(
         return self.component_manager.component_state.get("attenuation2polvy", 0.0)
 
     @attenuation2PolVY.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def attenuation2PolVY(self, value):
@@ -922,6 +991,7 @@ class DishManager(
         return self.component_manager.component_state.get("attenuationpolhx", 0.0)
 
     @attenuationPolHX.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def attenuationPolHX(self, value):
@@ -940,6 +1010,7 @@ class DishManager(
         return self.component_manager.component_state.get("attenuationpolvy", 0.0)
 
     @attenuationPolVY.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def attenuationPolVY(self, value):
@@ -1002,6 +1073,7 @@ class DishManager(
         return self.component_manager.component_state.get("band0pointingmodelparams", [])
 
     @band0PointingModelParams.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band0PointingModelParams(self, value):
@@ -1028,6 +1100,7 @@ class DishManager(
         return self.component_manager.component_state.get("band1pointingmodelparams", [])
 
     @band1PointingModelParams.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band1PointingModelParams(self, value):
@@ -1054,6 +1127,7 @@ class DishManager(
         return self.component_manager.component_state.get("band2pointingmodelparams", [])
 
     @band2PointingModelParams.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band2PointingModelParams(self, value):
@@ -1080,6 +1154,7 @@ class DishManager(
         return self.component_manager.component_state.get("band3pointingmodelparams", [])
 
     @band3PointingModelParams.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band3PointingModelParams(self, value):
@@ -1106,6 +1181,7 @@ class DishManager(
         return self.component_manager.component_state.get("band4pointingmodelparams", [])
 
     @band4PointingModelParams.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band4PointingModelParams(self, value):
@@ -1124,6 +1200,7 @@ class DishManager(
         return self._band5a_pointing_model_params
 
     @band5aPointingModelParams.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band5aPointingModelParams(self, value):
@@ -1142,6 +1219,7 @@ class DishManager(
         return self._band5b_pointing_model_params
 
     @band5bPointingModelParams.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band5bPointingModelParams(self, value):
@@ -1158,6 +1236,7 @@ class DishManager(
         return self._band1_sampler_frequency
 
     @band1SamplerFrequency.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band1SamplerFrequency(self, value):
@@ -1177,6 +1256,7 @@ class DishManager(
         return self._band2_sampler_frequency
 
     @band2SamplerFrequency.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band2SamplerFrequency(self, value):
@@ -1196,6 +1276,7 @@ class DishManager(
         return self._band3_sampler_frequency
 
     @band3SamplerFrequency.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band3SamplerFrequency(self, value):
@@ -1215,6 +1296,7 @@ class DishManager(
         return self._band4_sampler_frequency
 
     @band4SamplerFrequency.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band4SamplerFrequency(self, value):
@@ -1234,6 +1316,7 @@ class DishManager(
         return self._band5a_sampler_frequency
 
     @band5aSamplerFrequency.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band5aSamplerFrequency(self, value):
@@ -1253,6 +1336,7 @@ class DishManager(
         return self._band5b_sampler_frequency
 
     @band5bSamplerFrequency.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def band5bSamplerFrequency(self, value):
@@ -1289,6 +1373,7 @@ class DishManager(
         return self._configure_target_lock
 
     @configureTargetLock.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def configureTargetLock(self, value):
@@ -1340,6 +1425,7 @@ class DishManager(
         return self._dsh_max_short_term_power
 
     @dshMaxShortTermPower.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def dshMaxShortTermPower(self, value):
@@ -1366,6 +1452,7 @@ class DishManager(
         return self._dsh_power_curtailment
 
     @dshPowerCurtailment.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def dshPowerCurtailment(self, value):
@@ -1405,6 +1492,7 @@ class DishManager(
         return self._noise_diode_config
 
     @noiseDiodeConfig.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def noiseDiodeConfig(self, value):
@@ -1434,6 +1522,7 @@ class DishManager(
         return self._program_track_table
 
     @programTrackTable.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def programTrackTable(self, table):
@@ -1491,6 +1580,7 @@ class DishManager(
         return self._poly_track
 
     @polyTrack.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def polyTrack(self, value):
@@ -1515,6 +1605,7 @@ class DishManager(
         return self._track_interpolation_mode
 
     @trackInterpolationMode.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def trackInterpolationMode(self, value):
@@ -1533,6 +1624,7 @@ class DishManager(
         return self._track_program_mode
 
     @trackProgramMode.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def trackProgramMode(self, value):
@@ -1557,6 +1649,7 @@ class DishManager(
         return self._track_table_load_mode
 
     @trackTableLoadMode.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def trackTableLoadMode(self, value):
@@ -1642,6 +1735,7 @@ class DishManager(
         return self._scan_id
 
     @scanID.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def scanID(self, value):
@@ -1663,6 +1757,7 @@ class DishManager(
         return self.component_manager.component_state.get("ignorespf", False)
 
     @ignoreSpf.write
+    @controlled_write(requires_control=False)
     @time_tango_write()
     @log_tango_attr_write()
     def ignoreSpf(self, value):
@@ -1682,6 +1777,7 @@ class DishManager(
         return self.component_manager.component_state.get("ignorespfrx", False)
 
     @ignoreSpfrx.write
+    @controlled_write(requires_control=False)
     @time_tango_write()
     @log_tango_attr_write()
     def ignoreSpfrx(self, value):
@@ -1701,6 +1797,7 @@ class DishManager(
         return self.component_manager.component_state.get("ignoreb5dc", False)
 
     @ignoreB5dc.write
+    @controlled_write(requires_control=False)
     @time_tango_write()
     @log_tango_attr_write()
     def ignoreB5dc(self, value):
@@ -1724,6 +1821,7 @@ class DishManager(
         return self.component_manager.component_state.get("noisediodemode", NoiseDiodeMode.OFF)
 
     @noiseDiodeMode.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def noiseDiodeMode(self, mode: NoiseDiodeMode):
@@ -1748,6 +1846,7 @@ class DishManager(
         return self.component_manager.component_state.get("periodicnoisediodepars", [])
 
     @periodicNoiseDiodePars.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def periodicNoiseDiodePars(self, values):
@@ -1772,6 +1871,7 @@ class DishManager(
         return self.component_manager.component_state.get("pseudorandomnoisediodepars", [])
 
     @pseudoRandomNoiseDiodePars.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def pseudoRandomNoiseDiodePars(self, values):
@@ -1811,6 +1911,7 @@ class DishManager(
         return self.component_manager.component_state.get("spectralinversion", False)
 
     @spectralInversion.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def spectralInversion(self, value):
@@ -1834,6 +1935,7 @@ class DishManager(
         )
 
     @dscPowerLimitKw.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def dscPowerLimitKw(self, value):
@@ -1870,6 +1972,7 @@ class DishManager(
         return self.component_manager.component_state["watchdogtimeout"]
 
     @watchdogTimeout.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def watchdogTimeout(self, value):
@@ -1919,6 +2022,7 @@ class DishManager(
         return self.component_manager.component_state.get("autowindstowenabled", False)
 
     @autoWindStowEnabled.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def autoWindStowEnabled(self, enabled: bool):
@@ -1957,6 +2061,7 @@ class DishManager(
         return self.component_manager.get_action_timeout()
 
     @actionTimeoutSeconds.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def actionTimeoutSeconds(self, value):
@@ -1973,6 +2078,7 @@ class DishManager(
         return self.component_manager.component_state.get("b1lnahpowerstate", False)
 
     @b1LnaHPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b1LnaHPowerState(self, value: bool):
@@ -1991,6 +2097,7 @@ class DishManager(
         return self.component_manager.component_state.get("b2lnahpowerstate", False)
 
     @b2LnaHPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b2LnaHPowerState(self, value: bool):
@@ -2009,6 +2116,7 @@ class DishManager(
         return self.component_manager.component_state.get("b1lnavpowerstate", False)
 
     @b1LnaVPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b1LnaVPowerState(self, value: bool):
@@ -2027,6 +2135,7 @@ class DishManager(
         return self.component_manager.component_state.get("b2lnavpowerstate", False)
 
     @b2LnaVPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b2LnaVPowerState(self, value: bool):
@@ -2045,6 +2154,7 @@ class DishManager(
         return self.component_manager.component_state.get("b3lnapowerstate", False)
 
     @b3LnaPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b3LnaPowerState(self, value: bool):
@@ -2063,6 +2173,7 @@ class DishManager(
         return self.component_manager.component_state.get("b4lnapowerstate", False)
 
     @b4LnaPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b4LnaPowerState(self, value: bool):
@@ -2081,6 +2192,7 @@ class DishManager(
         return self.component_manager.component_state.get("b5alnapowerstate", False)
 
     @b5aLnaPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b5aLnaPowerState(self, value: bool):
@@ -2099,6 +2211,7 @@ class DishManager(
         return self.component_manager.component_state.get("b5blnapowerstate", False)
 
     @b5bLnaPowerState.write
+    @controlled_write()
     @time_tango_write()
     @log_tango_attr_write()
     def b5bLnaPowerState(self, value: bool):
@@ -2305,8 +2418,9 @@ class DishManager(
     @log_tango_command()
     @command(
         doc_in="Abort currently executing long running command(s) on DishManager, then stop "
-        "dish movement and transition dishMode to STANDBY_FP. In MAINTENANCE mode, only the "
-        "long running commands are aborted. For details consult DishManager documentation",
+        "dish movement and transition dishMode to STANDBY_FP. In MAINTENANCE mode, or when "
+        "controlMode is not MONITOR_AND_CONTROL, only the long running commands are aborted. "
+        "For details consult DishManager documentation",
         doc_out="[ResultCode.STARTED][Command ID]",
         display_level=DispLevel.OPERATOR,
         dtype_out="DevVarLongStringArray",
@@ -2532,7 +2646,7 @@ class DishManager(
 
     @record_command
     @log_tango_command()
-    @command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
+    @fast_command(dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR)
     def FlushCommandQueue(self):
         """Flushes the queue of time stamped commands."""
         raise NotImplementedError
@@ -2540,7 +2654,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in=str,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2559,7 +2673,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2574,7 +2688,7 @@ class DishManager(
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @slow_command(
-        check_allowed=False,
+        check_dish_mode=False,
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2689,7 +2803,7 @@ class DishManager(
     @record_command(record_mode=True)
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in=None,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2738,7 +2852,7 @@ class DishManager(
 
     @record_command
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in=None, dtype_out=None, display_level=DispLevel.OPERATOR, doc_in="Not Implemented."
     )
     def Synchronise(self):
@@ -2804,7 +2918,7 @@ class DishManager(
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @slow_command(
-        check_allowed=False,
+        check_dish_mode=False,
         dtype_in=(float,),
         dtype_out="DevVarLongStringArray",
         doc_in="""
@@ -2833,7 +2947,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in="DevLong64",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2850,7 +2964,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in="DevString",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2868,7 +2982,7 @@ class DishManager(
 
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
-    @command(
+    @fast_command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2886,7 +3000,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2903,7 +3017,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in=int,
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2920,7 +3034,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in="DevString",
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
@@ -2985,7 +3099,8 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
+        requires_control=False,
         dtype_in=None,
         dtype_out=None,
         display_level=DispLevel.OPERATOR,
@@ -3002,7 +3117,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_out="DevVarLongStringArray",
         display_level=DispLevel.OPERATOR,
         doc_in="This command resets the watchdog timer. "
@@ -3036,7 +3151,7 @@ class DishManager(
     @record_command
     @InfoIt(show_args=False, show_kwargs=False, show_ret=True)
     @log_tango_command()
-    @command(
+    @fast_command(
         dtype_in=None,
         doc_in="""This command resets the program track table on the controller""",
         dtype_out="DevVarLongStringArray",
@@ -3059,8 +3174,8 @@ class DishManager(
     @InfoIt(show_args=True, show_kwargs=True, show_ret=True)
     @log_tango_command()
     @slow_command(
+        check_dish_mode=False,
         dtype_in=None,
-        check_allowed=False,
         dtype_out="DevVarLongStringArray",
         doc_in=(
             "Clear the interlock status once interlocks or E-Stops have been"

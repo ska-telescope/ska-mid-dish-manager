@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import os
-import time
 
 import pytest
 import tango
@@ -16,7 +15,13 @@ from ska_mid_dish_manager.models.dish_enums import (
     DSOperatingMode,
     DSPowerState,
 )
-from tests.utils import EventPrinter, TrackedDevice, remove_subscriptions, setup_subscriptions
+from tests.utils import (
+    EventPrinter,
+    EventStore,
+    TrackedDevice,
+    remove_subscriptions,
+    setup_subscriptions,
+)
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -62,8 +67,6 @@ def dish_manager_proxy(dish_manager_device_fqdn):
     dev_proxy = tango.DeviceProxy(dish_manager_device_fqdn)
     # increase client request timeout to 5 seconds
     dev_proxy.set_timeout_millis(5000)
-    # set this in helm chart
-    dev_proxy.controlMode = 2
     return dev_proxy
 
 
@@ -314,13 +317,15 @@ def reset_dish_to_standby(
             power_state_events.wait_for_value(DSPowerState.FULL_POWER, timeout=20)
             update_messages.append("Got DS to FP")
 
-        # The dish mode passes through transient modes (e.g. UNKNOWN) while the sub-devices
-        # settle after the changes above, and SetStandbyFPMode is rejected in those modes.
-        # So wait for a mode it is allowed from before requesting it.
-        dish_mode = _wait_for_settled_dish_mode(dish_manager_proxy, timeout=60)
+        # dish mode passes through UNKNOWN while the sub-devices settle after
+        # the changes above, and SetStandbyFPMode is rejected in those modes.
+        # so wait for a mode it is allowed from before requesting it.
+        dish_mode = _wait_for_settled_dish_mode(dish_manager_proxy, timeout=30)
         if dish_mode != DishMode.STANDBY_FP:
+            # drop earlier events so an old STANDBY_FP event can't satisfy the wait
+            dish_mode_events.clear_queue()
             dish_manager_proxy.SetStandbyFPMode()
-            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=60)
+            dish_mode_events.wait_for_value(DishMode.STANDBY_FP, timeout=30)
 
     except (RuntimeError, tango.DevFailed, AssertionError):
         logger.exception(
@@ -336,30 +341,38 @@ def reset_dish_to_standby(
     yield
 
 
-# Dish modes SetStandbyFPMode is accepted from (including STANDBY_FP itself)
-_SETTLED_DISH_MODES = (
-    DishMode.STANDBY_LP,
-    DishMode.STANDBY_FP,
-    DishMode.STOW,
-    DishMode.OPERATE,
-)
-
-
-def _wait_for_settled_dish_mode(dish_manager_proxy, timeout: float = 60) -> DishMode:
+def _wait_for_settled_dish_mode(dish_manager_proxy, timeout: int = 60) -> DishMode:
     """Wait for the dish mode to leave transient modes such as UNKNOWN and CONFIG.
 
+    The subscription delivers the current dish mode first, so this returns straight
+    away if the dish is already settled.
+
     :param dish_manager_proxy: proxy to the dish manager
-    :param timeout: how long to wait, in seconds
-    :raises RuntimeError: if the dish mode does not settle in time
+    :param timeout: how long to wait for each dishMode event, in seconds
+    :raises RuntimeError: if no event with a settled dish mode arrives in time
     :return: the settled dish mode
     """
-    deadline = time.monotonic() + timeout
-    while True:
-        dish_mode = DishMode(dish_manager_proxy.dishMode)
+    _SETTLED_DISH_MODES = (
+        DishMode.STANDBY_LP,
+        DishMode.STANDBY_FP,
+        DishMode.STOW,
+        DishMode.OPERATE,
+    )
+    settled_modes: list[DishMode] = []
+
+    def is_settled(value) -> bool:
+        dish_mode = DishMode(value)
         if dish_mode in _SETTLED_DISH_MODES:
-            return dish_mode
-        if time.monotonic() > deadline:
-            raise RuntimeError(
-                f"Dish mode did not settle within {timeout}s, still {dish_mode.name}"
-            )
-        time.sleep(0.5)
+            settled_modes.append(dish_mode)
+            return True
+        return False
+
+    dish_mode_events = EventStore()
+    subscriptions = setup_subscriptions(
+        dish_manager_proxy, {"dishMode": dish_mode_events}, reset_queue=False
+    )
+    try:
+        dish_mode_events.wait_for_condition(is_settled, timeout=timeout)
+    finally:
+        remove_subscriptions(subscriptions)
+    return settled_modes[-1]

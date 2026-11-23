@@ -6,6 +6,7 @@ from typing import Any, Callable
 
 from ska_control_model import ResultCode, TaskStatus
 from ska_tango_base.long_running_commands import LRCReqType, long_running_command
+from tango.server import command
 
 from ska_mid_dish_manager.models.constants import OPERATOR_TAG
 
@@ -167,26 +168,25 @@ def last_command_failure_decorator(func: Any) -> Any:
 
 
 def slow_command(
-    *, check_allowed: bool = True, **cmd_kwargs: Any
+    *, check_dish_mode: bool = True, **cmd_kwargs: Any
 ) -> Callable[[Callable[..., Any]], Any]:
     """Mark a DishManager method as a long running command.
 
-    By default, the command is gated by the dish mode model: the check is built from the
-    method's name and runs when the command is queued and again just before it executes.
+    The command is checked when it is queued and again just before it executes: it needs
+    controlMode MONITOR_AND_CONTROL and no abort sequence in progress, and by default it
+    must also be allowed by the dish mode model.
 
-    :param check_allowed: Whether to gate the command with the dish mode model. Set to False
-        for commands the model has no rule for.
+    :param check_dish_mode: Whether to check the command against the dish mode model. Set
+        to False for commands the model has no rule for; the controlMode and abort checks
+        still apply.
     :param cmd_kwargs: Passed on to long_running_command, and from there to tango.server.command.
     """
 
     def decorator(tango_cmd: Callable[..., Any]) -> Any:
-        if not check_allowed:
-            return long_running_command(tango_cmd, **cmd_kwargs)
-
         command_name = tango_cmd.__name__
 
         def is_allowed(device: Any, request_type: LRCReqType = LRCReqType.ENQUEUE_REQ) -> bool:
-            return device.is_command_allowed(command_name)
+            return device.is_command_allowed(command_name, check_dish_mode=check_dish_mode)
 
         # Tango looks up fisallowed by name, so every command's check needs a unique name.
         # Without this, all commands share the check of the last command decorated.
@@ -194,5 +194,56 @@ def slow_command(
         is_allowed.__qualname__ = is_allowed.__name__
 
         return long_running_command(tango_cmd, fisallowed=is_allowed, **cmd_kwargs)
+
+    return decorator
+
+
+def fast_command(
+    *, requires_control: bool = True, **cmd_kwargs: Any
+) -> Callable[[Callable[..., Any]], Any]:
+    """Mark a DishManager method as a fast Tango command, gated by controlMode.
+
+    The check is built from the method's name and runs before the command executes.
+
+    :param requires_control: True if the command needs controlMode MONITOR_AND_CONTROL.
+        False if monitoring is enough (MONITOR_NO_CONTROL or MONITOR_AND_CONTROL).
+    :param cmd_kwargs: Passed on to tango.server.command.
+    """
+
+    def decorator(tango_cmd: Callable[..., Any]) -> Any:
+        command_name = tango_cmd.__name__
+
+        def is_allowed(device: Any) -> bool:
+            return device.is_fast_command_allowed(command_name, requires_control)
+
+        # Tango looks up fisallowed by name, so every command's check needs a unique name.
+        is_allowed.__name__ = f"is_{command_name}_allowed"
+        is_allowed.__qualname__ = is_allowed.__name__
+
+        return command(tango_cmd, fisallowed=is_allowed, **cmd_kwargs)
+
+    return decorator
+
+
+def controlled_write(requires_control: bool = True) -> Callable[[Any], Any]:
+    """Reject a Tango attribute write unless controlMode allows it.
+
+    Place it directly after ``@<attribute>.write`` so the check runs before the write is
+    logged or timed.
+
+    :param requires_control: True if the write needs controlMode MONITOR_AND_CONTROL.
+        False if monitoring is enough (MONITOR_NO_CONTROL or MONITOR_AND_CONTROL).
+    """
+
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        @functools.wraps(func)
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
+            self.check_attribute_write_allowed(
+                func.__name__,  # ty: ignore[unresolved-attribute]
+                requires_control,
+            )
+            return func(self, *args, **kwargs)
+
+        return wrapper
 
     return decorator

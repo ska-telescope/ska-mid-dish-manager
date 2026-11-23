@@ -9,6 +9,7 @@ from unittest import mock
 import pytest
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
+from ska_control_model.future import ControlMode
 from tango import DeviceProxy, server
 from tango.test_context import DeviceTestContext
 
@@ -43,7 +44,7 @@ def configure_mocks_for_dish_manager():
         tango_context = DeviceTestContext(PatchedDM)
         tango_context.start()
         device_proxy = cast(DeviceProxy, tango_context.device)
-        device_proxy.controlMode = 2
+        device_proxy.controlMode = ControlMode.MONITOR_AND_CONTROL
 
         class_instance: DishManager = cast(
             DishManager, PatchedDM.instances.get(device_proxy.name())

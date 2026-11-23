@@ -100,6 +100,11 @@ server:
                     - name: "__value"
                       values:
                         - "{{ $.Values.dishmanager.spfrx.ignored }}"
+                - attribute: "controlMode"
+                  properties:
+                    - name: "__value"
+                      values:
+                        - "2"   # ControlMode.MONITOR_AND_CONTROL
   {{- end }}
 depends_on:
   - device: sys/database/2

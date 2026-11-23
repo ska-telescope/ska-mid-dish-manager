@@ -7,6 +7,7 @@ from unittest.mock import Mock, patch
 import pytest
 import tango
 from ska_control_model import CommunicationStatus, TaskStatus
+from ska_control_model.future import ControlMode
 from tango import server
 from tango.test_context import DeviceTestContext
 
@@ -34,7 +35,7 @@ def dish_manager_resources():
         tango_context.start()
         device_proxy = tango_context.device
         assert device_proxy is not None
-        device_proxy.controlMode = 2
+        device_proxy.controlMode = ControlMode.MONITOR_AND_CONTROL
 
         class_instance = cast(DishManager, DishManager.instances.get(device_proxy.name()))
         dish_manager_cm = cast(DishManagerComponentManager, class_instance.component_manager)
@@ -105,7 +106,7 @@ def dish_manager_resources_with_b5dc_monitoring():
         tango_context.start()
         device_proxy = tango_context.device
         assert device_proxy is not None
-        device_proxy.controlMode = 2
+        device_proxy.controlMode = ControlMode.MONITOR_AND_CONTROL
 
         class_instance = cast(DishManager, DishManager.instances.get(device_proxy.name()))
         dish_manager_cm = cast(DishManagerComponentManager, class_instance.component_manager)

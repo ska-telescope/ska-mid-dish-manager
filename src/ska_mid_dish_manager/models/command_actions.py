@@ -339,9 +339,8 @@ class CompleteMaintenanceModeAction(Action):
         component_manager._set_maintenance_mode_active()
         component_manager._update_component_state(dishmode=DishMode.MAINTENANCE)
         final_message = "SetMaintenanceMode completed."
+        self.progress_callback(progress_info=final_message)
         self.logger.info(final_message)
-        if self.progress_callback:
-            self.progress_callback(progress_info=final_message)
         return ResultCode.OK, final_message
 
 
