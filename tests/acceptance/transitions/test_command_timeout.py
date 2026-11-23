@@ -5,10 +5,7 @@ import time
 
 import pytest
 
-from ska_mid_dish_manager.models.constants import (
-    DEFAULT_ACTION_TIMEOUT_S,
-    SPFRX_CONFIGURE_COMPLETION_DELAY_S,
-)
+from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
 from ska_mid_dish_manager.models.dish_enums import DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
@@ -36,9 +33,7 @@ def test_action_timeout(
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
     try:
-        # long enough for the configure band step to wait out the SPFRx completion delay, so
-        # that it is the SetOperateMode step that times out
-        dish_manager_proxy.actionTimeoutSeconds = SPFRX_CONFIGURE_COMPLETION_DELAY_S + 3
+        dish_manager_proxy.actionTimeoutSeconds = 5
 
         # Attempt to configure which will take SPF to Operate mode, this won't happen as
         # skipAttributeUpdates was set to True

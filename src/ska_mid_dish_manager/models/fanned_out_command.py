@@ -5,6 +5,7 @@ import json
 import logging
 import time
 import typing
+from threading import Event
 from typing import Any, Callable, Optional
 
 from ska_control_model import ResultCode, TaskStatus
@@ -210,8 +211,12 @@ class FannedOutCommand:
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
                 self._set_status(FannedOutCommandStatus.TIMED_OUT)
 
-    def report_progress(self) -> None:
-        """Report the progress of fanned out command."""
+    def report_progress(self, task_abort_event: Optional[Event] = None) -> None:
+        """Report the progress of fanned out command.
+
+        :param task_abort_event: Event signalling that an abort has been scheduled.
+        :type task_abort_event: Optional[Event]
+        """
         current_comp_state = dict(self.component_state)
 
         # Report awaited component state updates
@@ -321,9 +326,40 @@ class FannedOutTangoCommand(FannedOutCommand):
 
     def refresh_state_from_device(self) -> None:
         """Read the awaited attributes off the device to refresh the component state."""
+        # An empty tuple would make the component manager read every monitored attribute
+        if not self.awaited_component_state:
+            return
         self.device_component_manager.update_state_from_monitored_attributes(
             tuple(self.awaited_component_state.keys())
         )
+
+    def _refresh_state(self) -> None:
+        """Refresh the component state while the command is running.
+
+        A failed refresh is logged and retried on the next check, it must not end the action.
+        """
+        if self.finished:
+            return
+
+        try:
+            self.refresh_state_from_device()
+        except Exception:  # pylint:disable=broad-except
+            self.logger.exception(
+                f"Failed to refresh the component state of {self.device}.{self.command_name}"
+            )
+
+    @typing.override
+    def report_progress(self, task_abort_event: Optional[Event] = None) -> None:
+        """Refresh the component state, then report the progress of the command.
+
+        The refresh is skipped if an abort has been scheduled.
+
+        :param task_abort_event: Event signalling that an abort has been scheduled.
+        :type task_abort_event: Optional[Event]
+        """
+        if task_abort_event is None or not task_abort_event.is_set():
+            self._refresh_state()
+        super().report_progress(task_abort_event)
 
     def _execute_tango_command(self) -> tuple:
         """Fan out the respective command to the subservient devices."""
@@ -519,6 +555,126 @@ class FannedOutTangoLongRunningCommand(FannedOutTangoCommand):
             # timeout
             if self.timeout_s > 0 and time.time() - self.start_time > self.timeout_s:
                 self._set_status(FannedOutCommandStatus.TIMED_OUT)
+
+
+class FannedOutWaitForState(FannedOutCommand):
+    """Waits for the component state to match the awaited component state, then completes.
+
+    No command is sent to any device. Useful for steps in an Action that only need to wait for
+    a device to reach a state, e.g. after a command fanned out by a previous step.
+    """
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        device: str,
+        device_component_manager: TangoDeviceComponentManager,
+        awaited_component_state: dict[str, Any],
+        timeout_s: float = 0,
+        progress_callback: Optional[Callable[..., None]] = None,
+        wait_name: str = "WaitForState",
+        continue_on_timeout: bool = False,
+        is_device_ignored: bool = False,
+    ):
+        """:param logger: Logger instance
+        :type logger: Logger
+        :param device: The name for the device whose state is awaited
+        :type device: str
+        :param device_component_manager: The component manager of the device whose state is
+            awaited
+        :type device_component_manager: TangoDeviceComponentManager
+        :param awaited_component_state: The component state containing the attributes and values to
+            wait for.
+        :type awaited_component_state: dict
+        :param timeout_s: Timeout (in seconds) for the wait. A value <= 0 will disable the
+            timeout.
+        :type timeout_s: float
+        :param progress_callback: Optional callback to report progress updates.
+        :type progress_callback: Callable
+        :param wait_name: Name used in place of a command name in logs and progress reports.
+        :type wait_name: str
+        :param continue_on_timeout: When True, timing out is treated as success so that the
+            action carries on instead of failing. The status is still reported as TIMED_OUT.
+        :type continue_on_timeout: bool
+        :param is_device_ignored: Toggle to skip the wait if the device is ignored. The wait is
+            then marked IGNORED (successful) without waiting on any component state.
+        :type is_device_ignored: bool
+        """
+        self.device_component_manager = device_component_manager
+        self.continue_on_timeout = continue_on_timeout
+        self.is_device_ignored = is_device_ignored
+        super().__init__(
+            logger=logger,
+            device=device,
+            command_name=wait_name,
+            command=lambda: (None, None),
+            # use device_component_manager._component_state to pass the dict by reference
+            # device_component_manager.component_state will use the tango base property which will
+            # do a deep copy
+            component_state=self.device_component_manager._component_state,
+            awaited_component_state=awaited_component_state,
+            timeout_s=timeout_s,
+            progress_callback=progress_callback,
+        )
+
+    @typing.override
+    def execute(self) -> None:
+        """Start waiting for the awaited component state.
+
+        If the device is ignored, the wait is skipped and marked IGNORED. The finish is reported
+        on the next `report_progress`, in line with ignored tango commands.
+        """
+        if self.is_device_ignored:
+            self.logger.debug(
+                f"{self.device} device is disabled. {self.command_name} wait ignored"
+            )
+            self._set_status(FannedOutCommandStatus.IGNORED)
+            self.awaited_update_reports = {attr: True for attr in self.awaited_update_reports}
+            return
+
+        self.logger.debug(
+            f"{self.device}.{self.command_name} waiting for {self.awaited_component_state}"
+        )
+        self._set_status(FannedOutCommandStatus.IN_PROGRESS)
+        self.start_time = time.time()
+        report_awaited_attributes(
+            self._progress_callback,
+            list(self.awaited_component_state.keys()),
+            list(self.awaited_component_state.values()),
+            self.device,
+        )
+
+    @property
+    def _timed_out_and_continuing(self) -> bool:
+        """Check if the wait timed out and should not fail the action."""
+        return self.continue_on_timeout and self.status == FannedOutCommandStatus.TIMED_OUT
+
+    @property
+    @typing.override
+    def failed(self) -> bool:
+        """Check if the wait has failed, a timeout is not a failure if continuing on timeout."""
+        return super().failed and not self._timed_out_and_continuing
+
+    @property
+    @typing.override
+    def successful(self) -> bool:
+        """Check if the wait succeeded, a timeout counts as success if continuing on timeout."""
+        return super().successful or self._timed_out_and_continuing
+
+    @typing.override
+    def _update_status(self) -> None:
+        """Update the status, logging a warning if the wait timed out and the action carries on."""
+        super()._update_status()
+        if self._timed_out_and_continuing and not self._task_finish_reported:
+            attrs = list(self.awaited_component_state.keys())
+            values = convert_enums_to_names(list(self.awaited_component_state.values()))
+            awaited_str = ", ".join(f"{attr} {value}" for attr, value in zip(attrs, values))
+            msg = (
+                f"{self.device}.{self.command_name} timed out waiting for "
+                f"{awaited_str}, continuing"
+            )
+            self.logger.warning(msg)
+            report_task_progress(msg, self._progress_callback)
 
 
 class DishManagerCMMethod(FannedOutCommand):
