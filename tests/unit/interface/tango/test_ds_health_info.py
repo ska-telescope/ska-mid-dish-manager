@@ -3,6 +3,7 @@
 import pytest
 import tango
 from ska_control_model import HealthState
+from ska_control_model.future import ControlMode
 
 from ska_mid_dish_manager.models.dish_enums import SPFHealthState
 
@@ -24,7 +25,7 @@ def test_ignoring_spfrx_handles_raw_healthstate_during_sync(dish_manager_resourc
     spf_cm = sub_component_managers["SPF"]
     ds_cm = sub_component_managers["DS"]
 
-    assert dish_manager_cm.component_state["ignorespfrx"] is False
+    assert dish_manager_cm.component_state["spfrxcontrolmode"] == ControlMode.MONITOR_AND_CONTROL
 
     spf_cm.update_state_from_monitored_attributes.reset_mock()
     ds_cm.update_state_from_monitored_attributes.reset_mock()
@@ -32,9 +33,9 @@ def test_ignoring_spfrx_handles_raw_healthstate_during_sync(dish_manager_resourc
         ds_cm._update_component_state(healthstate=HealthState.OK)
     )
 
-    dish_manager_cm.set_spfrx_device_ignored(True)
+    dish_manager_cm.set_spfrx_control_mode(ControlMode.NO_MONITOR_NO_CONTROL)
 
-    assert dish_manager_cm.component_state["ignorespfrx"] is True
+    assert dish_manager_cm.component_state["spfrxcontrolmode"] == ControlMode.NO_MONITOR_NO_CONTROL
     assert type(spf_cm.component_state["healthstate"]) is int
     spf_cm.update_state_from_monitored_attributes.assert_called_with()
     ds_cm.update_state_from_monitored_attributes.assert_called_with()

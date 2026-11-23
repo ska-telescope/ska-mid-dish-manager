@@ -34,6 +34,7 @@ def test_wms_group_activation_and_polling_starts(mock_tango_group):
         "ska-mid/weather-monitoring/2",
         "ska-mid/weather-monitoring/3",
     ]
+
     mock_instance = mock_tango_group.return_value
     mock_device_list = Mock(return_value=test_wms_device_names)
     mock_instance.get_device_list = mock_device_list
@@ -46,20 +47,31 @@ def test_wms_group_activation_and_polling_starts(mock_tango_group):
         wind_gust_average_period=WIND_GUST_PERIOD,
     )
 
+    polling_event = threading.Event()
+
     wms.write_wms_group_attribute_value = Mock()
-    wms._run_wms_group_polling = Mock()
 
-    wms.start_communicating()
+    wms._run_wms_group_polling = Mock(side_effect=lambda *_: polling_event.set())
 
-    tango_group_device_list = wms._wms_device_group.get_device_list()  # ty: ignore[unresolved-attribute]
-    for device_name in test_wms_device_names:
-        assert device_name in tango_group_device_list
+    try:
+        wms.start_communicating()
 
-    wait_event = threading.Event()
-    wait_event.wait(timeout=wms._wms_polling_period)
+        tango_group_device_list = wms._wms_device_group.get_device_list()
 
-    wms.write_wms_group_attribute_value.assert_called_with("controlMode", 1)  # ty: ignore[deprecated]
-    wms._run_wms_group_polling.assert_called()
+        for device_name in test_wms_device_names:
+            assert device_name in tango_group_device_list
+
+        # Wait for the background monitoring startup to complete.
+        assert polling_event.wait(timeout=3 * WMS_POLLING_PERIOD), (
+            "WMS monitoring did not start within the expected timeout"
+        )
+
+        wms.write_wms_group_attribute_value.assert_any_call("controlMode", 1)
+
+        wms._run_wms_group_polling.assert_called_once()
+
+    finally:
+        wms.stop_communicating()
 
 
 @mock.patch("ska_mid_dish_manager.component_managers.wms_cm.tango.Group")

@@ -55,8 +55,11 @@ dishmanager:
   # with custom sub devices addresses
   # Otherwise device names will follow "mid-dish/<family_name>/ska0<N>" for N dishes
   spf:
-    # if true will set the ignoreSpf memorised attribute to True and not account for spf state in aggregation logic
-    ignored: False
+    # Supported:
+    # - MONITOR_AND_CONTROL
+    # - NO_MONITOR_NO_CONTROL
+    # MONITOR_NO_CONTROL is not implemented.
+    control_mode: "MONITOR_AND_CONTROL"
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfc"
@@ -67,8 +70,11 @@ dishmanager:
     family_name: "ds-manager"
 
   spfrx:
-    # if true will set the ignoreSpfrx memorised attribute to True and not account for spfrx state in aggregation logic
-    ignored: False
+    # Supported:
+    # - MONITOR_AND_CONTROL
+    # - NO_MONITOR_NO_CONTROL
+    # MONITOR_NO_CONTROL is not implemented.
+    control_mode: "MONITOR_AND_CONTROL"
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "simulator-spfrx"

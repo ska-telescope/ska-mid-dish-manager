@@ -13,6 +13,7 @@ import numpy as np
 import tango
 from matplotlib import pyplot as plt
 from ska_control_model import CommunicationStatus
+from ska_control_model.future import ControlMode
 from tango.utils import EventCallback
 
 from ska_mid_dish_manager.models.dish_enums import PointingState, TrackTableLoadMode
@@ -664,57 +665,69 @@ class EventPrinter:
                 )
 
 
-def set_ignored_devices(device_proxy, ignore_spf, ignore_spfrx, ignore_b5dc):
-    """Sets ignored devices on DishManager."""
-    if device_proxy.ignoreSpf != ignore_spf:
-        spf_connection_event_store = EventStore()
-        spf_sub_id = device_proxy.subscribe_event(
-            "spfConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            spf_connection_event_store,
+def set_ignored_devices(
+    device_proxy,
+    spf_control_mode: ControlMode,
+    spfrx_control_mode: ControlMode,
+    b5dc_control_mode: ControlMode,
+):
+    """Configure SPF, SPFRx and B5DC communication."""
+    _set_control_mode(
+        device_proxy,
+        "spfControlMode",
+        "spfConnectionState",
+        spf_control_mode,
+    )
+
+    _set_control_mode(
+        device_proxy,
+        "spfrxControlMode",
+        "spfrxConnectionState",
+        spfrx_control_mode,
+    )
+    _set_control_mode(device_proxy, "b5dcControlMode", "b5dcConnectionState", b5dc_control_mode)
+
+
+def _set_control_mode(
+    device_proxy,
+    control_mode_attribute: str,
+    connection_state_attribute: str,
+    control_mode: ControlMode,
+):
+    """Set a sub-device control mode and wait for its communication state."""
+    if control_mode == ControlMode.MONITOR_NO_CONTROL:
+        raise NotImplementedError(
+            f"{ControlMode.MONITOR_NO_CONTROL.name} is not supported for {control_mode_attribute}"
         )
 
-        device_proxy.ignoreSpf = ignore_spf
+    if getattr(device_proxy, control_mode_attribute) == control_mode:
+        return
 
-        if ignore_spf:
-            spf_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
-        else:
-            spf_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        device_proxy.unsubscribe_event(spf_sub_id)
+    connection_event_store = EventStore()
 
-    if device_proxy.ignoreSpfrx != ignore_spfrx:
-        spfrx_connection_event_store = EventStore()
+    subscription_id = device_proxy.subscribe_event(
+        connection_state_attribute,
+        tango.EventType.CHANGE_EVENT,
+        connection_event_store,
+    )
 
-        spfrx_sub_id = device_proxy.subscribe_event(
-            "spfrxConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            spfrx_connection_event_store,
+    try:
+        setattr(
+            device_proxy,
+            control_mode_attribute,
+            control_mode,
         )
 
-        device_proxy.ignoreSpfrx = ignore_spfrx
-
-        if ignore_spfrx:
-            spfrx_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
-        else:
-            spfrx_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        device_proxy.unsubscribe_event(spfrx_sub_id)
-
-    if device_proxy.ignoreB5dc != ignore_b5dc:
-        b5dc_connection_event_store = EventStore()
-
-        b5dc_sub_id = device_proxy.subscribe_event(
-            "b5dcConnectionState",
-            tango.EventType.CHANGE_EVENT,
-            b5dc_connection_event_store,
+        expected_status = (
+            CommunicationStatus.DISABLED
+            if control_mode == ControlMode.NO_MONITOR_NO_CONTROL
+            else CommunicationStatus.ESTABLISHED
         )
 
-        device_proxy.ignoreB5dc = ignore_b5dc
+        connection_event_store.wait_for_value(expected_status)
 
-        if ignore_b5dc:
-            b5dc_connection_event_store.wait_for_value(CommunicationStatus.DISABLED)
-        else:
-            b5dc_connection_event_store.wait_for_value(CommunicationStatus.ESTABLISHED)
-        device_proxy.unsubscribe_event(b5dc_sub_id)
+    finally:
+        device_proxy.unsubscribe_event(subscription_id)
 
 
 def generate_random_text(length=10):

@@ -25,23 +25,27 @@ POINTING_TOLERANCE_DEG = 0.1
 def slew_dish_to_init(event_store_class, dish_manager_proxy):
     """Fixture that slews the dish to a init position."""
     main_event_store = event_store_class()
-    band_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
+    result_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
-        "configuredBand": band_event_store,
         "achievedPointing": achieved_pointing_event_store,
-        "pointingstate": pointing_state_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
-    band_event_store.wait_for_value(Band.B1, timeout=10)
+    [[_], [configure_id]] = dish_manager_proxy.ConfigureBand1(True)
+    result_event_store.wait_for_command_id(configure_id, timeout=60)
+    assert dish_manager_proxy.configuredband == Band.B1
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
 
-    # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
+    pointing_subscription = setup_subscriptions(
+        dish_manager_proxy, {"pointingState": pointing_state_event_store}, reset_queue=False
+    )
+    pointing_state_event_store.wait_for_value(
+        PointingState.READY, timeout=120, proxy=dish_manager_proxy
+    )
 
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
@@ -56,6 +60,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=120)
 
     remove_subscriptions(subscriptions)
+    remove_subscriptions(pointing_subscription)
 
     yield
 
@@ -74,14 +79,14 @@ def test_track_and_track_stop_cmds(
     """Test call of Track command and stop."""
     pointing_state_event_store = event_store_class()
     result_event_store = event_store_class()
-    status_event_store = event_store_class()
+    progress_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
 
     attr_cb_mapping = {
         "pointingState": pointing_state_event_store,
         "achievedPointing": achieved_pointing_event_store,
         "lrcFinished": result_event_store,
-        "Status": status_event_store,
+        "lrcExecuting": progress_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
@@ -136,7 +141,9 @@ def test_track_and_track_stop_cmds(
     ]
 
     # Wait for the track command to complete
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=6)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=6
+    )
 
     # Check that all the expected progress messages appeared
     # in the event store
@@ -167,7 +174,9 @@ def test_track_and_track_stop_cmds(
     ]
 
     # Wait for the track command to complete
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=8)
+    events = progress_event_store.wait_for_progress_update(
+        expected_progress_updates[-1], timeout=8
+    )
 
     # Check that all the expected progress messages appeared
     # in the event store

@@ -7,10 +7,10 @@ This project adheres to `Semantic Versioning <http://semver.org/>`_.
 
 ## unreleased
 *************
-- Updated dcoker-compose to include Meerkat weather related code.
+- Updated docker-compose to include Meerkat weather related code.
 - Added manual job to run lmc integration test prior to dish manager release (cascading pipeline)
 - Added custom sub component's values i.e DS Manager and Simulator to enable the projects to trigger Dish Manager's pipeline for early integration testing
- 
+- Removed the ignore attributes ignoreSpf, ignoreSpfrx and ignoreb5dc and replaced with spfControlMode, spfrxControlMode and b5dcControlMode attributes, respectively, to provide equivalent monitoring and control configurations as per (ADR-114)  
 Version 12.0.1
 **************
 - Updated ConfigureBand to address SKB-1594 by waiting for CONFIGURE and then OPERATE rather than a set timeout
