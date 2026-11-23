@@ -52,3 +52,6 @@ SPFRX_BAND_WAIT_TIME = 12
 
 # ConfigureBand Indexer position change timeout
 INDEXER_POS_TIMEOUT = 60
+
+# APMaintenance Tango command timeout
+AP_MAINTENANCE_CMD_TIMEOUT = 120

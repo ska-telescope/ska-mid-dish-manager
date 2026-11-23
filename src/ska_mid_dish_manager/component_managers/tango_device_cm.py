@@ -437,10 +437,6 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
     @check_communicating
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
-        """Check communication state, then write the attribute value."""
-        self._write_attribute_value(attribute_name, attribute_value)
-
-    def _write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
         """Write the attribute value."""
         self.logger.debug(
             "About to write attribute [%s] on device [%s]",

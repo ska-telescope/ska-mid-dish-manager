@@ -633,9 +633,18 @@ class DishManager(SKAController):
         # Try to connect to DB and update memorized attributes if TANGO_HOST is set
         self.component_manager.try_update_memorized_attributes_from_db()
 
-        # Invalidate a set of irrelevant attrs if the AP Manager is being monitored
         # NOTE This is intended to be used as a temporary measure until the APManager
         # exposes and/or applies logic behind the listed attrs
+        self._invalidate_ap_manager_linked_attrs()
+
+        # Register device instance and continue initialization
+        self.instances[self.get_name()] = self
+        self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)
+        self.op_state_model.perform_action("component_on")
+        self.component_manager.start_communicating()
+
+    def _invalidate_ap_manager_linked_attrs(self) -> None:
+        """Invalidate attributes that are not applicable when AP Manager is monitored."""
         ds_sub_cm = self.component_manager.sub_component_managers["DS"]
         if isinstance(ds_sub_cm, APComponentManager):
             invaliation_time = time.time()
@@ -653,12 +662,6 @@ class DishManager(SKAController):
                     invaliation_time,
                     AttrQuality.ATTR_INVALID,
                 )
-
-        # Register device instance and continue initialization
-        self.instances[self.get_name()] = self
-        self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)
-        self.op_state_model.perform_action("component_on")
-        self.component_manager.start_communicating()
 
     def _configure_additional_user_tags_for_logging(self):
         """Append user tags to log records."""

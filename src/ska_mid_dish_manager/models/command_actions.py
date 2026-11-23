@@ -15,6 +15,7 @@ from ska_mid_dish_manager.models.action_handlers import (
     SequentialActionHandler,
 )
 from ska_mid_dish_manager.models.constants import (
+    AP_MAINTENANCE_CMD_TIMEOUT,
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
     INDEXER_POS_TIMEOUT,
@@ -323,7 +324,7 @@ class SetMaintenanceModeAction(Action):
                     "operatingmode": DSOperatingMode.MAINTENANCE,
                 },
                 progress_callback=self._progress_callback,
-                timeout_s=120.0,
+                timeout_s=AP_MAINTENANCE_CMD_TIMEOUT,
             )
             # Dish Mode calculation will go to UNKNOWN while DSOperatingMode is MAINTENANCE
             # therefore we dont await a particular dish Mode
