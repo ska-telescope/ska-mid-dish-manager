@@ -591,9 +591,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
         mode: ControlMode,
     ) -> None:
         """Validate the control mode for a subdevice."""
-        if device not in ("SPF", "SPFRX", "B5DC"):
-            raise ValueError(f"Unsupported subdevice: {device}")
-
         if not isinstance(mode, ControlMode):
             raise ValueError(f"Invalid {device} control mode: {mode!r}")
 
@@ -618,10 +615,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             "SPFRX": "spfrxcontrolmode",
             "B5DC": "b5dccontrolmode",
         }
-
-        if device not in control_mode_keys:
-            raise ValueError(f"Control mode is not supported for device {device}")
-
         return self.component_state[control_mode_keys[device]]
 
     def get_active_sub_component_managers(self) -> Dict:
@@ -678,19 +671,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
             return ControlMode(int(value))
         except ValueError as error:
             raise ValueError(f"Invalid control mode value: {value}") from error
-
-    @staticmethod
-    def _parse_legacy_ignore_value(value: str) -> ControlMode:
-        """Convert a legacy ignore flag to a ControlMode."""
-        normalized = str(value).strip().lower()
-
-        if normalized in ("true", "1"):
-            return ControlMode.NO_MONITOR_NO_CONTROL
-
-        if normalized in ("false", "0"):
-            return ControlMode.MONITOR_AND_CONTROL
-
-        raise ValueError(f"Invalid legacy ignore attribute value: {value!r}")
 
     def _is_maintenance_mode_active(self) -> bool:
         """Check if MaintenanceModeActive property is set to True.
