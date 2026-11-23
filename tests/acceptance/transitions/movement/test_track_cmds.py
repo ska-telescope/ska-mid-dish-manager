@@ -27,18 +27,25 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     main_event_store = event_store_class()
     achieved_pointing_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
+    result_event_store = event_store_class()
     attr_cb_mapping = {
         "dishMode": main_event_store,
         "achievedPointing": achieved_pointing_event_store,
-        "pointingstate": pointing_state_event_store,
+        "lrcFinished": result_event_store,
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
 
-    dish_manager_proxy.ConfigureBand1(True)
-    main_event_store.wait_for_value(DishMode.CONFIG, timeout=10, proxy=dish_manager_proxy)
-    # Await auto transition to OPERATE following band config
-    main_event_store.wait_for_value(DishMode.OPERATE, timeout=30, proxy=dish_manager_proxy)
+    [[_], [configure_id]] = dish_manager_proxy.ConfigureBand1(True)
+    result_event_store.wait_for_command_id(configure_id, timeout=60)
     assert dish_manager_proxy.configuredband == Band.B1
+    assert dish_manager_proxy.dishMode == DishMode.OPERATE
+
+    pointing_subscription = setup_subscriptions(
+        dish_manager_proxy, {"pointingState": pointing_state_event_store}, reset_queue=False
+    )
+    pointing_state_event_store.wait_for_value(
+        PointingState.READY, timeout=120, proxy=dish_manager_proxy
+    )
 
     dish_manager_proxy.Slew([INIT_AZ, INIT_EL])
 
@@ -53,6 +60,7 @@ def slew_dish_to_init(event_store_class, dish_manager_proxy):
     pointing_state_event_store.wait_for_value(PointingState.READY, timeout=120)
 
     remove_subscriptions(subscriptions)
+    remove_subscriptions(pointing_subscription)
 
     yield
 
