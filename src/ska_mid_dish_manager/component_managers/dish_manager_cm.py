@@ -599,12 +599,6 @@ class DishManagerComponentManager(TaskExecutorComponentManager):
                 f"{device} control mode MONITOR_NO_CONTROL is not implemented"
             )
 
-        if mode not in (
-            ControlMode.NO_MONITOR_NO_CONTROL,
-            ControlMode.MONITOR_AND_CONTROL,
-        ):
-            raise ValueError(f"{device} control mode cannot be {mode}")
-
     def check_device_control_mode(
         self,
         device: str,
