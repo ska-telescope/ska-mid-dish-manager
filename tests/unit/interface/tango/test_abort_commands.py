@@ -20,7 +20,66 @@ from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestam
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_only_one_abort_runs_at_a_time(dish_manager_resources):
+def test_abort_only_cancels_lrc(dish_manager_resources, event_store_class):
+    device_proxy, dish_manager_cm = dish_manager_resources
+    dish_manager_cm._update_component_state(dishmode=DishMode.STANDBY_LP)
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+
+    lrc_queue_event_store = event_store_class()
+    lrc_finished_event_store = event_store_class()
+    lrc_executing_event_store = event_store_class()
+
+    device_proxy.subscribe_event(
+        "lrcQueue",
+        tango.EventType.CHANGE_EVENT,
+        lrc_queue_event_store,
+    )
+    lrc_queue_event_store.clear_queue()
+
+    device_proxy.subscribe_event(
+        "lrcExecuting",
+        tango.EventType.CHANGE_EVENT,
+        lrc_executing_event_store,
+    )
+    lrc_executing_event_store.clear_queue()
+
+    device_proxy.subscribe_event(
+        "lrcFinished",
+        tango.EventType.CHANGE_EVENT,
+        lrc_finished_event_store,
+    )
+    lrc_finished_event_store.clear_queue()
+
+    # issue some commands accepted from LP mode
+    device_proxy.SetStandbyFPMode()
+    device_proxy.SetStandbyLPMode()
+    device_proxy.ConfigureBand1(True)
+
+    # check that 3 commands were queued in the LRC
+    assert lrc_queue_event_store.wait_for_n_events(3)
+
+    # check that 1 command is currently executing in the LRC
+    assert lrc_executing_event_store.wait_for_n_events(1)
+
+    [[result_code], [uid]] = device_proxy.Abort()
+    assert result_code == ResultCode.STARTED
+    assert not dish_manager_cm.abort_sequence_in_progress
+    lrc_finished_event_store.wait_for_finished_command_result(
+        uid, '[0, "Abort completed OK"]', timeout=5
+    )
+    # check that the LRC is no longer executing any commands
+    assert lrc_executing_event_store.wait_for_value(())
+    assert lrc_queue_event_store.wait_for_value(())
+
+    # Abort is not AbortScan: no TrackStop or track table reset was sent to DS
+    ds_commands = [call.args[0] for call in ds_cm.execute_command.call_args_list]
+    assert "TrackStop" not in ds_commands
+    assert "TrackLoadTable" not in ds_commands
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_only_one_abortscan_runs_at_a_time(dish_manager_resources):
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     # update the execute_command mock to return IN_PROGRESS and a timestamp
@@ -36,10 +95,10 @@ def test_only_one_abort_runs_at_a_time(dish_manager_resources):
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
+def test_abortscan_does_not_run_full_sequence_in_maintenance_dishmode(
     caplog, dish_manager_resources, event_store_class
 ):
-    """Verify Abort is rejected when DishMode is MAINTENANCE."""
+    """Verify AbortScan is rejected when DishMode is MAINTENANCE."""
     device_proxy, dish_manager_cm = dish_manager_resources
     caplog.set_level(logging.DEBUG, logger=dish_manager_cm.logger.name)
 
@@ -72,8 +131,8 @@ def test_abort_does_not_run_full_sequence_in_maintenance_dishmode(
         PointingState.TRACK,
     ],
 )
-def test_abort_during_dish_movement(dish_manager_resources, event_store_class, pointing_state):
-    """Verify Abort executes the abort sequence."""
+def test_abortscan_during_dish_movement(dish_manager_resources, event_store_class, pointing_state):
+    """Verify AbortScan executes the abort sequence."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]
@@ -139,10 +198,10 @@ def test_abort_during_dish_movement(dish_manager_resources, event_store_class, p
 
 @pytest.mark.unit
 @pytest.mark.forked
-def test_abort_sends_lrc_update_after_abort_sequence_finishes(
+def test_abortscan_sends_lrc_update_after_abort_sequence_finishes(
     dish_manager_resources, event_store_class
 ):
-    """Verify Abort sends LRC update after abort sequence finishes."""
+    """Verify AbortScan sends LRC update after abort sequence finishes."""
     device_proxy, dish_manager_cm = dish_manager_resources
     ds_cm = dish_manager_cm.sub_component_managers["DS"]
     spf_cm = dish_manager_cm.sub_component_managers["SPF"]

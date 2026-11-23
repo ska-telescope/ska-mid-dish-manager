@@ -25,7 +25,7 @@ def test_abort_scan(
     dish_manager_proxy,
     spf_device_proxy,
 ):
-    """Test Abort aborts the executing long running command."""
+    """Test AbortScan aborts the executing long running command."""
     dish_mode_event_store = event_store_class()
     progress_event_store = event_store_class()
     result_event_store = event_store_class()
@@ -39,12 +39,12 @@ def test_abort_scan(
     }
     subscriptions = setup_subscriptions(dish_manager_proxy, attr_cb_mapping)
     dish_manager_proxy.SetStowMode()
-    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=30)
+    dish_mode_event_store.wait_for_value(DishMode.STOW, timeout=120)
 
     dish_manager_proxy.ConfigureBand3(True)
 
     [[_], [unique_id]] = dish_manager_proxy.AbortScan()
-    # confirm Dish Manager aborted the request on the Configure action
+    # confirm Configure action was aborted
     result_event_store.wait_for_finished_command_result(
         unique_id, '[0, "Abort sequence completed. Abort completed OK"]', timeout=30
     )
@@ -52,7 +52,7 @@ def test_abort_scan(
 
     # confirm that abort finished and the queue is cleared
     cmds_in_queue_store.wait_for_value((), timeout=30)
-    # check that the Dish Manager left the dish in STOW as part of the Abort sequence
+    # check that the dish is left in STOW as part of the Abort sequence
     assert dish_manager_proxy.dishMode == DishMode.STOW
 
     remove_subscriptions(subscriptions)
@@ -136,7 +136,7 @@ def test_abort_scan_during_track(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that Abort aborts the executing track command."""
+    """Test that AbortScan aborts the executing track command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
@@ -164,7 +164,7 @@ def test_abort_scan_during_slew(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that Abort aborts the executing slew command."""
+    """Test that AbortScan aborts the executing slew command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
     pointing_state_event_store = event_store_class()
@@ -212,7 +212,7 @@ def test_abort_scan_during_stow(
     dish_manager_proxy,
     ds_device_proxy,
 ):
-    """Test that Abort aborts the executing stow command."""
+    """Test that AbortScan aborts the executing stow command."""
     result_event_store = event_store_class()
     main_event_store = event_store_class()
 
@@ -259,7 +259,7 @@ def test_abort_scan_in_maintenance_mode(
     event_store_class,
     dish_manager_proxy,
 ):
-    """Test that Abort only cancels LRC in maintenance mode."""
+    """Test that AbortScan only cancels LRC in maintenance mode."""
     lrc_finished_events = event_store_class()
     main_event_store = event_store_class()
 

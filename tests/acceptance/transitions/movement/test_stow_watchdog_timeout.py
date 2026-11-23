@@ -75,9 +75,9 @@ def test_watchdog_reset(event_store_class, dish_manager_proxy):
         time.sleep(WDT_TIMEOUT / 2)
         # Reset the watchdog timer
         [[result_code], [command_resp]] = dish_manager_proxy.ResetWatchdogTimer()
-        curr_lastwatchdogreset = dish_manager_proxy.lastwatchdogreset
-        assert prev_lastwatchdogreset != curr_lastwatchdogreset
         assert result_code == ResultCode.OK
+        curr_lastwatchdogreset = dish_manager_proxy.lastwatchdogreset
+        assert curr_lastwatchdogreset > prev_lastwatchdogreset
         assert command_resp == f"Watchdog timer reset at {curr_lastwatchdogreset}s"
         prev_lastwatchdogreset = curr_lastwatchdogreset
 
