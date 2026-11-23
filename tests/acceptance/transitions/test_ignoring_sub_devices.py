@@ -101,6 +101,7 @@ def test_ignoring_spf(
 
     remove_subscriptions(subscriptions)
 
+
 @pytest.mark.xfail(reason="Test is still flaky, will need looking into")
 @pytest.mark.acceptance
 def test_ignoring_spfrx(
