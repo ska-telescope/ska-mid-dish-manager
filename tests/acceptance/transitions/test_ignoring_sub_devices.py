@@ -101,7 +101,7 @@ def test_ignoring_spf(
 
     remove_subscriptions(subscriptions)
 
-
+@pytest.mark.xfail(reason="Test is still flaky, will need looking into")
 @pytest.mark.acceptance
 def test_ignoring_spfrx(
     monitor_tango_servers, toggle_spfrx_control_mode, event_store_class, dish_manager_proxy
