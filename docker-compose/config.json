@@ -125,6 +125,7 @@
                             "SPFRxDeviceFqdn": [
                                 "mid-dish/simulator-spfrx/SKA001"
                             ],
+                            "APManagerDeviceFqdn": [""],
                             "B5DCDeviceFqdn": [""],
                             "WMSDeviceNames": [""],
                             "SkaLevel": [

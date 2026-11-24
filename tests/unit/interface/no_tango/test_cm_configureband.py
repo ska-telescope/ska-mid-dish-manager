@@ -64,7 +64,6 @@ def test_configureband_handler(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand2 started",
         "Running ConfigureBand2 on device SPFRX",
         "ConfigureBand2 on SPFRX timeout is 0",
@@ -72,11 +71,26 @@ def test_configureband_handler(
         "SPFRX operatingmode changed to CONFIGURE",
     ]
 
+    # Run SetIndexerPosition and await expected DS indexer position and msgs
+    progress_cb = callbacks["progress_cb"]
+    for msg in msgs[:4]:
+        progress_cb.wait_for_args((msg,))
+
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B2
+    )
+
+    # Following DS indexer position config, await SPFRX CONFIG -> OPERATE
+    # transition
+    for msg in msgs[4:8]:
+        progress_cb.wait_for_args((msg,))
+
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
         operatingmode=SPFRxOperatingMode.CONFIGURE
     )
 
     component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
+    progress_cb.wait_for_args((msgs[8],))
 
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
         operatingmode=SPFRxOperatingMode.OPERATE
@@ -90,10 +104,6 @@ def test_configureband_handler(
 
     component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
 
-    component_manager.sub_component_managers["DS"]._update_component_state(
-        indexerposition=IndexerPosition.B2
-    )
-
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
         configuredband=Band.B2
     )
@@ -104,10 +114,6 @@ def test_configureband_handler(
     component_state_cb.wait_for_value("configuredband", Band.B2, timeout=30)
 
     component_state_cb.get_queue_values()
-
-    progress_cb = callbacks["progress_cb"]
-    for msg in msgs:
-        progress_cb.wait_for_args((msg,))
 
     # wait a bit for the lrc updates to come through
     component_state_cb.get_queue_values()
@@ -179,14 +185,27 @@ def test_configureband_json_handler_happy(
 
     msgs = [
         "Awaiting DS indexerposition change to B2",
+        "Running SetIndexPosition on device DS",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Running ConfigureBand on device SPFRX",
         "Awaiting SPFRX operatingmode change to CONFIGURE",
         "Running Wait for operatingMode.CONFIGURE on device SPFRX",
         "Awaiting SPFRX operatingmode change to CONFIGURE",
+        "SPFRX operatingmode changed to CONFIGURE",
     ]
     progress_cb = callbacks["progress_cb"]
-    for msg in msgs:
+
+    # Run SetIndexerPosition and await expected DS indexer position and msgs
+    for msg in msgs[:2]:
+        progress_cb.wait_for_args((msg,))
+
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B2
+    )
+
+    # Following DS indexer position config, await SPFRX CONFIG -> OPERATE
+    # transition
+    for msg in msgs[2:7]:
         progress_cb.wait_for_args((msg,))
 
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
@@ -194,16 +213,23 @@ def test_configureband_json_handler_happy(
     )
 
     component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
+    progress_cb.wait_for_args((msgs[7],))
+
+    progress_cb.wait_for_args(("Running Wait for operatingMode.OPERATE on device SPFRX",))
 
     # check that the component state reports the requested command
     component_manager.sub_component_managers["SPF"]._update_component_state(
         operatingmode=SPFOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B2, operatingmode=SPFRxOperatingMode.OPERATE
+        operatingmode=SPFRxOperatingMode.OPERATE
     )
     component_manager.sub_component_managers["DS"]._update_component_state(
-        indexerposition=IndexerPosition.B2, operatingmode=DSOperatingMode.POINT
+        operatingmode=DSOperatingMode.POINT
+    )
+    progress_cb.wait_for_args(("Running Wait for configuredband 2 on device SPFRX",))
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B2
     )
     component_state_cb.wait_for_value("configuredband", Band.B2)
 
@@ -456,17 +482,11 @@ def test_configureband_5b_with_subband(
 
     expected_json = json.dumps(expected_config)
 
-    # check that the SPFRX component manager received the expected ConfigureBand command
-    spfrx_cm = cast(SPFRxComponentManager, component_manager.sub_component_managers["SPFRX"])
-    spfrx_cm_calls = spfrx_cm.execute_command.call_args_list
-    assert call("ConfigureBand", expected_json) in spfrx_cm_calls
-
     msgs = [
         "ConfigureBand started",
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B5b",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B1, OPERATE",
         "Running ConfigureBand on device SPFRX",
@@ -502,44 +522,68 @@ def test_configureband_5b_with_subband(
         "SetOperateMode completed.",
     ]
 
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        operatingmode=SPFRxOperatingMode.CONFIGURE
-    )
-
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B1
-    )
-
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        operatingmode=SPFRxOperatingMode.OPERATE
-    )
-
-    component_manager.sub_component_managers["SPF"]._update_component_state(
-        operatingmode=SPFOperatingMode.OPERATE
-    )
-    component_manager.sub_component_managers["SPF"]._update_component_state(
-        bandinfocus=SPFBandInFocus.B5b
-    )
+    # Indexer position configuration check
+    progress_cb = callbacks["progress_cb"]
+    for msg in msgs[:4]:
+        progress_cb.wait_for_args((msg,), timeout=30)
 
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b
     )
 
+    # Await SPFRX.ConfiguredBand command action updates
+    for msg in msgs[4:8]:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    # check that the SPFRX component manager received the expected ConfigureBand command
+    spfrx_cm = cast(SPFRxComponentManager, component_manager.sub_component_managers["SPFRX"])
+    spfrx_cm_calls = spfrx_cm.execute_command.call_args_list
+    assert call("ConfigureBand", expected_json) in spfrx_cm_calls
+
+    # Await SPFRX CONFIGURE and ultimately OPERATE updates
+    for msg in msgs[8:11]:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.CONFIGURE
+    )
+    component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
+    assert component_manager.component_state["configuredband"] == Band.NONE
+
+    for msg in msgs[11:15]:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    for msg in msgs[15:17]:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.OPERATE
+    )
+
+    for msg in msgs[17:22]:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B1
+    )
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE, bandinfocus=SPFBandInFocus.B5b
+    )
     component_manager.sub_component_managers["DS"]._update_component_state(
         operatingmode=DSOperatingMode.POINT
     )
+
+    for msg in msgs[22:29]:
+        progress_cb.wait_for_args((msg,), timeout=30)
 
     component_manager.sub_component_managers["B5DC"]._update_component_state(
         rfcmfrequency=sub_band_frequency
     )
 
-    progress_cb = callbacks["progress_cb"]
-    for msg in msgs:
+    for msg in msgs[29:]:
         progress_cb.wait_for_args((msg,), timeout=30)
 
     # wait a bit for the lrc updates to come through
-    component_state_cb.wait_for_value("dishmode", DishMode.CONFIG)
-    component_state_cb.wait_for_value("configuredband", Band.UNKNOWN)
     component_state_cb.wait_for_value("dishmode", DishMode.UNKNOWN)
     component_state_cb.wait_for_value("configuredband", Band.B5b)
     component_state_cb.wait_for_value("dishmode", DishMode.OPERATE)
@@ -614,7 +658,6 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B5b",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B1, OPERATE",
         "Running ConfigureBand on device SPFRX",
@@ -631,6 +674,7 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         "SPFRX.Wait for operatingMode.OPERATE completed",
         "ConfigureBand: Wait for operatingMode.OPERATE on device SPFRX completed",
         "Awaiting SPFRX configuredband change to B1",
+        "Running Wait for configuredband 1 on device SPFRX",
         "SPFRX configuredband changed to B1",
         "SPFRX.Wait for configuredband 1 completed",
         "ConfigureBand: Wait for configuredband 1 on device SPFRX completed",
@@ -645,35 +689,47 @@ def test_configureband_5b_with_subband_ignore_b5dc(
         "SetOperateMode completed.",
     ]
 
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        operatingmode=SPFRxOperatingMode.CONFIGURE
-    )
-
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        configuredband=Band.B1
-    )
-
-    component_manager.sub_component_managers["SPFRX"]._update_component_state(
-        operatingmode=SPFRxOperatingMode.OPERATE
-    )
-
-    component_manager.sub_component_managers["SPF"]._update_component_state(
-        operatingmode=SPFOperatingMode.OPERATE
-    )
-    component_manager.sub_component_managers["SPF"]._update_component_state(
-        bandinfocus=SPFBandInFocus.B5b
-    )
+    # Indexer position configuration check
+    progress_cb = callbacks["progress_cb"]
+    for msg in msgs[:4]:
+        progress_cb.wait_for_args((msg,), timeout=20)
 
     component_manager.sub_component_managers["DS"]._update_component_state(
         indexerposition=IndexerPosition.B5b
     )
 
+    # Await SPFRX.ConfiguredBand command action updates
+    for msg in msgs[4:11]:
+        progress_cb.wait_for_args((msg,), timeout=20)
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.CONFIGURE
+    )
+
+    for msg in msgs[11:15]:
+        progress_cb.wait_for_args((msg,), timeout=20)
+
+    for msg in msgs[15:17]:
+        progress_cb.wait_for_args((msg,), timeout=20)
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        operatingmode=SPFRxOperatingMode.OPERATE
+    )
+    component_manager.sub_component_managers["SPF"]._update_component_state(
+        operatingmode=SPFOperatingMode.OPERATE, bandinfocus=SPFBandInFocus.B5b
+    )
     component_manager.sub_component_managers["DS"]._update_component_state(
         operatingmode=DSOperatingMode.POINT
     )
 
-    progress_cb = callbacks["progress_cb"]
-    for msg in msgs:
+    for msg in msgs[17:21]:
+        progress_cb.wait_for_args((msg,), timeout=20)
+
+    component_manager.sub_component_managers["SPFRX"]._update_component_state(
+        configuredband=Band.B1
+    )
+
+    for msg in msgs[21:]:
         progress_cb.wait_for_args((msg,), timeout=20)
 
     # check that the component state reports the requested command
@@ -1016,6 +1072,9 @@ def test_spfrx_operate_timed_out(
 
     msgs = [
         "ConfigureBand started",
+        "DS.SetIndexPosition started",
+        "Awaiting DS indexerposition change to B2",
+        "Running SetIndexPosition on device DS",
         "SPFRX.ConfigureBand started",
         "Running ConfigureBand on device SPFRX",
         "Running Wait for operatingMode.CONFIGURE on device SPFRX",
@@ -1026,7 +1085,15 @@ def test_spfrx_operate_timed_out(
         "SPFRX.Wait for operatingMode.OPERATE timed out",
         "Action 'ConfigureBand' failed. Wait for operatingMode.OPERATE on device SPFRX failed.",
     ]
-    for msg in msgs:
+
+    for msg in msgs[:4]:
+        progress_cb.wait_for_args((msg,), timeout=30)
+
+    component_manager.sub_component_managers["DS"]._update_component_state(
+        indexerposition=IndexerPosition.B2
+    )
+
+    for msg in msgs[4:]:
         progress_cb.wait_for_args((msg,), timeout=30)
 
     component_state_cb.get_queue_values()

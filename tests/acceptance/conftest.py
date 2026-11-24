@@ -10,7 +10,10 @@ import tango
 from aiokatcp import Client
 from ska_ser_logging import configure_logging
 
-from ska_mid_dish_manager.models.constants import DEFAULT_ACTION_TIMEOUT_S
+from ska_mid_dish_manager.models.constants import (
+    AP_MANAGER_TRL_FAMILY_NAME,
+    DEFAULT_ACTION_TIMEOUT_S,
+)
 from ska_mid_dish_manager.models.dish_enums import (
     DishMode,
     DSOperatingMode,
@@ -299,10 +302,20 @@ def reset_dish_to_standby(
     update_messages = []
 
     try:
+        # Special case to get the APManager out of STARTUP to STANDBY operatingMode
+        if (
+            ds_device_proxy.operatingMode == DSOperatingMode.STARTUP
+            and AP_MANAGER_TRL_FAMILY_NAME in ds_device_proxy.name()
+        ):
+            ds_device_proxy.SetStandbyMode()
+            op_mode_events.wait_for_value(DSOperatingMode.STANDBY, timeout=20)
+            power_state_events.wait_for_value(DSPowerState.LOW_POWER, timeout=20)
+
         if dish_manager_proxy.dishMode == DishMode.MAINTENANCE:
             ds_device_proxy.TakeAuthority()
             # wait 10s for the horn to go off
             dish_mode_events.get_queue_values(timeout=10)
+
             dish_manager_proxy.SetStowMode()
             dish_mode_events.wait_for_value(DishMode.STOW, timeout=120)
             update_messages.append("Got dishmode out of MAINTENANCE into STOW")

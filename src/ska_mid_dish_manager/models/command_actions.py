@@ -8,14 +8,17 @@ import tango
 from ska_control_model import AdminMode, ResultCode, TaskStatus  # ty: ignore[deprecated]
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
+from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.models.action_handlers import (
     Action,
     ActionHandler,
     SequentialActionHandler,
 )
 from ska_mid_dish_manager.models.constants import (
+    AP_MAINTENANCE_CMD_TIMEOUT,
     DEFAULT_ACTION_TIMEOUT_S,
     DSC_MIN_POWER_LIMIT_KW,
+    INDEXER_POS_TIMEOUT,
     OPERATOR_TAG,
     SPFRX_BAND_WAIT_TIME,
     SPFRX_CONFIG_WAIT_TIME,
@@ -294,16 +297,39 @@ class SetMaintenanceModeAction(Action):
             action_on_failure,
             waiting_callback,
         )
-        # This is not a FannedOutTangoLongRunningCommand because DSManager bypasses the lrcQueue
-        # and does not return the command ID in its response.
-        ds_command = FannedOutTangoCommand(
-            logger=self.logger,
-            device="DS",
-            command_name="Stow",
-            device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
-            awaited_component_state={"operatingmode": DSOperatingMode.STOW},
-            progress_callback=self._progress_callback,
-        )
+        awaited_dish_mode_before_maint_completion = {}
+
+        # The command fanout to DS on going to DishMode MAINTENANCE requires fanning out;
+        # - Command Stow() if the regular SKA DS Controller is being controlled
+        # - Command APMaintenance() if the MeerKAT AP is being controlled
+        ds_sub_component_manager = self.dish_manager_cm.sub_component_managers["DS"]
+        if isinstance(ds_sub_component_manager, DSComponentManager):
+            # DS Manager bypasses the LRC queue and does not return a command ID.
+            ds_command = FannedOutTangoCommand(
+                logger=self.logger,
+                device="DS",
+                command_name="Stow",
+                device_component_manager=ds_sub_component_manager,
+                awaited_component_state={"operatingmode": DSOperatingMode.STOW},
+                progress_callback=self._progress_callback,
+            )
+            awaited_dish_mode_before_maint_completion = {"dishmode": DishMode.STOW}
+        else:
+            ds_command = FannedOutTangoLongRunningCommand(
+                logger=self.logger,
+                device="DS",
+                command_name="APMaintenance",
+                device_component_manager=ds_sub_component_manager,
+                awaited_component_state={
+                    "operatingmode": DSOperatingMode.MAINTENANCE,
+                },
+                progress_callback=self._progress_callback,
+                timeout_s=AP_MAINTENANCE_CMD_TIMEOUT,
+            )
+            # Dish Mode calculation will go to UNKNOWN while DSOperatingMode is MAINTENANCE
+            # therefore we dont await a particular dish Mode
+            awaited_dish_mode_before_maint_completion = {}
+
         spfrx_command = FannedOutTangoCommand(
             logger=self.logger,
             device="SPFRX",
@@ -331,7 +357,7 @@ class SetMaintenanceModeAction(Action):
             # _dish_manager_cm.component_state will use the tango base property which will do a
             # deep copy
             component_state=self.dish_manager_cm._component_state,
-            awaited_component_state={"dishmode": DishMode.STOW},
+            awaited_component_state=awaited_dish_mode_before_maint_completion,
             action_on_success=self.action_on_success,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
@@ -678,6 +704,7 @@ class ConfigureBandAction(Action):
                 device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
                 command_argument=self.indexer_enum,
                 awaited_component_state={"indexerposition": self.indexer_enum},
+                timeout_s=INDEXER_POS_TIMEOUT,
                 progress_callback=self._progress_callback,
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)
@@ -849,6 +876,7 @@ class ConfigureBand6Action(Action):
                 device_component_manager=self.dish_manager_cm.sub_component_managers["DS"],
                 command_argument=7,
                 awaited_component_state={"indexerposition": IndexerPosition.B6},
+                timeout_s=INDEXER_POS_TIMEOUT,
                 progress_callback=self._progress_callback,
             )
             fanned_out_commands.insert(0, ds_set_index_position_command)

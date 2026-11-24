@@ -13,6 +13,7 @@ from tests.utils import remove_subscriptions, setup_subscriptions
 @pytest.mark.parametrize(
     "family", ["ds-manager", "simulator-spfc", "simulator-spfrx", "b5dc-manager"]
 )
+@pytest.mark.excl_test_against_ap_manager
 def test_device_goes_away(family, event_store_class, dish_manager_proxy):
     """Test dish manager reacts to devices restarting."""
     dp_manager = DeviceProxyManager()

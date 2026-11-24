@@ -1,3 +1,12 @@
+# Fail the Helm deployment if both the DS Manager and AP Manager TRLs/FQDNs are configured by the supplied values
+{{- $ds := .Values.dishmanager.ds -}}
+{{- $apManager := .Values.dishmanager.ap_manager -}}
+{{- $dsConfigured := or $ds.fqdn (and $ds.domain_name $ds.family_name) -}}
+{{- $apManagerConfigured := or $apManager.fqdn (and $apManager.domain_name $apManager.family_name) -}}
+{{- if and $dsConfigured $apManagerConfigured -}}
+{{- fail "Values for dishmanager.ds and dishmanager.ap_manager cannot both be configured. Disable the unrequired device by setting its FQDN or TRL params to empty strings" -}}
+{{- end -}}
+
 {{ $localchart := . }}
 
 {{- range $key, $deviceserver := .Values.deviceServers }}

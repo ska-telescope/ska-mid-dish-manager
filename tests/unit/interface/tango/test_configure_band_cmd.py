@@ -60,7 +60,7 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
 
     [[_], [unique_id]] = device_proxy.SetStandbyFPMode()
     status_event_store.wait_for_progress_update(
-        "Awaiting dishmode change to STANDBY_FP", timeout=120
+        "Awaiting dishmode change to STANDBY_FP", timeout=10
     )
 
     ds_cm._update_component_state(
@@ -73,18 +73,42 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
     assert device_proxy.dishMode == DishMode.STANDBY_FP
 
     [[_], [unique_id]] = device_proxy.command_inout(command, True)
-    # wait a bit before forcing the updates on the subcomponents
-    main_event_store.get_queue_values()
-
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.CONFIGURE)
-    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
-    spfrx_cm._update_component_state(configuredband=Band[band_number])
+    progress_events = status_event_store.wait_for_progress_update(
+        "Running SetIndexPosition on device DS", timeout=10
+    )
     ds_cm._update_component_state(
         indexerposition=IndexerPosition[band_number], operatingmode=DSOperatingMode.POINT
     )
+
+    progress_events.extend(
+        status_event_store.wait_for_progress_update(
+            "Running Wait for operatingMode.CONFIGURE on device SPFRX", timeout=10
+        )
+    )
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.CONFIGURE)
+
+    progress_events.extend(
+        status_event_store.wait_for_progress_update(
+            "SPFRX.Wait for operatingMode.CONFIGURE completed", timeout=10
+        )
+    )
+    progress_events.extend(
+        status_event_store.wait_for_progress_update(
+            "Running Wait for operatingMode.OPERATE on device SPFRX", timeout=10
+        )
+    )
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.OPERATE)
+
+    progress_events.extend(
+        status_event_store.wait_for_progress_update(
+            f"Running Wait for configuredband {band_number.replace('B', '')} on device SPFRX",
+            timeout=10,
+        )
+    )
+    spfrx_cm._update_component_state(configuredband=Band[band_number])
     spf_cm._update_component_state(bandinfocus=SPFBandInFocus[band_number])
 
-    assert main_event_store.wait_for_command_id(unique_id, timeout=40)
+    assert main_event_store.wait_for_command_id(unique_id, timeout=10)
     assert device_proxy.configuredBand == Band[band_number]
 
     expected_progress_updates = [
@@ -99,7 +123,6 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         "DS.SetIndexPosition started",
         f"Awaiting DS indexerposition change to {band_number}",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         f"SPFRX.{command} started",
         f"Running {command} on device SPFRX",
         f"{command} on SPFRX timeout is 0",
@@ -127,9 +150,11 @@ def test_configure_band_cmd_succeeds_when_dish_mode_is_standbyfp(
         f"{command} complete. Triggering on success action.",
     ]
 
-    events = status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=40)
+    progress_events.extend(
+        status_event_store.wait_for_progress_update(expected_progress_updates[-1], timeout=10)
+    )
 
-    events_string = "".join([str(event.attr_value.value) for event in events])
+    events_string = "".join([str(event.attr_value.value) for event in progress_events])
 
     # Check that all the expected progress messages appeared
     # in the event store

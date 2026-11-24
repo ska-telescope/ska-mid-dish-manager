@@ -1,0 +1,207 @@
+"""Specialization for AP Manager functionality."""
+
+import logging
+from threading import Lock
+from typing import Any, Callable, Optional, Tuple, override
+
+import tango
+from ska_control_model import CommunicationStatus, HealthState, ResultCode, TaskStatus
+from ska_control_model.future import ControlMode
+
+from ska_mid_dish_manager.component_managers.tango_device_cm import TangoDeviceComponentManager
+from ska_mid_dish_manager.models.dish_enums import (
+    DSOperatingMode,
+    DSPowerState,
+    IndexerPosition,
+    PointingState,
+)
+
+
+class APComponentManager(TangoDeviceComponentManager):
+    """Specialization for AP Manager functionality."""
+
+    def __init__(
+        self,
+        tango_device_fqdn: Any,
+        logger: logging.Logger,
+        state_update_lock: Lock,
+        *args: Any,
+        communication_state_callback: Optional[Callable] = None,
+        component_state_callback: Optional[Callable] = None,
+        **kwargs: Any,
+    ):
+        monitored_attr_names: tuple[str, ...] = (
+            "buildState",
+            "operatingMode",
+            "powerState",
+            "healthState",
+            "healthInfo",
+            "pointingState",
+            "indexerPosition",
+            "desiredPointingAz",
+            "desiredPointingEl",
+            "achievedPointing",
+            "band0PointingModelParams",
+            "band1PointingModelParams",
+            "band2PointingModelParams",
+            "band3PointingModelParams",
+            "band4PointingModelParams",
+            "band5aPointingModelParams",
+            "band5bPointingModelParams",
+            "trackInterpolationMode",
+            "achievedTargetLock",
+            "dscCmdAuth",
+            "configureTargetLock",
+            "actStaticOffsetValueXel",
+            "actStaticOffsetValueEl",
+            "dscpowerlimitkw",
+            # "trackTableCurrentIndex", - Currently noop on AP Manager
+            # "trackTableEndIndex", - Currently noop on AP Manager
+            "dscCtrlState",
+            "connectionState",
+            "dscErrorStatus",
+            "dscWarningStatus",
+            "dscSafetyStatus",
+            "feedIndexerMoving",
+        )
+
+        quality_monitored_attrs: tuple[str, ...] = (
+            "buildState",
+            "operatingMode",
+            "powerState",
+            "healthState",
+            "healthInfo",
+            "pointingState",
+            "indexerPosition",
+            "desiredPointingAz",
+            "desiredPointingEl",
+            "achievedPointing",
+            "band0PointingModelParams",
+            "band1PointingModelParams",
+            "band2PointingModelParams",
+            "band3PointingModelParams",
+            "band4PointingModelParams",
+            "band5aPointingModelParams",
+            "band5bPointingModelParams",
+            "trackInterpolationMode",
+            "achievedTargetLock",
+            "dscCmdAuth",
+            "dscpowerlimitkw",
+            # "trackTableCurrentIndex", - Currently noop on AP Manager
+            # "trackTableEndIndex", - Currently noop on AP Manager
+            "dscCtrlState",
+            "connectionState",
+            "dscErrorStatus",
+            "dscWarningStatus",
+            "dscSafetyStatus",
+            "feedIndexerMoving",
+        )
+
+        super().__init__(
+            tango_device_fqdn,
+            logger,
+            monitored_attr_names,
+            *args,
+            communication_state_callback=communication_state_callback,
+            component_state_callback=component_state_callback,
+            quality_monitored_attributes=quality_monitored_attrs,
+            **kwargs,
+        )
+        self._communication_state_lock = state_update_lock
+        self._component_state_lock = state_update_lock
+
+    def _update_component_state(self, **kwargs) -> None:
+        """Update the int we get from the event to the Enum."""
+        enum_conversion = {
+            "operatingmode": DSOperatingMode,
+            "powerstate": DSPowerState,
+            "healthstate": HealthState,
+            "pointingstate": PointingState,
+            "indexerposition": IndexerPosition,
+        }
+        for attr, enum_ in enum_conversion.items():
+            if attr in kwargs:
+                kwargs[attr] = enum_(kwargs[attr])
+
+        super()._update_component_state(**kwargs)
+
+    @override
+    def _update_communication_state(self, communication_state: CommunicationStatus) -> None:
+        """Set AP Manager controlMode on every transition into ESTABLISHED.
+
+        On every transition from another communicationState to state ESTABLISHED
+        request the controlMode of the AP Manager to go to MONITOR_AND_CONTROL to
+        enable monitoring of the under AP server
+        """
+        prev_comm_state = self.communication_state
+        super()._update_communication_state(communication_state)
+
+        # Mirror the APManager disconnection on the dscConnectionState attr
+        if self._communication_state in (
+            CommunicationStatus.NOT_ESTABLISHED,
+            CommunicationStatus.DISABLED,
+        ):
+            self._update_component_state(connectionstate=self._communication_state)
+
+        # If the prev communicationState was ESTABLISHED and the communicationState
+        # changes, do nothing, else, if the comms state is transitioning to ESTABLISHED
+        # set the APManager control mode to MONITOR_AND_CONTROL
+        if (
+            communication_state != CommunicationStatus.ESTABLISHED
+            or prev_comm_state == CommunicationStatus.ESTABLISHED
+        ):
+            return
+
+        try:
+            self.write_attribute_value(
+                "controlMode",
+                ControlMode.MONITOR_AND_CONTROL,
+            )
+        except Exception:
+            self.logger.exception("Failed to set AP Manager controlMode to MONITOR_AND_CONTROL")
+
+    @override
+    def stop_communicating(self) -> None:
+        """Stop the AP server monitoring on call to stop communicating.
+
+        DishManager sets the communicationState to DISABLED before this
+        method is executed which would ordinarily prevent attr writes, therefore,
+        this method bypasses the check_communicating decorator.
+        """
+        apm_device_proxy = self._device_proxy_factory.get_cached_proxy(self._tango_device_fqdn)
+        if apm_device_proxy is not None:
+            try:
+                with tango.EnsureOmniThread():
+                    apm_device_proxy.write_attribute(
+                        "controlMode",
+                        ControlMode.NO_MONITOR_NO_CONTROL,
+                    )
+            except Exception:
+                self.logger.exception(
+                    "Failed to set AP Manager controlMode to NO_MONITOR_NO_CONTROL"
+                )
+        else:
+            self.logger.warning(
+                "Cannot set AP Manager controlMode to NO_MONITOR_NO_CONTROL, the "
+                "device proxy is not available."
+            )
+
+        super().stop_communicating()
+
+    def _interpret_command_reply(self, command_name: str, reply: Any) -> Tuple[TaskStatus, Any]:
+        """Unpack the AP Manager LRC reply to enable LRC action tracking."""
+        [[result_code], [msg]] = reply
+        if result_code in [ResultCode.FAILED, ResultCode.REJECTED]:
+            self.logger.error(
+                "[%s] on [%s] failed with message: %s",
+                command_name,
+                self._tango_device_fqdn,
+                msg,
+            )
+            status_map = {
+                ResultCode.FAILED: TaskStatus.FAILED,
+                ResultCode.REJECTED: TaskStatus.REJECTED,
+            }
+            return status_map[result_code], msg
+
+        return TaskStatus.IN_PROGRESS, msg

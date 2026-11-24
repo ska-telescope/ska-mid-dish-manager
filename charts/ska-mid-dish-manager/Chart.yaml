@@ -64,3 +64,14 @@ dependencies:
   version: 0.3.0
   repository: https://artefact.skao.int/repository/helm-internal
   condition: ska-mid-meerkat-wms-simulator.enabled
+# Meerkat AP device
+- name: ska-mid-meerkat-ap-manager
+  version: 0.4.0
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-meerkat-ap-manager.enabled
+# Meerkat AP simulator
+- name: ska-mid-meerkat-ap-simulator
+  version: 0.3.2
+  repository: https://artefact.skao.int/repository/helm-internal
+  condition: ska-mid-meerkat-ap-simulator.enabled
+

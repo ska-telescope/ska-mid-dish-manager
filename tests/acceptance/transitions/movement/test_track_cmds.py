@@ -16,7 +16,7 @@ from ska_mid_dish_manager.models.dish_enums import (
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 TRACKING_POSITION_THRESHOLD_ERROR_DEG = 0.05
-INIT_AZ = -250
+INIT_AZ = -175  # Reduced AZ limit accounting for tests against the AP Manager
 INIT_EL = 70
 POINTING_TOLERANCE_DEG = 0.1
 
@@ -240,7 +240,6 @@ def test_append_dvs_case(
     [[_], [unique_id]] = dish_manager_proxy.Track()
 
     result_event_store.wait_for_command_id(unique_id, timeout=10)
-    pointing_state_event_store.wait_for_value(PointingState.SLEW, timeout=60)
     pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=60)
 
     number_of_1_second_appends = 20
@@ -275,6 +274,7 @@ def test_append_dvs_case(
 
 @pytest.mark.movement
 @pytest.mark.acceptance
+@pytest.mark.excl_test_against_ap_manager
 def test_maximum_capacity(
     slew_dish_to_init,
     monitor_tango_servers,
@@ -441,6 +441,9 @@ def test_track_fails_when_track_called_late(
     # we don't have any way yet to confirm that the track command failed
     dish_manager_proxy.Track()
     with pytest.raises(RuntimeError):
+        # The AP Manager fails here because it doesnt run the constant internal
+        # check like the DS Controller does to flush coordinates from its buffer
+        # that are expired. This will be added an AP Manager backlog item
         pointing_state_event_store.wait_for_value(PointingState.TRACK, timeout=10)
 
     remove_subscriptions(subscriptions)

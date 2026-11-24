@@ -68,6 +68,13 @@ dishmanager:
     fqdn: ""
     domain_name: "mid-dish"
     family_name: "ds-manager"
+  
+  ap_manager:
+    # To configure dish manager to control an AP instance (and not a DS Manager instance) set the expected
+    # complete AP fqdn or the AP TRL domain and family properties here, else the AP Manager monitoring will be disabled
+    fqdn: ""
+    domain_name: ""
+    family_name: ""
 
   spfrx:
     # Supported:
@@ -135,6 +142,12 @@ ska-mid-wms:
     enabled: true
 
 ska-mid-dish-b5dc-proxy:
+  enabled: false
+
+ska-mid-meerkat-ap-manager:
+  enabled: false
+
+ska-mid-meerkat-ap-simulator:
   enabled: false
 
 ska-mid-meerkat-wms-tango-device:

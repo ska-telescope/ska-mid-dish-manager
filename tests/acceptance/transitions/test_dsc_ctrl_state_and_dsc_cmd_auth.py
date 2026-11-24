@@ -16,6 +16,7 @@ def restore_auth(event_store_class, ds_device_proxy):
 
 
 @pytest.mark.acceptance
+@pytest.mark.excl_test_against_ap_manager
 def test_dsccmdauth_and_dsccmdauth_attrs(
     monitor_tango_servers,
     event_store_class,

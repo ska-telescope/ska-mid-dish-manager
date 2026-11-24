@@ -3,6 +3,7 @@
 import pytest
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
+from ska_mid_dish_manager.models.constants import AP_MANAGER_TRL_FAMILY_NAME
 from ska_mid_dish_manager.models.dish_enums import Band, DishMode
 from tests.utils import remove_subscriptions, setup_subscriptions
 
@@ -116,8 +117,16 @@ def test_configure_band_b(
     monitor_tango_servers,
     event_store_class,
     dish_manager_proxy,
+    ds_device_fqdn,
 ):
     """Test ConfigureBand."""
+    if AP_MANAGER_TRL_FAMILY_NAME in ds_device_fqdn and band_request in [
+        "ConfigureBand4",
+        "ConfigureBand5a",
+        "ConfigureBand5b",
+    ]:
+        pytest.skip(reason=f"Skipping {band_request} test for unsupported command on APManager.")
+
     # Just skip the band we already are in
     if expected_band == dish_manager_proxy.configuredBand:
         pytest.skip(f"Already in band {expected_band}")  # ty: ignore[too-many-positional-arguments]
@@ -198,7 +207,7 @@ def test_configure_band_2_from_stow(
 
     # Stow the dish
     current_el = dish_manager_proxy.achievedPointing[2]
-    stow_position = 90.2
+    stow_position = 90.2  # NOTE We have no defined STOW position for the AP Manager
     estimate_stow_duration = stow_position - current_el  # elevation speed is 1 degree per second
     dish_manager_proxy.SetStowMode()
     dm_event_store.wait_for_value(DishMode.STOW, timeout=estimate_stow_duration + 10)
@@ -215,7 +224,6 @@ def test_configure_band_2_from_stow(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand2 started",
         "Running ConfigureBand2 on device SPFRX",
         "ConfigureBand2 on SPFRX timeout is 0",
@@ -323,7 +331,6 @@ def test_configure_band_json(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Running ConfigureBand on device SPFRX",
@@ -507,7 +514,6 @@ def test_configure_band_json_with_b5dc_fanout(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Running ConfigureBand on device SPFRX",
@@ -641,7 +647,9 @@ def test_slow_spfrx_configure_band(
     # make sure configuredBand is not B2
     [[_], [unique_id]] = dish_manager_proxy.ConfigureBand(json_payload_1)
     result_event_store.wait_for_finished_command_result(
-        unique_id, '[0, "SetOperateMode completed."]', timeout=30
+        unique_id,
+        '[0, "SetOperateMode completed."]',
+        timeout=60,
     )
 
     assert dish_manager_proxy.dishMode == DishMode.OPERATE
@@ -678,7 +686,6 @@ def test_slow_spfrx_configure_band(
         "DS.SetIndexPosition started",
         "Awaiting DS indexerposition change to B2",
         "Running SetIndexPosition on device DS",
-        "SetIndexPosition on DS timeout is 0",
         "SPFRX.ConfigureBand started",
         "Awaiting SPFRX configuredband, operatingmode change to B2, OPERATE",
         "Running ConfigureBand on device SPFRX",

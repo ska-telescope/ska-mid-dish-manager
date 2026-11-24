@@ -47,6 +47,12 @@ def pytest_addoption(parser):
         default=None,
         help="File path to store pointing files to when tests have the required fixture",
     )
+    parser.addoption(
+        "--ds-fqdn",
+        action="store",
+        default=DEFAULT_DS_MANAGER_TRL,
+        help="FQDN of the DS/AP Manager Tango device",
+    )
 
 
 @pytest.fixture
@@ -73,8 +79,9 @@ def dish_manager_device_fqdn():
 
 
 @pytest.fixture(scope="session")
-def ds_device_fqdn():
-    return DEFAULT_DS_MANAGER_TRL
+def ds_device_fqdn(request):
+    """Allow for the substitution of the AP Manager, else default to DS Manager FQDN."""
+    return request.config.getoption("--ds-fqdn")
 
 
 @pytest.fixture(scope="session")

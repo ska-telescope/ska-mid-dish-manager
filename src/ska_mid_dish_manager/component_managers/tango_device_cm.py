@@ -121,7 +121,9 @@ class TangoDeviceComponentManager(BaseComponentManager):
             if attr_name in self._quality_monitored_attributes:
                 self._quality_state_callback(attr_name, quality)
         except Exception:  # pylint:disable=broad-except
-            self.logger.exception("Error occurred on attribute quality state update")
+            self.logger.exception(
+                f"Error occurred on attribute [{attr_name}] quality state update"
+            )
 
         if quality is not tango.AttrQuality.ATTR_INVALID:
             try:
@@ -435,7 +437,7 @@ class TangoDeviceComponentManager(BaseComponentManager):
 
     @check_communicating
     def write_attribute_value(self, attribute_name: str, attribute_value: Any) -> None:
-        """Check the connection and write an attribute."""
+        """Write the attribute value."""
         self.logger.debug(
             "About to write attribute [%s] on device [%s]",
             attribute_name,

@@ -1,12 +1,19 @@
 """Unit tests verify SetMaintenanceMode behaviour."""
 
+import json
 from unittest.mock import call
 
 import pytest
 import tango
-from ska_control_model import TaskStatus
+from ska_control_model import ResultCode, TaskStatus
 
-from ska_mid_dish_manager.models.dish_enums import DishMode, DSOperatingMode, SPFOperatingMode
+from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
+from ska_mid_dish_manager.models.dish_enums import (
+    DishMode,
+    DSOperatingMode,
+    SPFOperatingMode,
+    SPFRxOperatingMode,
+)
 from tests.utils import remove_subscriptions, setup_subscriptions
 
 
@@ -45,6 +52,84 @@ def test_happy_case(dish_manager_resources, event_store_class):
     # Check that the ReleaseAuth command was executed
     execute_command_args = ds_cm.execute_command.call_args_list[-1]
     assert execute_command_args == call("ReleaseAuth", None)
+
+    remove_subscriptions(subscriptions)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_happy_case_with_ap_manager(dish_manager_resources_with_ap_manager, event_store_class):
+    device_proxy, dish_manager_cm = dish_manager_resources_with_ap_manager
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    spf_cm = dish_manager_cm.sub_component_managers["SPF"]
+    spfrx_cm = dish_manager_cm.sub_component_managers["SPFRX"]
+
+    assert isinstance(ds_cm, APComponentManager)
+
+    # Ensure lrcFinished returns the completed APMaintenance result
+    # when attr value read by the action handler
+    command_id = "ap_maintenance_command_id"
+    ds_cm.execute_command.return_value = (TaskStatus.IN_PROGRESS, command_id)
+    ds_cm.read_attribute_value.return_value = (
+        json.dumps(
+            {
+                "uid": command_id,
+                "name": "APMaintenance",
+                "status": TaskStatus.COMPLETED.name,
+                "result": [int(ResultCode.OK), "AP maintenance completed"],
+            }
+        ),
+    )
+
+    status_event_store = event_store_class()
+    setup_subscriptions(
+        device_proxy,
+        {"Status": status_event_store},
+    )
+
+    device_proxy.SetMaintenanceMode()
+
+    # The AP path awaits reported operating modes, not a dishMode of STOW.
+    ds_cm._update_component_state(operatingmode=DSOperatingMode.MAINTENANCE)
+    spf_cm._update_component_state(operatingmode=SPFOperatingMode.MAINTENANCE)
+    spfrx_cm._update_component_state(operatingmode=SPFRxOperatingMode.STANDBY)
+
+    status_event_store.wait_for_progress_update(
+        "SetMaintenanceMode completed",
+        timeout=10,
+    )
+
+    ds_cm.execute_command.assert_called_once_with("APMaintenance", None)
+
+
+@pytest.mark.unit
+@pytest.mark.forked
+def test_ap_maintenance_lrc_failure_finishes_action(
+    dish_manager_resources_with_ap_manager, event_store_class
+):
+    """A failed APMaintenance LRC should fail SetMaintenanceMode without waiting for timeout."""
+    device_proxy, dish_manager_cm = dish_manager_resources_with_ap_manager
+    ds_cm = dish_manager_cm.sub_component_managers["DS"]
+    command_id = "ap_maintenance_command_id"
+    failure_message = "AP maintenance failed"
+    ds_cm.execute_command.return_value = (TaskStatus.IN_PROGRESS, command_id)
+    ds_cm.read_attribute_value.return_value = (
+        json.dumps(
+            {
+                "uid": command_id,
+                "name": "APMaintenance",
+                "status": TaskStatus.COMPLETED.name,
+                "result": [3, failure_message],
+            }
+        ),
+    )
+
+    result_event_store = event_store_class()
+    subscriptions = setup_subscriptions(device_proxy, {"lrcFinished": result_event_store})
+    [[_], [unique_id]] = device_proxy.SetMaintenanceMode()
+
+    expected_result = json.dumps([3, failure_message])
+    result_event_store.wait_for_finished_command_result(unique_id, expected_result, timeout=10)
 
     remove_subscriptions(subscriptions)
 

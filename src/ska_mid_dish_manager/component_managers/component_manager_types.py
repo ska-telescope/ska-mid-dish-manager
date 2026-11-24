@@ -1,3 +1,4 @@
+from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
 from ska_mid_dish_manager.component_managers.b5dc_cm import B5DCComponentManager
 from ska_mid_dish_manager.component_managers.ds_cm import DSComponentManager
 from ska_mid_dish_manager.component_managers.spf_cm import SPFComponentManager
@@ -10,4 +11,5 @@ type SubComponentManagers = (
     | SPFComponentManager
     | SPFRxComponentManager
     | WMSComponentManager
+    | APComponentManager
 )

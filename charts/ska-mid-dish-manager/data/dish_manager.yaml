@@ -35,10 +35,22 @@ server:
                     - ""
                 - name: "DSDeviceFqdn"
                   values:
-                    {{- if $.Values.dishmanager.ds.fqdn }}
+                    # Disable DS Manager monitoring (by setting the FQDN/TRL to an empty string) if AP Manager monitoring is configured
+                    {{- if or $.Values.dishmanager.ap_manager.fqdn (and $.Values.dishmanager.ap_manager.domain_name $.Values.dishmanager.ap_manager.family) }}
+                    - ""
+                    {{- else if $.Values.dishmanager.ds.fqdn }}
                     - "{{ $.Values.dishmanager.ds.fqdn }}"
                     {{- else }}
                     - "{{ $.Values.dishmanager.ds.domain_name }}/{{ $.Values.dishmanager.ds.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- end }}
+                - name: "APManagerDeviceFqdn"
+                  values:
+                    {{- if $.Values.dishmanager.ap_manager.fqdn }}
+                    - "{{ $.Values.dishmanager.ap_manager.fqdn }}"
+                    {{- else if and $.Values.dishmanager.ap_manager.domain_name $.Values.dishmanager.ap_manager.family_name }}
+                    - "{{ $.Values.dishmanager.ap_manager.domain_name }}/{{ $.Values.dishmanager.ap_manager.family_name }}/{{ if regexMatch "^[0-9]+$" $dish }}SKA{{ $dish }}{{ else }}{{ $dishLower }}{{ end }}"
+                    {{- else }}
+                    - ""
                     {{- end }}
                 - name: "SPFDeviceFqdn"
                   values:

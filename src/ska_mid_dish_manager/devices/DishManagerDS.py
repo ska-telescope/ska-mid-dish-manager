@@ -31,6 +31,7 @@ from tango import (
 )
 from tango.server import attribute, command, device_property, run
 
+from ska_mid_dish_manager.component_managers.ap_manager_cm import APComponentManager
 from ska_mid_dish_manager.component_managers.dish_manager_cm import DishManagerComponentManager
 from ska_mid_dish_manager.models.command_class import (
     AbortCommand,
@@ -105,9 +106,25 @@ class DishManager(SKAController):
     # -----------------
     # these values will be overwritten by values in
     # /charts/ska-mid-dish-manager/data in k8s deployment
-    DSDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_DS_MANAGER_TRL)
+
+    # On Dish Manager instatiation, both the DS and AP FQDNs will be evaluated.
+    # The subcomponent manager for the configured FQDN will be created. If both FQDNs
+    # are configured dish manager instantiation will fail. Set the FQDN to an empty string
+    # to disable the unwanted dish structure type
+    DSDeviceFqdn = device_property(
+        dtype=str,
+        doc="The TRL of the SKA Dish Structure Manager instance to control and monitor.",
+        default_value="",
+    )
+    APManagerDeviceFqdn = device_property(
+        dtype=str,
+        doc="The TRL of the AP Manager instance to control and monitor.",
+        default_value="",
+    )
+
     SPFDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFC_TRL)
     SPFRxDeviceFqdn = device_property(dtype=str, default_value=DEFAULT_SPFRX_TRL)
+
     # B5DC device is not monitored by default, so default value is empty string
     B5DCDeviceFqdn = device_property(dtype=str, default_value="")
     DishId = device_property(dtype=str, default_value=DEFAULT_DISH_ID)
@@ -155,13 +172,21 @@ class DishManager(SKAController):
         :rtype: DishManagerComponentManager
         """
         self._configure_additional_user_tags_for_logging()
+
+        # Set the DSDeviceFqdn to the DEFAULT_DS_MANAGER_TRL if both the AP
+        # Manager TRL and DS Manager TRL properties are not configured
+        ds_device_fqdn = self.DSDeviceFqdn
+        if not self.APManagerDeviceFqdn and not ds_device_fqdn:
+            ds_device_fqdn = DEFAULT_DS_MANAGER_TRL
+
         return DishManagerComponentManager(
             self.logger,
             self._command_tracker,
             self._update_version_of_subdevice_on_success,
             self._attr_quality_state_changed,
             self.get_name(),
-            self.DSDeviceFqdn,
+            ds_device_fqdn,
+            self.APManagerDeviceFqdn,
             self.SPFDeviceFqdn,
             self.SPFRxDeviceFqdn,
             self.B5DCDeviceFqdn,
@@ -225,7 +250,7 @@ class DishManager(SKAController):
                 self._command_tracker,  # ty: ignore[invalid-argument-type]
                 self.component_manager,
                 "set_maintenance_mode",
-                callback=self.component_manager.stow_to_maintenance_transition_callback,
+                callback=self.component_manager.complete_maintenance_transition_callback,
                 logger=self.logger,
             ),
         )
@@ -455,7 +480,9 @@ class DishManager(SKAController):
         self._track_table_load_mode = TrackTableLoadMode.APPEND
         self._last_commanded_pointing_params = ""
         self._release_info = ReleaseInfo(
-            ds_manager_address=self.DSDeviceFqdn,
+            ds_manager_address=(
+                self.DSDeviceFqdn or self.APManagerDeviceFqdn or DEFAULT_DS_MANAGER_TRL
+            ),
             spfc_address=self.SPFDeviceFqdn,
             spfrx_address=self.SPFRxDeviceFqdn,
             b5dc_address=self.B5DCDeviceFqdn,
@@ -607,11 +634,35 @@ class DishManager(SKAController):
         # Try to connect to DB and update memorized attributes if TANGO_HOST is set
         self.component_manager.try_update_memorized_attributes_from_db()
 
+        # NOTE This is intended to be used as a temporary measure until the APManager
+        # exposes and/or applies logic behind the listed attrs
+        self._invalidate_ap_manager_linked_attrs()
+
         # Register device instance and continue initialization
         self.instances[self.get_name()] = self
         self.logger.info("Device Initialization: Complete", extra=OPERATOR_TAG)
         self.op_state_model.perform_action("component_on")
         self.component_manager.start_communicating()
+
+    def _invalidate_ap_manager_linked_attrs(self) -> None:
+        """Invalidate attributes that are not applicable when AP Manager is monitored."""
+        ds_sub_cm = self.component_manager.sub_component_managers["DS"]
+        if isinstance(ds_sub_cm, APComponentManager):
+            invaliation_time = time.time()
+            # The dict key is the attr to invalidate, with the value being the
+            # attr value to be assigned to the invalid attribute
+            attrs_to_invalidate = {
+                "trackTableCurrentIndex": 0,
+                "trackTableEndIndex": 0,
+            }
+
+            for attr_name, attr_value in attrs_to_invalidate.items():
+                attr_obj = getattr(self, attr_name)
+                attr_obj.set_value_date_quality(
+                    attr_value,
+                    invaliation_time,
+                    AttrQuality.ATTR_INVALID,
+                )
 
     def _configure_additional_user_tags_for_logging(self):
         """Append user tags to log records."""
@@ -801,7 +852,7 @@ class DishManager(SKAController):
     )
     def trackTableCurrentIndex(self) -> int:
         """Index of current point being tracked in the track table."""
-        return self.component_manager.component_state.get("tracktablecurrentindex", 0)
+        return self.component_manager.component_state.get("tracktablecurrentindex", None)
 
     @attribute(
         dtype=int,
@@ -810,7 +861,7 @@ class DishManager(SKAController):
     )
     def trackTableEndIndex(self) -> int:
         """Index of last point in the track table."""
-        return self.component_manager.component_state.get("tracktableendindex", 0)
+        return self.component_manager.component_state.get("tracktableendindex", None)
 
     @attribute(
         dtype=float,

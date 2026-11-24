@@ -87,6 +87,7 @@ def component_manager(
             callbacks["quality_state_cb"],
             "device-1",
             "sub-device-1",
+            "",  # Disable AP Manager monitoring while DS Manager is enabled
             "sub-device-2",
             "sub-device-3",
             "sub-device-4",

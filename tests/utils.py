@@ -16,6 +16,13 @@ from ska_control_model import CommunicationStatus
 from ska_control_model.future import ControlMode
 from tango.utils import EventCallback
 
+from ska_mid_dish_manager.models.constants import (
+    AP_MANAGER_TRL_FAMILY_NAME,
+    MAX_AZIMUTH_ACU,
+    MAX_ELEVATION_ACU,
+    MIN_AZIMUTH_ACU,
+    MIN_ELEVATION_ACU,
+)
 from ska_mid_dish_manager.models.dish_enums import PointingState, TrackTableLoadMode
 from ska_mid_dish_manager.utils.ska_epoch_to_tai import get_current_tai_timestamp_from_unix_time
 
@@ -736,10 +743,16 @@ def generate_random_text(length=10):
     return "".join(random.choice(letters) for _ in range(length))
 
 
-def calculate_slew_target(current_az, current_el, offset_az, offset_el):
+def calculate_slew_target(dish_structure_fqdn, current_az, current_el, offset_az, offset_el):
     """Moves a point by specified offsets in azimuth and elevation,
     ensuring the result stays within defined constraints.
 
+    The FQDN of the dish structure is used to determine whether the
+    DS Manager or the AP Manager is being controlled and monitored.
+    The minimum and maximum az/el constraints are updated accordingly.
+
+    :param dish_structure_fqdn: FDQN of the monitored dish structure
+    :type value: str
     :param current_az: Current azimuth value.
     :type value: float
     :param current_el: Current elevation value.
@@ -751,14 +764,26 @@ def calculate_slew_target(current_az, current_el, offset_az, offset_el):
     :return: Tuple containing the constrained azimuth and elevation values.
     :rtype: Tuple[float, float]
     """
+    if AP_MANAGER_TRL_FAMILY_NAME in dish_structure_fqdn:
+        max_az = MAX_AZIMUTH_ACU
+        min_az = MIN_AZIMUTH_ACU
+        max_el = MAX_ELEVATION_ACU
+        min_el = MIN_ELEVATION_ACU
+    else:
+        # Default to standard SKA DS az/el limits
+        max_az = MAX_AZIMUTH
+        min_az = MIN_AZIMUTH
+        max_el = MAX_ELEVATION
+        min_el = MIN_ELEVATION
+
     # Calculate requested values
     requested_az = current_az + offset_az
     requested_el = current_el + offset_el
 
     # Constrained azimuth
-    requested_az = min(MAX_AZIMUTH, max(MIN_AZIMUTH, requested_az))
+    requested_az = min(max_az, max(min_az, requested_az))
     # Constrained elevation
-    requested_el = min(MAX_ELEVATION, max(MIN_ELEVATION, requested_el))
+    requested_el = min(max_el, max(min_el, requested_el))
 
     return requested_az, requested_el
 

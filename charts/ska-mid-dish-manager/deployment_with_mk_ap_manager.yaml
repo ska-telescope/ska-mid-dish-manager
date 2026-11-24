@@ -1,0 +1,73 @@
+# deploy dish-manager with spfrx and spf sim with default instance 001, substituting DS with an AP Manager
+global:
+  minikube: true
+  operator: true
+  dishes: ["001"]
+
+ska-tango-base:
+  enabled: true
+
+ska-mid-dish-ds-manager:
+  enabled: false
+
+ska-mid-dish-simulators:
+  enabled: true
+  deviceServers:
+    spfdevice:
+      enabled: true
+    spfrxdevice:
+      enabled: true
+  dsOpcuaSimulator:
+    enabled: false
+
+# -----------------------------------------------------------------------------
+# Dish Manager config - Configure the DS TRL to point to an AP Manager instance
+# -----------------------------------------------------------------------------
+dishmanager:
+  b5dcproxy:
+    monitoring: false
+  ds:
+    fqdn: ""
+    domain_name: ""
+    family_name: ""
+  ap_manager:
+    fqdn: "mid-dish/meerkat-ap-manager/SKA001"
+
+# -------------------------------------------------
+# MeerKAT AP Manager and AP Simulator configuration
+# -------------------------------------------------
+ska-mid-meerkat-ap-manager:
+  enabled: true
+
+  meerkatapmanager:
+    enabled: true
+    # Test development image of the Meerkat AP Manager
+    # image:
+    #   registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
+    #   image: ska-mid-meerkat-lmc
+    #   tag: 0.3.1-dev.cc4d981fa
+    #   pullPolicy: IfNotPresent
+
+    # Configure MK AP server instance to connect to
+    deviceproperties:
+      katcp_hosts: ["katcp-ap-sim-001-svc"]
+      katcp_ports: [4022]
+      sampling_strategies: []
+      sensors_to_ignore: []
+
+  deviceServers:
+    meerkatapmanager:
+      enabled: true
+    
+
+ska-mid-meerkat-ap-simulator:
+  enabled: true
+  apSimulator:
+    name: katcp-ap-sim
+    enabled: true
+    # example override: pull image from gitlab registry for testing
+    # image:
+    #   registry: registry.gitlab.com/ska-telescope/mid-dish/ska-mid-meerkat-lmc
+    #   image: ska-mid-meerkat-ap-simulator
+    #   tag: 0.3.0-dev.cd1a107e8
+    #   pullPolicy: IfNotPresent

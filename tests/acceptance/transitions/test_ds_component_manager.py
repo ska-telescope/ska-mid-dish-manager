@@ -13,6 +13,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 @pytest.mark.acceptance
+@pytest.mark.excl_test_against_ap_manager
 def test_ds_cm(monitor_tango_servers, component_state_store, ds_device_fqdn):
     """Stress test component updates."""
     state_update_lock = Lock()

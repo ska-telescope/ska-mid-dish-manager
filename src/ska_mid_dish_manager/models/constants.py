@@ -20,6 +20,7 @@ WIND_GUST_THRESHOLD_MPS = 16.9
 DEVICE_PROXY_TIMEOUT_MS = 5000
 SLOW_DEVICE_PROXY_TIMEOUT_MS = 12000
 STOW_ELEVATION_DEGREES = 90.2
+STOW_ELEVATION_DEGREES_ACU_SIMULATOR = 90.0
 ELEVATION_SPEED_DEGREES_PER_SECOND = 1.0
 DEFAULT_ACTION_TIMEOUT_S = 120
 # Name of the environment variable holding the URL of the TZ data file that is
@@ -33,6 +34,14 @@ MAX_ELEVATION_SCIENCE = 85.0
 MIN_ELEVATION_SCIENCE = 15.0
 MAX_AZIMUTH = 270.0
 MIN_AZIMUTH = -270.0
+# Elevation and azimuth limits where ACU is controller and monitored as the dish structure
+MAX_ELEVATION_ACU = 92.0
+MIN_ELEVATION_ACU = 14.5
+MAX_AZIMUTH_ACU = 275.0
+MIN_AZIMUTH_ACU = -185.0
+# Expected Tango TRL family name for a MeerKAT AP Manager instance
+AP_MANAGER_TRL_FAMILY_NAME = "meerkat-ap-manager"
+
 
 OPERATOR_TAG = {"user": "operator"}
 
@@ -40,3 +49,9 @@ OPERATOR_TAG = {"user": "operator"}
 SPFRX_CONFIG_WAIT_TIME = 12
 SPFRX_OPERATE_WAIT_TIME = 12
 SPFRX_BAND_WAIT_TIME = 12
+
+# ConfigureBand Indexer position change timeout
+INDEXER_POS_TIMEOUT = 60
+
+# APMaintenance Tango command timeout
+AP_MAINTENANCE_CMD_TIMEOUT = 120
