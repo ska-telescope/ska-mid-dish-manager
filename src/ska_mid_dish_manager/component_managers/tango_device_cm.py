@@ -16,8 +16,6 @@ from ska_mid_dish_manager.component_managers.device_monitor import TangoDeviceMo
 from ska_mid_dish_manager.component_managers.device_proxy_factory import DeviceProxyManager
 from ska_mid_dish_manager.models.constants import LOGGED_ARG_MAX_LENGTH, OPERATOR_TAG
 
-# from ska_mid_dish_manager.utils.decorators import check_communicating
-
 
 class TangoDeviceComponentManager(BaseComponentManager):
     """A component manager for a Tango device."""

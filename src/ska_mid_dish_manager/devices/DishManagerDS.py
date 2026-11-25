@@ -3108,7 +3108,7 @@ class DishManager(
             "Sync each subservient device componentstate with the dish manager component state."
         ),
     )
-    def SyncComponentStates(self):
+    def SyncComponentStates(self) -> None:
         """Sync each subservient device component state with its tango device
         to refresh the dish manager component state.
         """

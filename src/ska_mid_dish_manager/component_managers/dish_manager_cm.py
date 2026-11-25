@@ -36,7 +36,6 @@ from ska_mid_dish_manager.component_managers.spfrx_cm import SPFRxComponentManag
 from ska_mid_dish_manager.component_managers.wms_cm import WMSComponentManager
 from ska_mid_dish_manager.models.abort_sequence_command_handler import AbortSequenceCommandHandler
 from ska_mid_dish_manager.models.command_actions import (
-    CompleteMaintenanceModeAction,
     ConfigureBand6Action,
     ConfigureBandActionSequence,
     InterlockAckAction,
@@ -692,17 +691,14 @@ class DishManagerComponentManager(BaseComponentManager):
         self.record_command(trigger_source, True)
         if self.component_state["dishmode"] == DishMode.STOW:
             # remove any queued tasks on the task executor
-            if self._abort_lrc_callback is not None:
-                self._abort_lrc_callback()
+            self.abort_lrc()
             self.logger.info(f"{trigger_source}: Dish is already in STOW mode, no action taken.")
             return
 
         retry_interval = 0.1
         self.logger.info(f"{trigger_source} transitioning dish to STOW.", extra=OPERATOR_TAG)
 
-        if self._abort_lrc_callback is not None:
-            self._abort_lrc_callback()
-
+        self.abort_lrc()
         while not self._stop_event.is_set():
             result_code, _ = self.set_stow_mode()
 
@@ -907,6 +903,11 @@ class DishManagerComponentManager(BaseComponentManager):
         """Forward last Tango event errors to the owning Tango device signal."""
         if self._last_tango_event_error_callback is not None:
             self._last_tango_event_error_callback(*error)
+
+    def abort_lrc(self) -> None:
+        """Abort LRCs."""
+        if self._abort_lrc_callback is not None:
+            self._abort_lrc_callback()
 
     # ---------
     # Callbacks
@@ -1410,10 +1411,6 @@ class DishManagerComponentManager(BaseComponentManager):
             else:
                 self.sub_component_managers["SPF"].start_communicating()
 
-            # The set of active sub-devices changed, so recompute the aggregate state
-            # self._refresh_communication_state()
-            # self._update_dish_health_state_and_info()
-
             if sync:
                 self.sync_component_states()
 
@@ -1426,10 +1423,6 @@ class DishManagerComponentManager(BaseComponentManager):
                 self.sub_component_managers["SPFRX"].stop_communicating()
             else:
                 self.sub_component_managers["SPFRX"].start_communicating()
-
-            # The set of active sub-devices changed, so recompute the aggregate state
-            # self._refresh_communication_state()
-            # self._update_dish_health_state_and_info()
 
             if sync:
                 self.sync_component_states()
@@ -1448,10 +1441,6 @@ class DishManagerComponentManager(BaseComponentManager):
                 self.sub_component_managers["B5DC"].stop_communicating()
             else:
                 self.sub_component_managers["B5DC"].start_communicating()
-
-            # The set of active sub-devices changed, so recompute the aggregate state
-            # self._refresh_communication_state()
-            # self._update_dish_health_state_and_info()
 
             if sync:
                 self.sync_component_states()
@@ -1574,14 +1563,10 @@ class DishManagerComponentManager(BaseComponentManager):
         task_abort_event: threading.Event,
     ) -> Tuple[ResultCode, str]:
         """Transition the dish to MAINTENANCE mode."""
-        action_on_success = CompleteMaintenanceModeAction(
-            self.logger, self, self.get_action_timeout(), progress_callback=progress_callback
-        )
         command_action = SetMaintenanceModeAction(
             self.logger,
             self,
             self.get_action_timeout(),
-            action_on_success=action_on_success,
             progress_callback=progress_callback,
         )
         result_code, msg = command_action.execute(task_abort_event)

@@ -5,7 +5,7 @@ import logging
 from typing import Callable, Optional, Tuple
 
 import tango
-from ska_control_model import AdminMode, ResultCode
+from ska_control_model import AdminMode, ResultCode  # ty: ignore[deprecated]
 from ska_mid_dish_dcp_lib.device.b5dc_device_mappings import B5dcFrequency
 
 from ska_mid_dish_manager.models.action_handlers import (
@@ -395,6 +395,13 @@ class SetMaintenanceModeAction(Action):
             is_device_ignored=self.dish_manager_cm.is_device_ignored("SPF"),
         )
 
+        complete_maintenance_transition = CompleteMaintenanceModeAction(
+            logger=self.logger,
+            dish_manager_cm=self.dish_manager_cm,
+            timeout_s=self.timeout_s,
+            progress_callback=self.progress_callback,
+        )
+
         self._handler = ActionHandler(
             self.logger,
             "SetMaintenanceMode",
@@ -404,7 +411,7 @@ class SetMaintenanceModeAction(Action):
             # deep copy
             component_state=self.dish_manager_cm._component_state,
             awaited_component_state={"dishmode": DishMode.STOW},
-            action_on_success=self.action_on_success,
+            action_on_success=self.action_on_success or complete_maintenance_transition,
             action_on_failure=self.action_on_failure,
             waiting_callback=self.waiting_callback,
             progress_callback=self.progress_callback,

@@ -8,8 +8,7 @@ A command whose target mode is the dish's current mode is also allowed, so repea
 command (for example SetStowMode while already in STOW) succeeds instead of being rejected.
 """
 
-from collections.abc import Callable
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 from ska_mid_dish_manager.models.dish_enums import DishMode, PointingState
 
